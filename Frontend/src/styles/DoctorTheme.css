@@ -1,0 +1,134 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
+
+/* High-End Azure & Midnight UI System */
+:root {
+  --primary: #1d4ed8;          /* Royal Blue */
+  --primary-hover: #1e40af;
+  --primary-light: rgba(29, 78, 216, 0.12);
+  --secondary: #0369a1;        /* Cerulean */
+  --accent: #38bdf8;           /* Light Sky Blue */
+  
+  --danger: #ef4444;
+  --danger-light: rgba(239, 68, 68, 0.1);
+  --warning: #f59e0b;
+  --warning-light: rgba(245, 158, 11, 0.1);
+  --success: #10b981;
+  --success-light: rgba(16, 185, 129, 0.1);
+  
+  --bg-main: #f8fafc;          /* Off-white canvas */
+  --bg-sidebar: #0f172a;       /* Deep Midnight */
+  --bg-card: #ffffff;
+  
+  --border: rgba(148, 163, 184, 0.2);
+  --shadow-sm: 0 2px 4px rgba(15, 23, 42, 0.04);
+  --shadow-md: 0 8px 16px rgba(15, 23, 42, 0.05);
+  --shadow-lg: 0 15px 35px rgba(29, 78, 216, 0.08); /* Colored premium shadow */
+  
+  --text-main: #0f172a;
+  --text-muted: #64748b;
+  --text-sidebar: #94a3b8;
+  --text-sidebar-hover: #f1f5f9;
+  
+  --font-family: 'Inter', system-ui, sans-serif;
+  --radius-sm: 0.6rem;
+  --radius-md: 1.25rem;
+  --radius-lg: 2rem;
+}
+
+*, *::before, *::after { box-sizing: border-box; }
+
+body {
+  margin: 0; font-family: var(--font-family);
+  background-color: var(--bg-main); color: var(--text-main);
+  -webkit-font-smoothing: antialiased; letter-spacing: -0.01em;
+}
+a { color: inherit; text-decoration: none; }
+
+/* Status Chips & Metrics */
+.badge-soft, .chip, .chip-neutral, .status-pill, .chip-danger, .chip-warning {
+  font-size: 0.75rem; font-weight: 700; padding: 0.35rem 0.85rem; border-radius: 999px;
+  display: inline-flex; align-items: center; gap: 0.35rem; white-space: nowrap; letter-spacing: 0.02em;
+}
+.badge-soft { background: var(--primary-light); color: var(--primary); }
+.chip { background: var(--success-light); color: var(--success); }
+.chip-danger { background: var(--danger-light); color: var(--danger); }
+.chip-warning { background: var(--warning-light); color: var(--warning); }
+.chip-neutral { background: #f1f5f9; color: var(--text-muted); }
+.status-pill.status-active { background: var(--success-light); color: var(--success); box-shadow: 0 0 0 2px white, 0 0 0 4px var(--success-light);}
+.status-pill.status-risk-high { background: var(--danger-light); color: var(--danger); }
+.status-pill.status-risk-medium { background: var(--warning-light); color: var(--warning); }
+.status-pill.status-risk-low { background: var(--success-light); color: var(--success); }
+
+/* Buttons */
+.btn {
+  display: inline-flex; align-items: center; justify-content: center; gap: 0.6rem;
+  padding: 0.75rem 1.5rem; font-size: 0.95rem; font-weight: 600;
+  border-radius: var(--radius-sm); border: none; cursor: pointer; transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+.btn-primary { background: var(--primary); color: white; box-shadow: 0 4px 12px rgba(29, 78, 216, 0.25); }
+.btn-primary:hover { background: var(--primary-hover); transform: translateY(-2px); box-shadow: 0 6px 16px rgba(29, 78, 216, 0.4); }
+.btn-outline { background: white; border: 1px solid var(--border); color: var(--text-main); font-weight: 600;}
+.btn-outline:hover { background: #f1f5f9; border-color: #94a3b8; }
+
+.btn-icon {
+  width: 36px; height: 36px; padding: 0; border-radius: 8px;
+  background: white; border: 1px solid var(--border); color: var(--text-muted);
+  display: inline-flex; align-items: center; justify-content: center; cursor: pointer; transition: 0.2s;
+}
+.btn-icon:hover { background: var(--primary-light); color: var(--primary); border-color: transparent; }
+
+/* Filter Chips */
+.filter-group { display: flex; gap: 0.5rem; overflow-x: auto; padding-bottom: 0.5rem; }
+.filter-chip {
+  background: white; border: 1px solid var(--border); color: var(--text-muted);
+  font-size: 0.85rem; font-weight: 600; padding: 0.4rem 1rem; border-radius: 9999px; cursor: pointer; transition: 0.2s;
+}
+.filter-chip:hover { border-color: var(--primary); color: var(--primary); }
+.filter-chip.active { background: var(--primary); color: white; border-color: transparent; box-shadow: 0 2px 8px rgba(29, 78, 216, 0.3);}
+
+/* Search Bar System */
+.search-bar {
+  display: flex; align-items: center; gap: 0.75rem; 
+  background: #f8fafc; border: 1px solid #e2e8f0; 
+  padding: 0.65rem 1.25rem; border-radius: 12px; 
+  width: 100%; max-width: 400px; transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: 0 1px 2px rgba(0,0,0,0.03);
+}
+.search-bar:focus-within {
+  background: white; border-color: var(--primary); 
+  box-shadow: 0 4px 12px rgba(29, 78, 216, 0.1), 0 0 0 4px var(--primary-light);
+  transform: translateY(-1px);
+}
+.search-bar input {
+  border: none; background: transparent; outline: none; 
+  width: 100%; font-size: 0.95rem; color: var(--text-main); font-weight: 500;
+  padding: 0;
+}
+.search-bar input::placeholder { color: #94a3b8; font-weight: 400; }
+.search-icon { color: #94a3b8; transition: color 0.3s; flex-shrink: 0; display:flex;}
+.search-bar:focus-within .search-icon { color: var(--primary); }
+
+/* Forms */
+.form-grid { display: grid; gap: 1.5rem; }
+.form-2 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.form-group { display: flex; flex-direction: column; gap: 0.5rem; }
+.form-group label { font-size: 0.9rem; font-weight: 600; color: var(--text-main); }
+.form-control, .form-select {
+  width: 100%; padding: 0.8rem 1.25rem; font-size: 1rem; background: #f8fafc;
+  border: 1px solid #e2e8f0; border-radius: 8px; color: var(--text-main);
+  transition: all 0.2s; font-family: inherit; font-weight: 500;
+}
+.form-control::placeholder { color: #94a3b8; font-weight: 400;}
+.form-control:focus, .form-select:focus {
+  outline: none; border-color: var(--primary); box-shadow: 0 0 0 4px var(--primary-light); background: white;
+}
+
+/* Utilities */
+.w-full { width: 100%; }
+.flex { display: flex; }
+.justify-between { justify-content: space-between; }
+.items-center { align-items: center; }
+.mt-1 { margin-top: 0.5rem; }
+.mt-2 { margin-top: 1rem; }
+.mt-3 { margin-top: 1.5rem; }
+.mt-4 { margin-top: 2rem; }
