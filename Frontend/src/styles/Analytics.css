@@ -1,0 +1,225 @@
+.analytics-container {
+    padding: 32px;
+    background-color: #f8fafc;
+    flex: 1;
+}
+
+/* Analytics Top Stats Grid */
+.analytics-stats-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 24px;
+    margin-bottom: 24px;
+}
+
+.stat-card {
+    background-color: white;
+    border-radius: 12px;
+    padding: 24px;
+    border: 1px solid #e5e7eb;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.02);
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+}
+
+.stat-card-header h3 {
+    margin: 0 0 12px 0;
+    font-size: 14px;
+    font-weight: 600;
+    color: #111827;
+}
+
+.stat-card-value {
+    font-size: 28px;
+    font-weight: 700;
+}
+
+.stat-card-value .unit {
+    font-size: 16px;
+    color: #1d4ed8;
+    /* inherit blue */
+    margin-left: 2px;
+}
+
+.stat-subtitle {
+    margin: 4px 0 0;
+    font-size: 12px;
+    color: #9ca3af;
+}
+
+/* Main Grid Layout */
+.analytics-main-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 24px;
+}
+
+/* Biometrics Panel */
+.biometrics-list {
+    display: flex;
+    flex-direction: column;
+    gap: 32px;
+    margin-top: 8px;
+}
+
+.metric-item {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.metric-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.metric-name {
+    font-size: 14px;
+    font-weight: 500;
+    color: #4b5563;
+}
+
+.metric-current {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 20px;
+    font-weight: 700;
+}
+
+.progress-track {
+    width: 100%;
+    height: 8px;
+    background-color: #f3f4f6;
+    border-radius: 4px;
+    overflow: hidden;
+}
+
+.progress-bar {
+    height: 100%;
+    border-radius: 4px;
+}
+
+.bg-blue {
+    background-color: #3b82f6;
+}
+
+.bg-green {
+    background-color: #14b8a6;
+}
+
+/* Teal/green to match 92 mmHg */
+.bg-red {
+    background-color: #ef4444;
+}
+
+.bg-orange {
+    background-color: #f59e0b;
+}
+
+.metric-footer {
+    display: flex;
+    justify-content: space-between;
+    font-size: 11px;
+    color: #9ca3af;
+}
+
+.metric-normal {
+    color: #6b7280;
+}
+
+/* Insights Panel */
+.insights-panel {
+    border-top: 4px solid #3b82f6;
+}
+
+.insights-list {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+.insight-card {
+    padding: 16px;
+    border-radius: 8px;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.insight-header {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.insight-header h4 {
+    margin: 0;
+    font-size: 14px;
+    font-weight: 600;
+    color: #111827;
+}
+
+.insight-card p {
+    margin: 0;
+    font-size: 13px;
+    color: #4b5563;
+    line-height: 1.5;
+}
+
+.insight-info {
+    background-color: #eff6ff;
+    border: 1px solid #dbeafe;
+}
+
+.insight-success {
+    background-color: #f0fdf4;
+    border: 1px solid #dcfce7;
+}
+
+.insight-danger {
+    background-color: #fef2f2;
+    border: 1px solid #fee2e2;
+}
+
+.insight-warning {
+    background-color: #fffbeb;
+    border: 1px solid #fef3c7;
+}
+
+.insights-disclaimer {
+    margin-top: 24px;
+    font-size: 12px;
+    color: #9ca3af;
+    font-style: italic;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.insights-disclaimer i {
+    font-style: normal;
+    font-weight: bold;
+}
+
+@media (max-width: 1024px) {
+    .analytics-stats-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+
+    .analytics-main-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+@media (max-width: 768px) {
+    .analytics-container {
+        padding: 16px;
+    }
+
+    .analytics-stats-grid {
+        grid-template-columns: 1fr;
+    }
+}
