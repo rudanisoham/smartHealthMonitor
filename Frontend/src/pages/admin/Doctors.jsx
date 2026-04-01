@@ -9,8 +9,18 @@ const mockDoctors = [
 
 export default function Doctors() {
   const [search, setSearch] = useState('');
+  const [doctors, setDoctors] = useState(mockDoctors);
 
-  const filteredDoctors = mockDoctors.filter(d => 
+  const toggleStatus = (id) => {
+    setDoctors(doctors.map(d => {
+      if (d.id === id) {
+        return { ...d, status: d.status === 'Active' ? 'INACTIVE' : 'Active' };
+      }
+      return d;
+    }));
+  };
+
+  const filteredDoctors = doctors.filter(d => 
     d.name.toLowerCase().includes(search.toLowerCase()) || 
     d.specialty.toLowerCase().includes(search.toLowerCase()) || 
     d.dept.toLowerCase().includes(search.toLowerCase())
@@ -23,7 +33,7 @@ export default function Doctors() {
       <div className="grid grid-2 mb-6">
         <div className="card" style={{padding: '1.75rem 2rem', display: 'flex', flexDirection: 'column', justifyContent: 'center'}}>
           <div style={{fontWeight: '700', fontSize: '0.95rem', color: '#1E293B', marginBottom: '0.5rem'}}>Total Doctors</div>
-          <div style={{fontSize: '2.5rem', fontWeight: '800', color: '#1D4ED8', lineHeight: '1.2'}}>{mockDoctors.length}</div>
+          <div style={{fontSize: '2.5rem', fontWeight: '800', color: '#1D4ED8', lineHeight: '1.2'}}>{doctors.length}</div>
         </div>
         
         <div className="card" style={{padding: '1.75rem 2rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center'}}>
@@ -102,8 +112,8 @@ export default function Doctors() {
                 </td>
                 <td style={{padding: '1.25rem 1.5rem', borderBottom: i === filteredDoctors.length - 1 ? 'none' : '1px solid #F1F5F9'}}>
                   <div style={{display: 'flex', gap: '0.5rem'}}>
-                    <button style={{padding: '0.45rem 0.9rem', background: '#FFFFFF', border: '1px solid #E2E8F0', borderRadius: '6px', fontSize: '0.8rem', fontWeight: '600', color: '#1E293B', cursor: 'pointer', transition: 'all 0.2s', boxShadow: '0 1px 2px rgba(0,0,0,0.02)'}} onMouseOver={(e) => {e.currentTarget.style.borderColor = '#CBD5E1';}} onMouseOut={(e) => {e.currentTarget.style.borderColor = '#E2E8F0';}}>View</button>
-                    <button style={{padding: '0.45rem 0.9rem', background: '#FFFFFF', border: '1px solid #E2E8F0', borderRadius: '6px', fontSize: '0.8rem', fontWeight: '600', color: '#1E293B', cursor: 'pointer', transition: 'all 0.2s', boxShadow: '0 1px 2px rgba(0,0,0,0.02)'}} onMouseOver={(e) => {e.currentTarget.style.borderColor = '#CBD5E1';}} onMouseOut={(e) => {e.currentTarget.style.borderColor = '#E2E8F0';}}>Toggle Status</button>
+                    <Link to={`/admin/doctors/${doc.id}/view`} style={{padding: '0.45rem 0.9rem', background: '#FFFFFF', border: '1px solid #E2E8F0', borderRadius: '6px', fontSize: '0.8rem', fontWeight: '600', color: '#1E293B', cursor: 'pointer', transition: 'all 0.2s', boxShadow: '0 1px 2px rgba(0,0,0,0.02)', textDecoration: 'none'}} onMouseOver={(e) => {e.currentTarget.style.borderColor = '#CBD5E1';}} onMouseOut={(e) => {e.currentTarget.style.borderColor = '#E2E8F0';}}>View</Link>
+                    <button onClick={() => toggleStatus(doc.id)} style={{padding: '0.45rem 0.9rem', background: '#FFFFFF', border: '1px solid #E2E8F0', borderRadius: '6px', fontSize: '0.8rem', fontWeight: '600', color: '#1E293B', cursor: 'pointer', transition: 'all 0.2s', boxShadow: '0 1px 2px rgba(0,0,0,0.02)'}} onMouseOver={(e) => {e.currentTarget.style.borderColor = '#CBD5E1';}} onMouseOut={(e) => {e.currentTarget.style.borderColor = '#E2E8F0';}}>Toggle Status</button>
                   </div>
                 </td>
               </tr>

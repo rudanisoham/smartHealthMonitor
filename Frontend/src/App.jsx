@@ -13,6 +13,7 @@ import PendingDoctors from './pages/admin/PendingDoctors';
 import RegisterDoctor from './pages/admin/RegisterDoctor';
 import PatientProfile from './pages/admin/PatientProfile';
 import RegisterPatient from './pages/admin/RegisterPatient';
+import DoctorProfile from './pages/admin/DoctorProfile';
 import AddDepartment from './pages/admin/AddDepartment';
 import Reports from './pages/admin/Reports';
 import './styles/admin.css';
@@ -25,6 +26,7 @@ function App() {
         <Route path="/auth/admin/login" element={<AdminLogin />} />
         <Route path="/admin/dashboard" element={<Dashboard />} />
         <Route path="/admin/doctors" element={<Doctors />} />
+        <Route path="/admin/doctors/:id/view" element={<DoctorProfile />} />
         <Route path="/admin/doctors/requests" element={<PendingDoctors />} />
         <Route path="/admin/doctors/add" element={<RegisterDoctor />} />
         <Route path="/admin/patients" element={<Patients />} />
