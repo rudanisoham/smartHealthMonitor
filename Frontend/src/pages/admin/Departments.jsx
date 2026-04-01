@@ -2,102 +2,91 @@ import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import AdminLayout from '../../components/AdminLayout';
 
-const mockDepartments = [
-  { id: 1, name: 'Cardiology', code: 'CARD-01', status: 'Active', occupancy: 12, beds: 40, head: 'Dr. Emily Chen', location: 'Block A, Floor 2' },
-  { id: 2, name: 'Neurology', code: 'NEUR-02', status: 'Active', occupancy: 8, beds: 30, head: 'Dr. Robert Smith', location: 'Block B, Floor 3' },
-  { id: 3, name: 'Pediatrics', code: 'PEDI-03', status: 'Active', occupancy: 20, beds: 50, head: 'Dr. Sarah Lee', location: 'Block C, Floor 1' },
-  { id: 4, name: 'Orthopedics', code: 'ORTH-04', status: 'Inactive', occupancy: 0, beds: 25, head: 'Dr. James Park', location: 'Block A, Floor 4' },
-  { id: 5, name: 'Oncology', code: 'ONCO-05', status: 'Active', occupancy: 17, beds: 35, head: 'Dr. Maria Gonzalez', location: 'Block D, Floor 2' },
+const mockDepts = [
+  { title: "Cardiology", occ: "0/30", status: "Active" },
+  { title: "Neurology", occ: "0/25", status: "Active" },
+  { title: "Orthopedics", occ: "0/20", status: "Active" },
+  { title: "Pediatrics", occ: "0/35", status: "Active" },
+  { title: "Emergency", occ: "0/50", status: "Active" }
 ];
 
 export default function Departments() {
   const [search, setSearch] = useState('');
-  const [filter, setFilter] = useState('All availability');
 
-  const filtered = mockDepartments.filter(d => {
-    const matchSearch = d.name.toLowerCase().includes(search.toLowerCase()) || d.code.toLowerCase().includes(search.toLowerCase());
-    const matchFilter = filter === 'All availability' || d.status === filter;
-    return matchSearch && matchFilter;
-  });
+  const filteredDepts = mockDepts.filter(dept => 
+    dept.title.toLowerCase().includes(search.toLowerCase()) ||
+    dept.status.toLowerCase().includes(search.toLowerCase())
+  );
 
   return (
-    <AdminLayout title="Departments" subtitle="Capacity, staffing and patient distribution">
-
-      {/* Search + Filter Row */}
-      <div style={{ display: 'flex', gap: '1rem', marginBottom: '1.5rem', alignItems: 'center' }}>
-        <input
-          type="text"
-          placeholder="Search departments by name or code"
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-          style={{ flex: 1, padding: '0.75rem 1.25rem', border: '1px solid #E5E7EB', borderRadius: '8px', fontSize: '0.95rem', color: '#374151', outline: 'none', background: 'white' }}
-          onFocus={(e) => e.target.style.borderColor = '#2563EB'}
-          onBlur={(e) => e.target.style.borderColor = '#E5E7EB'}
-        />
-        <select
-          value={filter}
-          onChange={(e) => setFilter(e.target.value)}
-          style={{ padding: '0.75rem 1.25rem', border: '1px solid #E5E7EB', borderRadius: '8px', fontSize: '0.95rem', color: '#374151', appearance: 'auto', background: 'white', cursor: 'pointer', outline: 'none', minWidth: '180px' }}
-        >
-          <option>All availability</option>
-          <option>Active</option>
-          <option>Inactive</option>
-        </select>
-      </div>
-
-      {/* Add Button */}
-      <div style={{ marginBottom: '2rem' }}>
-        <button style={{ padding: '0.7rem 1.5rem', background: '#2563EB', color: 'white', border: 'none', borderRadius: '8px', fontSize: '0.95rem', fontWeight: '600', cursor: 'pointer' }}
-          onMouseOver={(e) => e.target.style.background = '#1D4ED8'}
-          onMouseOut={(e) => e.target.style.background = '#2563EB'}>
-          Add new department
-        </button>
-      </div>
-
-      {/* Cards Grid */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))', gap: '1.5rem' }}>
-        {filtered.map(dept => (
-          <div key={dept.id} style={{ background: 'white', borderRadius: '16px', border: '1px solid #F1F5F9', padding: '1.75rem', display: 'flex', flexDirection: 'column', gap: '0.5rem', boxShadow: '0 2px 8px rgba(0,0,0,0.04)', transition: 'box-shadow 0.2s' }}
-            onMouseOver={(e) => e.currentTarget.style.boxShadow = '0 8px 24px rgba(0,0,0,0.08)'}
-            onMouseOut={(e) => e.currentTarget.style.boxShadow = '0 2px 8px rgba(0,0,0,0.04)'}>
-
-            {/* Card Header */}
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '0.75rem' }}>
-              <div>
-                <div style={{ fontWeight: '800', fontSize: '1.2rem', color: '#0F172A' }}>{dept.name}</div>
-                <div style={{ fontSize: '0.85rem', color: '#94A3B8', marginTop: '0.2rem' }}>{dept.code}</div>
-              </div>
-              <span style={{ padding: '0.3rem 0.9rem', borderRadius: '999px', fontSize: '0.75rem', fontWeight: '700', background: dept.status === 'Active' ? '#DCFCE7' : '#F1F5F9', color: dept.status === 'Active' ? '#16A34A' : '#94A3B8' }}>
-                {dept.status}
-              </span>
+    <AdminLayout title="Departments" subtitle="Manage hospital units and capacities">
+      {/* Main Container */}
+      <div className="card" style={{padding: '0', overflow: 'hidden'}}>
+        
+        {/* Toolbar */}
+        <div style={{padding: '1.5rem 2.5rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid #E2E8F0', flexWrap: 'wrap', gap: '1rem'}}>
+          <div>
+            <div style={{fontSize: '1.15rem', fontWeight: '800', color: '#0F172A'}}>All Departments</div>
+            <div style={{fontSize: '0.9rem', color: '#64748B', marginTop: '0.2rem', fontWeight: '500'}}>Operational metrics by hospital wing</div>
+          </div>
+          
+          <div style={{display: 'flex', gap: '1rem', alignItems: 'center'}}>
+            <div style={{position: 'relative', width: '280px'}}>
+               <svg style={{position: 'absolute', left: '1rem', top: '50%', transform: 'translateY(-50%)', width: '16px', height: '16px', color: '#94A3B8'}} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+               </svg>
+               <input 
+                  type="text" 
+                  placeholder="Search departments..." 
+                  value={search}
+                  onChange={(e) => setSearch(e.target.value)}
+                  style={{width: '100%', padding: '0.65rem 1rem 0.65rem 2.5rem', background: '#F8FAFC', border: '1px solid #E2E8F0', borderRadius: '8px', fontSize: '0.85rem', color: '#1E293B', outline: 'none', transition: 'border-color 0.2s', boxShadow: '0 1px 2px rgba(0,0,0,0.02)'}} onFocus={(e) => e.target.style.borderColor = '#94A3B8'} onBlur={(e) => e.target.style.borderColor = '#E2E8F0'} />
             </div>
-
-            {/* Occupancy */}
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingBottom: '0.75rem', borderBottom: '1px solid #F1F5F9' }}>
-              <span style={{ fontSize: '0.9rem', color: '#475569' }}>Occupancy limit</span>
-              <span style={{ fontSize: '0.9rem', fontWeight: '700', color: '#0F172A' }}>{dept.occupancy} / {dept.beds} Beds</span>
-            </div>
-
-            {/* Head + Location */}
-            <div style={{ fontSize: '0.9rem', color: '#64748B', paddingBottom: '1rem' }}>
-              Department Head<strong style={{ color: '#0F172A' }}> Dr. {dept.head}</strong><span style={{ marginLeft: '0.5rem' }}>Location</span><span style={{ color: '#64748B' }}> {dept.location}</span>
-            </div>
-
-            {/* Configure Button */}
-            <Link to="/admin/departments/configure" style={{ display: 'block', textAlign: 'center', padding: '0.75rem', border: '1px solid #E5E7EB', borderRadius: '8px', color: '#374151', fontWeight: '600', fontSize: '0.9rem', textDecoration: 'none', marginTop: 'auto', transition: 'all 0.2s' }}
-              onMouseOver={(e) => { e.currentTarget.style.background = '#F8FAFC'; e.currentTarget.style.borderColor = '#2563EB'; e.currentTarget.style.color = '#2563EB'; }}
-              onMouseOut={(e) => { e.currentTarget.style.background = 'white'; e.currentTarget.style.borderColor = '#E5E7EB'; e.currentTarget.style.color = '#374151'; }}>
-              Configure department
+            <Link to="/admin/departments/add" style={{padding: '0.65rem 1.25rem', background: '#1D4ED8', color: '#FFFFFF', border: 'none', borderRadius: '8px', fontSize: '0.85rem', fontWeight: '700', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '0.4rem', transition: 'all 0.2s', boxShadow: '0 2px 4px rgba(29, 78, 216, 0.2)', textDecoration: 'none'}} onMouseOver={(e) => e.currentTarget.style.background = '#1E40AF'} onMouseOut={(e) => e.currentTarget.style.background = '#1D4ED8'}>
+              <span>+</span> Add Department
             </Link>
           </div>
-        ))}
-      </div>
+        </div>
 
-      {/* Footer */}
-      <div style={{ textAlign: 'right', marginTop: '4rem', fontSize: '0.78rem', color: '#94A3B8' }}>
-        © 2026 Smart Health Monitor Admin · Crafted for modern hospital workflows.
+        {/* Table */}
+        <div style={{width: '100%', overflowX: 'auto'}}>
+          <table className="premium-table" style={{width: '100%', minWidth: '900px', borderSpacing: 0}}>
+            <thead>
+              <tr style={{background: '#FFFFFF'}}>
+                <th style={{padding: '1.25rem 2.5rem', fontSize: '0.75rem', fontWeight: '800', color: '#64748B', letterSpacing: '0.05em', borderBottom: '1px solid #E2E8F0', background: '#FFFFFF', textAlign: 'left', width: '20%'}}>UNIT NAME</th>
+                <th style={{padding: '1.25rem 1.5rem', fontSize: '0.75rem', fontWeight: '800', color: '#64748B', letterSpacing: '0.05em', borderBottom: '1px solid #E2E8F0', background: '#FFFFFF', textAlign: 'left', width: '30%'}}>DESCRIPTION</th>
+                <th style={{padding: '1.25rem 1.5rem', fontSize: '0.75rem', fontWeight: '800', color: '#64748B', letterSpacing: '0.05em', borderBottom: '1px solid #E2E8F0', background: '#FFFFFF', textAlign: 'center', width: '15%'}}>OCCUPANCY</th>
+                <th style={{padding: '1.25rem 1.5rem', fontSize: '0.75rem', fontWeight: '800', color: '#64748B', letterSpacing: '0.05em', borderBottom: '1px solid #E2E8F0', background: '#FFFFFF', textAlign: 'center', width: '15%'}}>STATUS/ACCOUNT</th>
+                <th style={{padding: '1.25rem 2.5rem', fontSize: '0.75rem', fontWeight: '800', color: '#64748B', letterSpacing: '0.05em', borderBottom: '1px solid #E2E8F0', background: '#FFFFFF', textAlign: 'right', width: '20%'}}>ACTION</th>
+              </tr>
+            </thead>
+            <tbody>
+                {filteredDepts.map((dept, index) => (
+                  <tr key={index} style={{background: '#FFFFFF', transition: 'background 0.2s'}} onMouseOver={(e) => e.currentTarget.style.background = '#F8FAFC'} onMouseOut={(e) => e.currentTarget.style.background = '#FFFFFF'}>
+                    <td style={{padding: '1.5rem 2.5rem', borderBottom: index === filteredDepts.length - 1 ? 'none' : '1px solid #F1F5F9'}}>
+                      <div style={{fontSize: '0.95rem', fontWeight: '700', color: '#0F172A'}}>{dept.title}</div>
+                    </td>
+                    <td style={{padding: '1.5rem 1.5rem', borderBottom: index === filteredDepts.length - 1 ? 'none' : '1px solid #F1F5F9'}}>
+                       <span style={{color: '#94A3B8', fontSize: '0.85rem'}}>—</span>
+                    </td>
+                    <td style={{padding: '1.5rem 1.5rem', textAlign: 'center', fontSize: '0.85rem', color: '#1E293B', fontWeight: '600', borderBottom: index === filteredDepts.length - 1 ? 'none' : '1px solid #F1F5F9'}}>
+                      {dept.occ}
+                    </td>
+                    <td style={{padding: '1.5rem 1.5rem', textAlign: 'center', borderBottom: index === filteredDepts.length - 1 ? 'none' : '1px solid #F1F5F9'}}>
+                      <span style={{background: dept.status === 'Active' ? '#DCFCE7' : '#F1F5F9', color: dept.status === 'Active' ? '#16A34A' : '#64748B', padding: '0.2rem 0.8rem', borderRadius: '999px', fontSize: '0.75rem', fontWeight: '700'}}>{dept.status}</span>
+                    </td>
+                    <td style={{padding: '1.5rem 2.5rem', borderBottom: index === filteredDepts.length - 1 ? 'none' : '1px solid #F1F5F9', textAlign: 'right'}}>
+                        <button style={{padding: '0.45rem 1.25rem', background: '#FFFFFF', border: '1px solid #FECACA', borderRadius: '8px', fontSize: '0.85rem', fontWeight: '600', color: '#EF4444', cursor: 'pointer', transition: 'all 0.2s'}} onMouseOver={(e) => {e.currentTarget.style.background = '#FEF2F2';}} onMouseOut={(e) => {e.currentTarget.style.background = '#FFFFFF';}}>Delete unit</button>
+                    </td>
+                  </tr>
+                ))}
+            </tbody>
+          </table>
+          {filteredDepts.length === 0 && (
+            <div style={{padding: '2rem', textAlign: 'center', color: '#64748B', fontSize: '0.9rem'}}>No departments found matching "{search}"</div>
+          )}
+        </div>
       </div>
-
     </AdminLayout>
   );
 }

@@ -12,10 +12,10 @@ export default function AdminLayout({ children, title, subtitle }) {
       {/* Sidebar */}
       <aside className={`admin-sidebar ${isCollapsed ? 'collapsed' : ''}`}>
         <div className="sidebar-logo">
-          <div className="sidebar-logo-icon" style={{background: '#2563EB', borderRadius: '50%'}}>SH</div>
+          <div className="sidebar-logo-icon">SH</div>
           <div className="sidebar-logo-text">
-            <div style={{fontWeight: '800', color: '#1E293B', fontSize: '1.2rem'}}>Smart Health</div>
-            <span style={{fontSize: '0.75rem', color: '#64728B', letterSpacing: '0.05em'}}>ADMIN CONSOLE</span>
+            <div style={{fontWeight: '900', color: '#0F172A', fontSize: '1.2rem', letterSpacing: '-0.02em'}}>Smart Health</div>
+            <span>ADMIN CONSOLE</span>
           </div>
         </div>
 
@@ -23,42 +23,49 @@ export default function AdminLayout({ children, title, subtitle }) {
         <nav className="sidebar-nav" style={{flex: 1}}>
           <Link to="/admin/dashboard" className={`sidebar-link ${currentPath === '/admin/dashboard' ? 'active' : ''}`} title={isCollapsed ? "Dashboard" : ""}>
             <span className="icon">
-              <svg className="nav-icon" viewBox="0 0 24 24"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+              {/* Home Icon */}
+              <svg className="nav-icon" viewBox="0 0 24 24"><path d="M3 9.5L12 3l9 6.5V20a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V9.5z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
             </span>
             <span>Dashboard</span>
           </Link>
-          <Link to="/admin/doctors" className={`sidebar-link ${currentPath === '/admin/doctors' ? 'active' : ''}`} title={isCollapsed ? "Doctors" : ""}>
+          <Link to="/admin/doctors" className={`sidebar-link ${currentPath.startsWith('/admin/doctors') ? 'active' : ''}`} title={isCollapsed ? "Doctors" : ""}>
              <span className="icon">
+              {/* User Icon */}
               <svg className="nav-icon" viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
             </span>
             <span>Doctors</span>
           </Link>
-          <Link to="/admin/patients" className={`sidebar-link ${currentPath === '/admin/patients' ? 'active' : ''}`} title={isCollapsed ? "Patients" : ""}>
+          <Link to="/admin/patients" className={`sidebar-link ${currentPath.startsWith('/admin/patients') ? 'active' : ''}`} title={isCollapsed ? "Patients" : ""}>
              <span className="icon">
+              {/* User Outline Icon */}
               <svg className="nav-icon" viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
             </span>
             <span>Patients</span>
           </Link>
           <Link to="/admin/departments" className={`sidebar-link ${currentPath.startsWith('/admin/departments') ? 'active' : ''}`} title={isCollapsed ? "Departments" : ""}>
             <span className="icon">
-              <svg className="nav-icon" viewBox="0 0 24 24"><rect x="4" y="2" width="16" height="20" rx="2" ry="2"/><line x1="12" y1="18" x2="12.01" y2="18"/><line x1="8" y1="6" x2="16" y2="6"/><line x1="8" y1="10" x2="16" y2="10"/><line x1="8" y1="14" x2="16" y2="14"/></svg>
+              {/* Building Icon */}
+              <svg className="nav-icon" viewBox="0 0 24 24"><path d="M3 21h18"/><path d="M9 8h1"/><path d="M9 12h1"/><path d="M9 16h1"/><path d="M14 8h1"/><path d="M14 12h1"/><path d="M14 16h1"/><path d="M5 21V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2v16"/></svg>
             </span>
             <span>Departments</span>
           </Link>
-          <Link to="/admin/analytics" className={`sidebar-link ${currentPath === '/admin/analytics' ? 'active' : ''}`} title={isCollapsed ? "Reports & Analytics" : ""}>
+          <Link to="/admin/reports" className={`sidebar-link ${currentPath.startsWith('/admin/reports') ? 'active' : ''}`} title={isCollapsed ? "Reports & Analytics" : ""}>
              <span className="icon">
-              <svg className="nav-icon" viewBox="0 0 24 24"><path d="M18 20V10"/><path d="M12 20V4"/><path d="M6 20v-6"/></svg>
+              {/* Bar Chart Icon */}
+              <svg className="nav-icon" viewBox="0 0 24 24"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
             </span>
             <span>Reports & Analytics</span>
           </Link>
           <Link to="/admin/logs" className={`sidebar-link ${currentPath === '/admin/logs' ? 'active' : ''}`} title={isCollapsed ? "System Logs" : ""}>
             <span className="icon">
-              <svg className="nav-icon" viewBox="0 0 24 24"><line x1="4" y1="6" x2="20" y2="6"/><line x1="4" y1="12" x2="20" y2="12"/><line x1="4" y1="18" x2="20" y2="18"/></svg>
+              {/* List Lines Icon */}
+              <svg className="nav-icon" viewBox="0 0 24 24"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg>
             </span>
             <span>System Logs</span>
           </Link>
           <Link to="/admin/settings" className={`sidebar-link ${currentPath === '/admin/settings' ? 'active' : ''}`} title={isCollapsed ? "Settings" : ""}>
             <span className="icon">
+              {/* Gear Icon (Simplified) */}
               <svg className="nav-icon" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
             </span>
             <span>Settings</span>
@@ -69,16 +76,17 @@ export default function AdminLayout({ children, title, subtitle }) {
         <div style={{marginTop: 'auto', display: 'flex', flexDirection: 'column', gap: '1.5rem'}}>
           <div>
             <div className="sidebar-section-label">SESSION</div>
-            <Link to="/auth/admin/login" className="sidebar-link" style={{display: 'flex', alignItems: 'center', gap: '1rem', width: '100%', padding: '0.85rem 1rem', background: 'transparent', border: 'none', color: '#4B5563', cursor: 'pointer', fontWeight: '500', borderRadius: '12px', transition: 'all 0.2s', textDecoration: 'none'}} onMouseOver={(e) => { e.currentTarget.style.background = '#F8FAFC'; e.currentTarget.style.color = '#111827'; }} onMouseOut={(e) => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = '#4B5563'; }} title={isCollapsed ? "Sign out" : ""}>
-              <span className="icon" style={{width: '40px', height: '40px', minWidth: '40px', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#F3F4F6', borderRadius: '10px', color: '#6B7280', transition: 'all 0.2s'}}>
+            <Link to="/auth/admin/login" className="sidebar-link" title={isCollapsed ? "Sign out" : ""}>
+              <span className="icon">
+                {/* Log Out Icon */}
                 <svg className="nav-icon" viewBox="0 0 24 24"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" x2="9" y1="12" y2="12"/></svg>
               </span>
               <span>Sign out</span>
             </Link>
           </div>
           
-          <div className="sidebar-footer-text" style={{paddingTop: '0.5rem'}}>
-            <div style={{fontWeight: '800', fontSize: '0.85rem', color: '#111827'}}>SmartHealthMonitor</div>
+          <div className="sidebar-footer-text" style={{paddingTop: '0.5rem', paddingLeft: '1rem'}}>
+            <div style={{fontWeight: '800', fontSize: '0.85rem', color: '#0F172A'}}>SmartHealthMonitor</div>
             <div className="muted" style={{fontSize: '0.75rem', marginTop: '0.35rem', lineHeight: '1.4'}}>Optimized for hospital operations & insights.</div>
           </div>
         </div>
@@ -101,10 +109,17 @@ export default function AdminLayout({ children, title, subtitle }) {
                 )}
               </svg>
             </button>
-            <h1 className="page-title">{title} <span>{subtitle}</span></h1>
+            <div style={{display: 'flex', flexDirection: 'column', gap: '0.2rem'}}>
+              <h1 className="page-title" style={{margin: 0}}>{title}</h1>
+              {subtitle && <span style={{fontSize: '0.85rem', color: '#64748B'}}>{subtitle}</span>}
+            </div>
           </div>
-          <div className="header-right">
-            <div className="header-avatar">A</div>
+          <div className="header-right" style={{display: 'flex', alignItems: 'center', gap: '1rem'}}>
+            <div style={{background: '#EFF6FF', color: '#1D4ED8', padding: '0.35rem 0.85rem', borderRadius: '999px', fontSize: '0.8rem', fontWeight: '700', display: 'flex', alignItems: 'center', gap: '0.4rem', border: '1px solid #BFDBFE'}}>
+              <span style={{width: '6px', height: '6px', borderRadius: '50%', background: '#2563EB', display: 'inline-block'}}></span>
+              System Healthy
+            </div>
+            <div className="header-avatar" style={{background: '#1D4ED8', color: 'white'}}>A</div>
           </div>
         </header>
 
