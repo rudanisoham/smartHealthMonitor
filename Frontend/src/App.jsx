@@ -1,5 +1,4 @@
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
-<<<<<<< HEAD
 import Landing from './pages/Landing';
 import Dashboard from './pages/admin/Dashboard';
 import Doctors from './pages/admin/Doctors';
@@ -17,7 +16,6 @@ import RegisterPatient from './pages/admin/RegisterPatient';
 import AddDepartment from './pages/admin/AddDepartment';
 import Reports from './pages/admin/Reports';
 import './styles/admin.css';
-=======
 import DoctorLayout from './components/DoctorLayout';
 import LoginPage from './pages/Auth/Doctor/LoginPage';
 import RegisterPage from './pages/Auth/Doctor/RegisterPage';
@@ -31,13 +29,11 @@ import ProfilePage from './pages/Doctor/ProfilePage';
 import SettingsPage from './pages/Doctor/SettingsPage';
 import AddDiagnosisPage from './pages/Doctor/AddDiagnosisPage';
 import ReportViewPage from './pages/Doctor/ReportViewPage';
->>>>>>> Doctor
 
 function App() {
   return (
     <Router>
       <Routes>
-<<<<<<< HEAD
         <Route path="/" element={<Landing />} />
         <Route path="/auth/admin/login" element={<AdminLogin />} />
         <Route path="/admin/dashboard" element={<Dashboard />} />
@@ -54,10 +50,7 @@ function App() {
         <Route path="/admin/analytics" element={<Analytics />} />
         <Route path="/admin/departments/configure" element={<ConfigureDepartment />} />
         <Route path="/admin/settings" element={<Settings />} />
-      </Routes>
-    </Router>
-  )
-=======
+
         {/* Auth Route */}
         <Route path="/auth/doctor/login" element={<LoginPage />} />
         <Route path="/auth/doctor/register" element={<RegisterPage />} />
@@ -82,7 +75,6 @@ function App() {
       </Routes>
     </Router>
   );
->>>>>>> Doctor
 }
 
 export default App;
