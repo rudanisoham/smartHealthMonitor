@@ -1,75 +1,93 @@
-import React from 'react';
-import { Menu } from 'lucide-react';
-import '../../styles/Prescriptions.css';
+import React, { useState, useEffect } from 'react';
+import { Link } from 'react-router-dom';
 
 const Prescriptions = () => {
+    const [prescriptions, setPrescriptions] = useState([]);
+
+    useEffect(() => {
+        // Mock data
+        const initial = [
+            {
+                id: 1,
+                date: '2026-04-15',
+                diagnosis: 'Common Cold',
+                doctor: 'Sarah Jenkins',
+                specialty: 'General Medicine',
+                medicines: 'Paracetamol 500mg, Cetirizine 10mg',
+                validUntil: '2026-04-22'
+            },
+            {
+                id: 2,
+                date: '2026-03-10',
+                diagnosis: 'Hypertension',
+                doctor: 'Michael Chen',
+                specialty: 'Cardiology',
+                medicines: 'Lisinopril 10mg',
+                validUntil: null
+            }
+        ];
+        setPrescriptions(initial);
+    }, []);
+
     return (
-        <div className="prescriptions-container">
-            {/* Header */}
-            <header className="page-header">
-                <div className="header-title">
-                    <button className="mobile-menu-btn">
-                        <Menu size={20} />
-                    </button>
-                    <div>
-                        <h1>Prescriptions</h1>
-                        <p>View all your medicines and doctor instructions</p>
-                    </div>
+        <div className="card">
+            <div className="card-header">
+                <div>
+                    <div className="section-title">Your Prescriptions</div>
+                    <div className="section-subtitle">All prescriptions issued by your doctors</div>
                 </div>
-                <div className="header-actions">
-                    <div className="status-badge">
-                        <span className="dot"></span>
-                        Signed in
-                    </div>
-                    <div className="profile-avatar">P</div>
-                </div>
-            </header>
+                <span className="chip-neutral">{prescriptions.length} Total</span>
+            </div>
 
-            {/* Main Content Grid */}
-            <div className="prescriptions-content">
-
-                <div className="full-panel">
-                    <div className="panel-header-flex">
-                        <div>
-                            <h2>Your Prescriptions</h2>
-                            <p>All prescriptions issued by your doctors</p>
-                        </div>
-                        <div className="badge badge-gray-light">1 Total</div>
-                    </div>
-
-                    <div className="table-wrapper">
-                        <table className="data-table">
-                            <thead>
-                                <tr>
-                                    <th>DATE</th>
-                                    <th>DIAGNOSIS</th>
-                                    <th>DOCTOR</th>
-                                    <th>MEDICINES</th>
-                                    <th>INSTRUCTIONS</th>
-                                    <th>VALID UNTIL</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                <tr>
-                                    <td className="font-medium">2026-04-01</td>
-                                    <td className="font-semibold">For fiver</td>
+            <div className="table-container mt-3">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Date</th>
+                            <th>Diagnosis</th>
+                            <th>Doctor</th>
+                            <th>Medicines</th>
+                            <th>Valid Until</th>
+                            <th className="text-right" style={{ textAlign: 'right' }}>Action</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {prescriptions.length > 0 ? (
+                            prescriptions.map((rx) => (
+                                <tr key={rx.id}>
+                                    <td>{rx.date}</td>
+                                    <td><strong>{rx.diagnosis}</strong></td>
                                     <td>
-                                        <div className="doctor-info-stack">
-                                            <span className="doc-name">Dr. Renish</span>
-                                            <span className="doc-spec">Neurology</span>
-                                        </div>
+                                        Dr. {rx.doctor}
+                                        {rx.specialty && (
+                                            <>
+                                                <br />
+                                                <span className="muted" style={{ fontSize: '0.8rem' }}>{rx.specialty}</span>
+                                            </>
+                                        )}
                                     </td>
-                                    <td>sfdsf,rdgf,fx,y</td>
-                                    <td></td>
+                                    <td style={{ maxWidth: '200px' }}>{rx.medicines}</td>
                                     <td>
-                                        <span className="status-pill status-valid">2026-04-04</span>
+                                        {rx.validUntil ? (
+                                            <span className="chip">{rx.validUntil}</span>
+                                        ) : (
+                                            <span className="muted">Ongoing</span>
+                                        )}
+                                    </td>
+                                    <td className="text-right" style={{ textAlign: 'right' }}>
+                                        <Link to={`/patient/prescription-detail/${rx.id}`} className="btn btn-primary btn-sm">Details</Link>
                                     </td>
                                 </tr>
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
-
+                            ))
+                        ) : (
+                            <tr>
+                                <td colSpan="6" style={{ textAlign: 'center', padding: '2.5rem' }} className="muted">
+                                    No prescriptions issued yet. Book an appointment to consult a doctor.
+                                </td>
+                            </tr>
+                        )}
+                    </tbody>
+                </table>
             </div>
         </div>
     );

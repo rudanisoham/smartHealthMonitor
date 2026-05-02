@@ -1,114 +1,99 @@
 import React from 'react';
-import { Bed, Plus, MoreVertical, CheckCircle, XCircle, AlertCircle } from 'lucide-react';
-import '../../styles/Dashboard.css';
+import { Bed, Users, AlertTriangle, ArrowRight, Activity } from 'lucide-react';
 
 const BedManagement = () => {
   const departments = [
-    { name: 'Cardiology', total: 20, occupied: 15, floor: '2nd Floor' },
-    { name: 'Neurology', total: 15, occupied: 13, floor: '3rd Floor' },
-    { name: 'Pediatrics', total: 10, occupied: 10, floor: '1st Floor' },
-    { name: 'General Medicine', total: 40, occupied: 32, floor: 'G Floor' },
-    { name: 'Orthopedics', total: 15, occupied: 8, floor: '1st Floor' },
-    { name: 'Emergency', total: 12, occupied: 11, floor: 'G Floor' },
+    { id: '1', name: 'Cardiology', occupied: 15, total: 20, critical: 3 },
+    { id: '2', name: 'Neurology', occupied: 13, total: 15, critical: 1 },
+    { id: '3', name: 'Pediatrics', occupied: 10, total: 10, critical: 0 },
+    { id: '4', name: 'General Medicine', occupied: 32, total: 40, critical: 5 },
+    { id: '5', name: 'ICU', occupied: 11, total: 12, critical: 8 },
+    { id: '6', name: 'Emergency', occupied: 5, total: 10, critical: 2 },
   ];
 
   return (
-    <div className="dashboard-container">
-      <header className="dashboard-header">
-        <div className="header-text">
-          <h1>Bed Management</h1>
-          <p>Monitor real-time bed availability across all hospital wings</p>
+    <div className="admin-content">
+      <div className="flex justify-between items-center mb-6">
+        <div>
+          <h2 className="section-title">Hospital Bed Management</h2>
+          <p className="section-subtitle">Real-time occupancy tracking and capacity planning</p>
         </div>
-        <div className="header-actions">
-          <button className="btn-primary">
-            <Plus size={18} /> Add New Bed
-          </button>
-        </div>
-      </header>
-
-      <div className="grid grid-3 mb-5">
-        <div className="card stat-card-simple">
-          <div className="card-body">
-            <span className="stat-label">Total Capacity</span>
-            <h2 className="stat-value">112</h2>
-            <p className="stat-desc">Across 6 departments</p>
-          </div>
-        </div>
-        <div className="card stat-card-simple highlight-blue">
-          <div className="card-body">
-            <span className="stat-label">Total Occupied</span>
-            <h2 className="stat-value">99</h2>
-            <p className="stat-desc">88% current occupancy</p>
-          </div>
-        </div>
-        <div className="card stat-card-simple highlight-green">
-          <div className="card-body">
-            <span className="stat-label">Available Now</span>
-            <h2 className="stat-value">13</h2>
-            <p className="stat-desc">Ready for new patients</p>
+        <div className="flex gap-3">
+          <div className="header-pill">
+            <Activity size={14} className="me-2" /> Live Updates
           </div>
         </div>
       </div>
 
-      <div className="dashboard-card">
-        <div className="card-header">
-          <div className="header-info">
-            <h3>Department Breakdown</h3>
-            <p>Bed status by specialized medical wing</p>
+      <div className="grid grid-3 mb-6">
+        <div className="card" style={{ borderLeft: '4px solid var(--primary)' }}>
+          <div className="card-header">
+            <span className="card-title">Total Capacity</span>
+            <Bed className="text-primary" size={20} />
           </div>
+          <div className="card-value">107</div>
+          <span className="muted">Across all departments</span>
         </div>
-        <div className="table-wrapper">
-          <table className="data-table">
-            <thead>
-              <tr>
-                <th>Department Name</th>
-                <th>Floor/Wing</th>
-                <th>Capacity</th>
-                <th>Occupancy Rate</th>
-                <th>Status</th>
-                <th className="text-right">Actions</th>
-              </tr>
-            </thead>
-            <tbody>
-              {departments.map((dept, index) => {
-                const occupancy = (dept.occupied / dept.total) * 100;
-                let status = 'Available';
-                let statusClass = 'success';
-                if (occupancy === 100) { status = 'Full'; statusClass = 'danger'; }
-                else if (occupancy >= 80) { status = 'Near Capacity'; statusClass = 'warning'; }
+        <div className="card" style={{ borderLeft: '4px solid var(--warning)' }}>
+          <div className="card-header">
+            <span className="card-title">Occupied Beds</span>
+            <Users className="text-warning" size={20} />
+          </div>
+          <div className="card-value">86</div>
+          <span className="muted">80.3% Occupancy rate</span>
+        </div>
+        <div className="card" style={{ borderLeft: '4px solid var(--danger)' }}>
+          <div className="card-header">
+            <span className="card-title">Critical Patients</span>
+            <AlertTriangle className="text-danger" size={20} />
+          </div>
+          <div className="card-value">19</div>
+          <span className="muted">Requiring high monitoring</span>
+        </div>
+      </div>
 
-                return (
-                  <tr key={index}>
-                    <td className="fw-bold">{dept.name}</td>
-                    <td className="text-muted">{dept.floor}</td>
-                    <td>
-                      <div className="bed-metric">
-                        <span className="occupied">{dept.occupied}</span> / <span className="total">{dept.total}</span>
-                      </div>
-                    </td>
-                    <td style={{ minWidth: '150px' }}>
-                      <div className="progress-bar-wrapper">
-                        <div className="progress-bar-bg">
-                          <div 
-                            className={`progress-bar-fill ${statusClass}`} 
-                            style={{ width: `${occupancy}%` }}
-                          ></div>
-                        </div>
-                        <span className="progress-text">{Math.round(occupancy)}%</span>
-                      </div>
-                    </td>
-                    <td>
-                      <span className={`chip chip-${statusClass}`}>{status}</span>
-                    </td>
-                    <td className="text-right">
-                      <button className="icon-btn"><MoreVertical size={18} /></button>
-                    </td>
-                  </tr>
-                );
-              })}
-            </tbody>
-          </table>
-        </div>
+      <div className="grid grid-2">
+        {departments.map((dept) => {
+          const percent = Math.round((dept.occupied / dept.total) * 100);
+          return (
+            <div key={dept.id} className="card">
+              <div className="flex justify-between items-start mb-4">
+                <div>
+                  <h3 className="author-name" style={{ fontSize: '1.1rem' }}>{dept.name} Department</h3>
+                  <span className="muted">{dept.occupied} beds occupied of {dept.total}</span>
+                </div>
+                <span className={`chip ${percent >= 100 ? 'chip-danger' : percent > 85 ? 'chip-warning' : 'chip'}`}>
+                  {percent}% Full
+                </span>
+              </div>
+              
+              <div className="progress-bar-bg mb-4" style={{ height: '10px' }}>
+                <div 
+                  className={`progress-bar-fill ${percent >= 100 ? 'danger' : percent > 85 ? 'warning' : 'success'}`}
+                  style={{ width: `${percent}%` }}
+                ></div>
+              </div>
+
+              <div className="flex justify-between items-center">
+                <div className="flex gap-4">
+                  <div className="flex items-center gap-1">
+                    <div className="status-pill status-active" style={{ width: '8px', height: '8px', padding: 0 }}></div>
+                    <span className="muted" style={{ fontSize: '0.8rem' }}>{dept.total - dept.occupied} Available</span>
+                  </div>
+                  {dept.critical > 0 && (
+                    <div className="flex items-center gap-1">
+                      <div className="status-pill status-risk-high" style={{ width: '8px', height: '8px', padding: 0 }}></div>
+                      <span className="muted" style={{ fontSize: '0.8rem' }}>{dept.critical} Critical</span>
+                    </div>
+                  )}
+                </div>
+                <button className="btn btn-outline" style={{ padding: '0.4rem 1rem', fontSize: '0.85rem' }}>
+                  Manage <ArrowRight size={14} className="ms-1" />
+                </button>
+              </div>
+            </div>
+          );
+        })}
       </div>
     </div>
   );

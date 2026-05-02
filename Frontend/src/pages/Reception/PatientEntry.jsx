@@ -1,6 +1,5 @@
 import React, { useState } from 'react';
-import { Search, UserPlus, ArrowRight, CheckCircle2 } from 'lucide-react';
-import '../../styles/Dashboard.css'; // Reusing base styles
+import { Search, UserPlus, ArrowRight, CheckCircle2, User, UserCheck, LayoutPanelLeft } from 'lucide-react';
 
 const PatientEntry = () => {
   const [searchTerm, setSearchTerm] = useState('');
@@ -9,9 +8,9 @@ const PatientEntry = () => {
   const [successMsg, setSuccessMsg] = useState('');
 
   const patients = [
-    { id: 'PAT001', name: 'John Smith', email: 'john.smith@email.com' },
-    { id: 'PAT002', name: 'Sarah Wilson', email: 'sarah.w@email.com' },
-    { id: 'PAT003', name: 'Michael Brown', email: 'm.brown@email.com' },
+    { id: 'PAT001', name: 'John Smith', email: 'john.smith@email.com', phone: '+1 234 567 8901' },
+    { id: 'PAT002', name: 'Sarah Wilson', email: 'sarah.w@email.com', phone: '+1 234 567 8902' },
+    { id: 'PAT003', name: 'Michael Brown', email: 'm.brown@email.com', phone: '+1 234 567 8903' },
   ];
 
   const departments = [
@@ -29,7 +28,7 @@ const PatientEntry = () => {
   const handleAssign = (e) => {
     e.preventDefault();
     if (selectedPatient && selectedDept) {
-      setSuccessMsg(`Patient ${selectedPatient.name} has been assigned to ${selectedDept} department successfully.`);
+      setSuccessMsg(`Patient ${selectedPatient.name} has been assigned to ${selectedDept} successfully.`);
       setTimeout(() => setSuccessMsg(''), 5000);
       setSelectedPatient(null);
       setSelectedDept('');
@@ -38,60 +37,100 @@ const PatientEntry = () => {
   };
 
   return (
-    <div className="dashboard-container">
-      <header className="dashboard-header">
-        <div className="header-text">
-          <h1>Patient Entry</h1>
-          <p>Register or assign patients to departments</p>
-        </div>
-      </header>
+    <div className="admin-content">
+      <div className="mb-6">
+        <h2 className="section-title">Patient Intake & Entry</h2>
+        <p className="section-subtitle">Search for registered patients or initiate new registration</p>
+      </div>
 
       {successMsg && (
-        <div className="alert-box success">
+        <div style={{
+          background: 'var(--success-light)', 
+          color: 'var(--success)', 
+          padding: '1rem', 
+          borderRadius: '12px', 
+          marginBottom: '1.5rem',
+          display: 'flex',
+          alignItems: 'center',
+          gap: '0.75rem',
+          fontWeight: '600'
+        }}>
           <CheckCircle2 size={20} />
           <span>{successMsg}</span>
         </div>
       )}
 
-      <div className="content-grid grid-2">
-        <div className="dashboard-card">
+      <div className="grid grid-2">
+        <div className="card">
           <div className="card-header">
-            <div className="header-info">
-              <h3>Assign Existing Patient</h3>
-              <p>Search and allocate beds to registered patients</p>
-            </div>
+            <h3 className="card-title">Assign Registered Patient</h3>
           </div>
           
-          <form className="entry-form" onSubmit={handleAssign}>
+          <form className="mt-4" onSubmit={handleAssign}>
             <div className="form-group">
-              <label>Search Patient</label>
-              <div className="search-input-wrapper">
-                <Search size={18} />
+              <label>Search Patient (ID or Name)</label>
+              <div className="search-bar w-full">
+                <Search className="search-icon" size={18} />
                 <input 
                   type="text" 
-                  placeholder="Patient name or ID..." 
+                  placeholder="e.g. PAT001 or John..." 
                   value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
+                  onChange={(e) => {
+                    setSearchTerm(e.target.value);
+                    if (selectedPatient) setSelectedPatient(null);
+                  }}
                 />
               </div>
+              
               {searchTerm && !selectedPatient && (
-                <div className="search-results">
+                <div className="card mt-2" style={{ padding: '0.5rem', position: 'absolute', width: '90%', zIndex: 10, boxShadow: 'var(--shadow-lg)' }}>
                   {filteredPatients.map(p => (
-                    <div key={p.id} className="result-item" onClick={() => {
-                      setSelectedPatient(p);
-                      setSearchTerm(p.name);
-                    }}>
-                      <span className="result-name">{p.name}</span>
-                      <span className="result-id">{p.id}</span>
+                    <div 
+                      key={p.id} 
+                      style={{ 
+                        padding: '0.75rem', 
+                        cursor: 'pointer', 
+                        borderRadius: '8px',
+                        display: 'flex',
+                        justifyContent: 'space-between',
+                        transition: 'background 0.2s'
+                      }}
+                      onMouseEnter={(e) => e.currentTarget.style.background = '#f1f5f9'}
+                      onMouseLeave={(e) => e.currentTarget.style.background = 'transparent'}
+                      onClick={() => {
+                        setSelectedPatient(p);
+                        setSearchTerm(p.name);
+                      }}
+                    >
+                      <div>
+                        <div className="author-name">{p.name}</div>
+                        <div className="muted" style={{ fontSize: '0.75rem' }}>{p.email}</div>
+                      </div>
+                      <span className="badge-soft">{p.id}</span>
                     </div>
                   ))}
-                  {filteredPatients.length === 0 && <div className="no-results">No patients found</div>}
+                  {filteredPatients.length === 0 && <div className="muted p-2">No patients found</div>}
                 </div>
               )}
             </div>
 
+            {selectedPatient && (
+              <div className="card mt-4" style={{ background: '#f8fafc', border: '1px dashed var(--primary)' }}>
+                <div className="flex items-center gap-3">
+                  <div className="header-avatar">
+                    {selectedPatient.name.charAt(0)}
+                  </div>
+                  <div>
+                    <div className="author-name">{selectedPatient.name}</div>
+                    <div className="muted">{selectedPatient.phone}</div>
+                  </div>
+                  <UserCheck className="ms-auto" style={{ color: 'var(--success)' }} />
+                </div>
+              </div>
+            )}
+
             <div className="form-group mt-4">
-              <label>Select Department</label>
+              <label>Assign to Department</label>
               <select 
                 className="form-select" 
                 value={selectedDept}
@@ -107,30 +146,53 @@ const PatientEntry = () => {
               </select>
             </div>
 
-            <div className="form-action mt-5">
-              <button type="submit" className="btn-primary-full" disabled={!selectedPatient || !selectedDept}>
-                Assign Patient <ArrowRight size={18} />
-              </button>
-            </div>
+            <button type="submit" className="btn btn-primary w-full mt-6" disabled={!selectedPatient || !selectedDept}>
+              Confirm Admission <ArrowRight size={18} />
+            </button>
           </form>
         </div>
 
-        <div className="dashboard-card">
+        <div className="card">
           <div className="card-header">
-            <div className="header-info">
-              <h3>Register New Patient</h3>
-              <p>Onboard new members to the system</p>
+            <h3 className="card-title">New Patient Registration</h3>
+          </div>
+          
+          <div className="mt-6 text-center py-8">
+            <div style={{ 
+              width: '80px', 
+              height: '80px', 
+              background: 'var(--primary-light)', 
+              borderRadius: '50%', 
+              display: 'flex', 
+              alignItems: 'center', 
+              justifyContent: 'center', 
+              margin: '0 auto 1.5rem',
+              color: 'var(--primary)'
+            }}>
+              <UserPlus size={40} />
+            </div>
+            <h4 className="author-name" style={{ fontSize: '1.25rem' }}>Register New Patient</h4>
+            <p className="muted px-8 mt-2 mb-8">
+              If the patient is not yet in our system, you can either guide them to the self-registration kiosk or open the registration portal.
+            </p>
+            
+            <div className="grid grid-2 px-4 gap-3">
+              <button className="btn btn-outline" onClick={() => window.open('/auth/patient/register', '_blank')}>
+                Public Portal
+              </button>
+              <button className="btn btn-primary" onClick={() => alert('Opening internal registration form...')}>
+                Internal Form
+              </button>
             </div>
           </div>
-          <div className="registration-promo">
-            <div className="promo-icon">
-              <UserPlus size={48} />
-            </div>
-            <p>To register a completely new patient into the system, direct them to the self-registration portal or use the administrative patient creation tool.</p>
-            <div className="promo-actions">
-              <button className="btn-secondary-full" onClick={() => window.open('/auth/patient/register', '_blank')}>
-                Open Registration Portal
-              </button>
+
+          <div className="card mt-4" style={{ background: 'rgba(56, 189, 248, 0.05)', border: '1px solid rgba(56, 189, 248, 0.2)' }}>
+            <div className="flex gap-3">
+              <LayoutPanelLeft className="text-accent" size={20} />
+              <div>
+                <div className="author-name" style={{ fontSize: '0.9rem' }}>Kiosk Assistance</div>
+                <div className="muted" style={{ fontSize: '0.8rem' }}>Help patients scan QR codes for rapid check-in at the desk.</div>
+              </div>
             </div>
           </div>
         </div>

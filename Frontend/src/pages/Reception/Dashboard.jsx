@@ -7,77 +7,76 @@ import {
   Layers,
   ChevronRight,
   User,
-  ArrowRight
+  ArrowRight,
+  MoreVertical
 } from 'lucide-react';
-import '../../styles/Dashboard.css';
 
 const Dashboard = () => {
   const navigate = useNavigate();
 
   const stats = [
-    { label: 'Awaiting Assignment', value: '12', subtext: 'Patients in queue', color: '#f59e0b', icon: <Clock /> },
-    { label: "Today's Appointments", value: '28', subtext: 'Scheduled for today', color: '#3b82f6', icon: <Calendar /> },
-    { label: 'Total Appointments', value: '154', subtext: 'All time', color: '#10b981', icon: <Layers /> },
-    { label: 'Total Patients', value: '432', subtext: 'Registered', color: '#6366f1', icon: <Users /> },
+    { label: 'Awaiting Assignment', value: '12', subtext: 'Patients in queue', color: '#f59e0b', icon: <Clock size={22} /> },
+    { label: "Today's Appointments", value: '28', subtext: 'Scheduled for today', color: '#3b82f6', icon: <Calendar size={22} /> },
+    { label: 'Total Appointments', value: '154', subtext: 'All time records', color: '#10b981', icon: <Layers size={22} /> },
+    { label: 'Total Patients', value: '432', subtext: 'Registered in system', color: '#6366f1', icon: <Users size={22} /> },
   ];
 
   const pendingQueue = [
-    { id: '1', name: 'John Smith', email: 'john.smith@email.com', time: '10:30 AM' },
-    { id: '2', name: 'Sarah Wilson', email: 'sarah.w@email.com', time: '11:15 AM' },
-    { id: '3', name: 'Michael Brown', email: 'm.brown@email.com', time: '01:45 PM' },
-    { id: '4', name: 'Emily Davis', email: 'emily.d@email.com', time: '02:30 PM' },
-    { id: '5', name: 'Robert Johnson', email: 'robt.j@email.com', time: '03:15 PM' },
+    { id: '1', name: 'John Smith', email: 'john.smith@email.com', time: '10:30 AM', dept: 'Cardiology' },
+    { id: '2', name: 'Sarah Wilson', email: 'sarah.w@email.com', time: '11:15 AM', dept: 'General Medicine' },
+    { id: '3', name: 'Michael Brown', email: 'm.brown@email.com', time: '01:45 PM', dept: 'Neurology' },
+    { id: '4', name: 'Emily Davis', email: 'emily.d@email.com', time: '02:30 PM', dept: 'Pediatrics' },
+    { id: '5', name: 'Robert Johnson', email: 'robt.j@email.com', time: '03:15 PM', dept: 'Cardiology' },
   ];
 
   const bedOverview = [
-    { dept: 'Cardiology', available: 5, total: 20, status: 'Available' },
-    { dept: 'Neurology', available: 2, total: 15, status: 'Available' },
-    { dept: 'Pediatrics', available: 0, total: 10, status: 'Full' },
-    { dept: 'General Medicine', available: 8, total: 40, status: 'Available' },
-    { dept: 'ICU', available: 1, total: 12, status: 'Critical' },
+    { dept: 'Cardiology', available: 5, total: 20, status: 'Available', percent: 75 },
+    { dept: 'Neurology', available: 2, total: 15, status: 'Limited', percent: 86 },
+    { dept: 'Pediatrics', available: 0, total: 10, status: 'Full', percent: 100 },
+    { dept: 'General Medicine', available: 8, total: 40, status: 'Available', percent: 80 },
+    { dept: 'ICU', available: 1, total: 12, status: 'Critical', percent: 92 },
   ];
 
   return (
-    <div className="dashboard-container">
-      <header className="dashboard-header">
-        <div className="header-text">
-          <h1>Reception Dashboard</h1>
-          <p>Appointment queue and bed overview</p>
+    <div className="admin-content">
+      <div className="flex justify-between items-center mb-6">
+        <div>
+          <h2 className="section-title">Reception Dashboard</h2>
+          <p className="section-subtitle">Real-time overview of patient queue and hospital capacity</p>
         </div>
-      </header>
+        <button className="btn btn-primary" onClick={() => navigate('/reception/patient-entry')}>
+          <UserPlus size={18} /> New Patient Entry
+        </button>
+      </div>
 
-      <div className="stats-grid">
+      <div className="grid grid-4 mb-6">
         {stats.map((stat, index) => (
-          <div key={index} className="stat-card">
-            <div className="stat-icon" style={{ backgroundColor: `${stat.color}15`, color: stat.color }}>
-              {stat.icon}
+          <div key={index} className="card">
+            <div className="card-header">
+              <span className="card-title">{stat.label}</span>
+              <div style={{ color: stat.color }}>{stat.icon}</div>
             </div>
-            <div className="stat-info">
-              <h3 className="stat-value">{stat.value}</h3>
-              <p className="stat-label">{stat.label}</p>
-              <span className="stat-subtext">{stat.subtext}</span>
-            </div>
+            <div className="card-value">{stat.value}</div>
+            <span className="muted">{stat.subtext}</span>
           </div>
         ))}
       </div>
 
-      <div className="content-grid">
-        <div className="dashboard-card">
+      <div className="grid grid-2">
+        <div className="card">
           <div className="card-header">
-            <div className="header-info">
-              <h3>Appointment Queue</h3>
-              <p>Patients awaiting doctor assignment</p>
-            </div>
-            <button className="btn-view-all" onClick={() => navigate('/reception/appointments')}>
-              Manage All <ChevronRight size={16} />
+            <h3 className="card-title">Pending Appointment Queue</h3>
+            <button className="btn-icon" onClick={() => navigate('/reception/appointments')}>
+              <ChevronRight size={18} />
             </button>
           </div>
-          <div className="table-wrapper">
-            <table className="data-table">
+          <div className="table-container" style={{ border: 'none', marginTop: '0' }}>
+            <table className="premium-table">
               <thead>
                 <tr>
                   <th>Patient</th>
-                  <th>Preferred Time</th>
+                  <th>Department</th>
+                  <th>Time</th>
                   <th>Action</th>
                 </tr>
               </thead>
@@ -85,18 +84,20 @@ const Dashboard = () => {
                 {pendingQueue.map((item) => (
                   <tr key={item.id}>
                     <td>
-                      <div className="patient-cell">
-                        <div className="avatar-mini"><User size={14} /></div>
-                        <div>
-                          <div className="patient-name">{item.name}</div>
-                          <div className="patient-email">{item.email}</div>
+                      <div className="flex-author">
+                        <div className="header-avatar" style={{ width: '32px', height: '32px', fontSize: '0.8rem' }}>
+                          {item.name.charAt(0)}
+                        </div>
+                        <div className="author-info">
+                          <span className="author-name" style={{ fontSize: '0.85rem' }}>{item.name}</span>
                         </div>
                       </div>
                     </td>
-                    <td>{item.time}</td>
+                    <td><span className="badge-soft">{item.dept}</span></td>
+                    <td><span className="muted">{item.time}</span></td>
                     <td>
-                      <button className="btn-action-primary" onClick={() => navigate(`/reception/appointments/${item.id}/assign`)}>
-                        Assign
+                      <button className="btn-icon" title="Assign Doctor">
+                        <ArrowRight size={14} />
                       </button>
                     </td>
                   </tr>
@@ -106,38 +107,50 @@ const Dashboard = () => {
           </div>
         </div>
 
-        <div className="dashboard-card">
+        <div className="card">
           <div className="card-header">
-            <div className="header-info">
-              <h3>Bed Overview</h3>
-              <p>Capacity by department</p>
-            </div>
-            <button className="btn-view-all" onClick={() => navigate('/reception/beds')}>
-              Manage Beds <ChevronRight size={16} />
+            <h3 className="card-title">Hospital Bed Occupancy</h3>
+            <button className="btn-icon" onClick={() => navigate('/reception/beds')}>
+              <ChevronRight size={18} />
             </button>
           </div>
-          <div className="list-wrapper">
+          <div className="mt-4">
             {bedOverview.map((item, index) => (
-              <div key={index} className="bed-status-item">
-                <div className="item-info">
-                  <span className="dept-name">{item.dept}</span>
-                  <span className="bed-count">{item.available} available / {item.total} total</span>
+              <div key={index} className="mb-6">
+                <div className="flex justify-between items-center mb-2">
+                  <div>
+                    <span className="author-name">{item.dept}</span>
+                    <span className="muted" style={{ marginLeft: '1rem', fontSize: '0.8rem' }}>
+                      {item.available} beds left / {item.total} total
+                    </span>
+                  </div>
+                  <span className={`chip ${item.status === 'Full' ? 'chip-danger' : item.status === 'Critical' ? 'chip-danger' : item.status === 'Limited' ? 'chip-warning' : ''}`}>
+                    {item.status}
+                  </span>
                 </div>
-                <div className={`status-badge ${item.status.toLowerCase()}`}>
-                  {item.status}
+                <div className="progress-bar-bg" style={{ height: '8px' }}>
+                  <div 
+                    className={`progress-bar-fill ${item.percent > 90 ? 'danger' : item.percent > 70 ? 'warning' : 'success'}`} 
+                    style={{ width: `${item.percent}%` }}
+                  ></div>
                 </div>
               </div>
             ))}
-          </div>
-          <div className="card-footer-action">
-            <button className="btn-secondary-full" onClick={() => navigate('/reception/patient-entry')}>
-              Assign Bed to Patient <ArrowRight size={16} />
-            </button>
           </div>
         </div>
       </div>
     </div>
   );
 };
+
+// Internal icon component
+const UserPlus = ({ size }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+    <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"></path>
+    <circle cx="9" cy="7" r="4"></circle>
+    <line x1="19" y1="8" x2="19" y2="14"></line>
+    <line x1="16" y1="11" x2="22" y2="11"></line>
+  </svg>
+);
 
 export default Dashboard;

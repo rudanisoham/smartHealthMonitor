@@ -1,99 +1,97 @@
 import React, { useState } from 'react';
-import { Calendar, Search, Filter, Clock, CheckCircle2, XCircle } from 'lucide-react';
-import '../../styles/Dashboard.css';
+import { Search, Calendar as CalendarIcon, CheckCircle, XCircle, Clock, ChevronRight } from 'lucide-react';
 
 const Appointments = () => {
-  const [activeTab, setActiveTab] = useState('all');
+  const [filter, setFilter] = useState('All');
 
   const appointments = [
-    { id: 'APT101', patient: 'John Smith', date: '2026-05-10', time: '10:30 AM', doctor: 'Dr. Sarah Connor', status: 'Confirmed' },
-    { id: 'APT102', patient: 'Sarah Wilson', date: '2026-05-10', time: '11:15 AM', doctor: 'Pending Assignment', status: 'Pending' },
-    { id: 'APT103', patient: 'Michael Brown', date: '2026-05-11', time: '09:45 AM', doctor: 'Dr. James Smith', status: 'Confirmed' },
-    { id: 'APT104', patient: 'Emily Davis', date: '2026-05-11', time: '02:30 PM', doctor: 'Pending Assignment', status: 'Pending' },
-    { id: 'APT105', patient: 'Robert Johnson', date: '2026-05-12', time: '11:00 AM', doctor: 'Dr. Emily White', status: 'Cancelled' },
-    { id: 'APT106', patient: 'Emma Wilson', date: '2026-05-12', time: '01:15 PM', doctor: 'Dr. Sarah Connor', status: 'Confirmed' },
+    { id: 'APP001', patient: 'John Smith', doctor: 'Dr. Sarah Connor', date: '2026-05-10', time: '10:30 AM', status: 'Confirmed', dept: 'Cardiology' },
+    { id: 'APP002', patient: 'Emma Watson', doctor: 'Dr. James Wilson', date: '2026-05-10', time: '11:15 AM', status: 'Pending', dept: 'Neurology' },
+    { id: 'APP003', patient: 'Robert Dow', doctor: 'Dr. Lisa Cuddy', date: '2026-05-10', time: '01:45 PM', status: 'Cancelled', dept: 'Pediatrics' },
+    { id: 'APP004', patient: 'Sarah Jane', doctor: 'Dr. Eric Foreman', date: '2026-05-11', time: '09:00 AM', status: 'Confirmed', dept: 'General Medicine' },
+    { id: 'APP005', patient: 'Bruce Wayne', doctor: 'Dr. Sarah Connor', date: '2026-05-11', time: '10:00 AM', status: 'Confirmed', dept: 'Cardiology' },
   ];
 
-  const filteredAppointments = activeTab === 'all' 
-    ? appointments 
-    : appointments.filter(a => a.status.toLowerCase() === activeTab);
+  const filteredApps = filter === 'All' ? appointments : appointments.filter(a => a.status === filter);
 
   return (
-    <div className="dashboard-container">
-      <header className="dashboard-header">
-        <div className="header-text">
-          <h1>Appointments</h1>
-          <p>Oversee all patient schedules and doctor assignments</p>
+    <div className="admin-content">
+      <div className="flex justify-between items-center mb-6">
+        <div>
+          <h2 className="section-title">Appointment Management</h2>
+          <p className="section-subtitle">Track and coordinate patient-doctor consultations</p>
         </div>
-        <div className="header-actions">
-          <button className="btn-primary">
-            <Calendar size={18} /> Schedule New
-          </button>
-        </div>
-      </header>
+        <button className="btn btn-primary">
+          <CalendarIcon size={18} /> Schedule New
+        </button>
+      </div>
 
-      <div className="tabs-wrapper mb-4">
-        <div className="tabs">
-          <button className={`tab-item ${activeTab === 'all' ? 'active' : ''}`} onClick={() => setActiveTab('all')}>All Appointments</button>
-          <button className={`tab-item ${activeTab === 'pending' ? 'active' : ''}`} onClick={() => setActiveTab('pending')}>Pending Approval</button>
-          <button className={`tab-item ${activeTab === 'confirmed' ? 'active' : ''}`} onClick={() => setActiveTab('confirmed')}>Confirmed</button>
-          <button className={`tab-item ${activeTab === 'cancelled' ? 'active' : ''}`} onClick={() => setActiveTab('cancelled')}>Cancelled</button>
+      <div className="card mb-6">
+        <div className="filter-group">
+          {['All', 'Confirmed', 'Pending', 'Cancelled'].map((f) => (
+            <button 
+              key={f}
+              className={`filter-chip ${filter === f ? 'active' : ''}`}
+              onClick={() => setFilter(f)}
+            >
+              {f}
+            </button>
+          ))}
         </div>
       </div>
 
-      <div className="dashboard-card no-padding">
-        <div className="table-wrapper">
-          <table className="data-table">
-            <thead>
-              <tr>
-                <th>Appt ID</th>
-                <th>Patient Name</th>
-                <th>Date & Time</th>
-                <th>Assigned Doctor</th>
-                <th>Status</th>
-                <th className="text-right">Action</th>
-              </tr>
-            </thead>
-            <tbody>
-              {filteredAppointments.map((appt) => (
-                <tr key={appt.id}>
-                  <td className="fw-bold">{appt.id}</td>
-                  <td>{appt.patient}</td>
-                  <td>
-                    <div className="dt-cell">
-                      <div className="dt-date">{appt.date}</div>
-                      <div className="dt-time text-muted small"><Clock size={12} className="inline-icon" /> {appt.time}</div>
-                    </div>
-                  </td>
-                  <td>
-                    <span className={appt.doctor === 'Pending Assignment' ? 'text-warning fw-bold' : ''}>
-                      {appt.doctor}
-                    </span>
-                  </td>
-                  <td>
-                    <span className={`status-pill ${appt.status.toLowerCase()}`}>
-                      {appt.status}
-                    </span>
-                  </td>
-                  <td className="text-right">
-                    {appt.status === 'Pending' ? (
-                      <button className="btn-action-primary">Assign Doctor</button>
-                    ) : (
-                      <button className="btn-action-outline">View Details</button>
+      <div className="table-container">
+        <table className="premium-table">
+          <thead>
+            <tr>
+              <th>ID</th>
+              <th>Patient</th>
+              <th>Doctor / Department</th>
+              <th>Date & Time</th>
+              <th>Status</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            {filteredApps.map((app) => (
+              <tr key={app.id}>
+                <td><span className="badge-soft">{app.id}</span></td>
+                <td><span className="author-name">{app.patient}</span></td>
+                <td>
+                  <div className="author-info">
+                    <span className="author-name">{app.doctor}</span>
+                    <span className="author-sub">{app.dept}</span>
+                  </div>
+                </td>
+                <td>
+                  <div className="flex items-center gap-2">
+                    <Clock size={14} className="text-muted" />
+                    <span className="author-name">{app.time}</span>
+                    <span className="muted">| {app.date}</span>
+                  </div>
+                </td>
+                <td>
+                  <span className={`chip ${
+                    app.status === 'Confirmed' ? 'chip' : 
+                    app.status === 'Pending' ? 'chip-warning' : 
+                    'chip-danger'
+                  }`}>
+                    {app.status}
+                  </span>
+                </td>
+                <td>
+                  <div className="flex gap-2">
+                    {app.status === 'Pending' && (
+                      <button className="btn-icon text-success" title="Confirm"><CheckCircle size={16} /></button>
                     )}
-                  </td>
-                </tr>
-              ))}
-              {filteredAppointments.length === 0 && (
-                <tr>
-                  <td colspan="6" className="text-center py-5 text-muted">
-                    No appointments found for this category.
-                  </td>
-                </tr>
-              )}
-            </tbody>
-          </table>
-        </div>
+                    <button className="btn-icon text-danger" title="Cancel"><XCircle size={16} /></button>
+                    <button className="btn-icon" title="Details"><ChevronRight size={16} /></button>
+                  </div>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
       </div>
     </div>
   );

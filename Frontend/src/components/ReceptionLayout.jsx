@@ -2,7 +2,6 @@ import React from 'react';
 import { Outlet } from 'react-router-dom';
 import ReceptionSidebar from './ReceptionSidebar';
 import TopHeader from './TopHeader';
-import '../styles/PatientLayout.css'; // Reusing the same layout base styles
 
 const ReceptionLayout = () => {
     const [isSidebarCollapsed, setIsSidebarCollapsed] = React.useState(false);
@@ -12,15 +11,16 @@ const ReceptionLayout = () => {
     };
 
     return (
-        <div className={`patient-layout ${isSidebarCollapsed ? 'sidebar-collapsed' : ''}`}>
+        <div className={`admin-app ${isSidebarCollapsed ? 'sidebar-collapsed' : ''}`}>
             <ReceptionSidebar isCollapsed={isSidebarCollapsed} />
-            <main className="main-content">
+            <div className="sidebar-overlay" onClick={toggleSidebar}></div>
+            <main className="admin-main">
                 <TopHeader toggleSidebar={toggleSidebar} isSidebarCollapsed={isSidebarCollapsed} />
-                <div className="page-content-wrapper">
+                <div className="admin-content">
                     <Outlet />
                 </div>
-                <footer className="portal-footer">
-                    &copy; 2026 Smart Health Monitor - Reception Panel.
+                <footer className="admin-footer">
+                    &copy; {new Date().getFullYear()} Smart Health Monitor - Reception Desk. All rights reserved.
                 </footer>
             </main>
         </div>

@@ -1,6 +1,4 @@
-import React from 'react';
 import { useNavigate, Link } from 'react-router-dom';
-import '../../../styles/Register.css';
 
 const Register = () => {
     const navigate = useNavigate();
@@ -8,139 +6,127 @@ const Register = () => {
     const handleRegister = (e) => {
         e.preventDefault();
         // In a real app, perform registration here
-        // Redirecting to login or dashboard for demonstration
         navigate('/auth/patient/login');
     };
 
     return (
-        <div className="register-wrapper">
-
-            {/* Left Panel: Signup Form Section */}
-            <div className="register-left-panel">
-                <div className="register-form-container">
-
-                    <div className="app-badge">
-                        <span className="dot-blue"></span>
-                        Create your Smart Health account
+        <div className="login-page">
+            <div className="login-card">
+                <div className="login-main">
+                    <Link to="/" className="btn-back-home">
+                        <i className="fas fa-arrow-left"></i> Back to Home
+                    </Link>
+                    <div className="login-badge">
+                        <span>Create your Smart Health account</span>
                     </div>
-
-                    <h1 className="register-title">Sign up as patient</h1>
-                    <p className="register-subtitle">
+                    <h1 className="login-title">Sign up as patient</h1>
+                    <p className="login-subtitle">
                         Track your health data, appointments, prescriptions and reports.
                     </p>
 
-                    <form className="register-form" onSubmit={handleRegister}>
-
-                        <div className="form-grid-2">
-                            <div className="form-group-reg">
-                                <label htmlFor="fullName">Full Name</label>
-                                <input
-                                    type="text"
-                                    id="fullName"
-                                    placeholder="John Doe"
-                                    className="reg-input"
-                                    required
-                                />
-                            </div>
-
-                            <div className="form-group-reg">
-                                <label htmlFor="email">Email</label>
-                                <input
-                                    type="email"
-                                    id="email"
-                                    placeholder="john@example.com"
-                                    className="reg-input"
-                                    required
-                                />
-                            </div>
+                    <form className="form-grid form-2" onSubmit={handleRegister}>
+                        <div className="form-group">
+                            <label htmlFor="fullName">Full Name</label>
+                            <input
+                                id="fullName"
+                                name="fullName"
+                                type="text"
+                                className="form-control"
+                                placeholder="John Doe"
+                                required
+                                minLength="2"
+                            />
                         </div>
-
-                        <div className="form-grid-2">
-                            <div className="form-group-reg">
-                                <label htmlFor="password">Password</label>
-                                <input
-                                    type="password"
-                                    id="password"
-                                    placeholder="••••••••"
-                                    className="reg-input"
-                                    required
-                                />
-                            </div>
-
-                            <div className="form-group-reg">
-                                <label htmlFor="confirmPassword">Confirm Password</label>
-                                <input
-                                    type="password"
-                                    id="confirmPassword"
-                                    placeholder="••••••••"
-                                    className="reg-input"
-                                    required
-                                />
-                            </div>
+                        <div className="form-group">
+                            <label htmlFor="email">Email</label>
+                            <input
+                                id="email"
+                                name="email"
+                                type="email"
+                                className="form-control"
+                                placeholder="john@example.com"
+                                required
+                            />
                         </div>
-
-                        <div className="form-group-reg">
+                        <div className="form-group">
+                            <label htmlFor="registerPassword">Password</label>
+                            <input
+                                id="registerPassword"
+                                name="password"
+                                type="password"
+                                className="form-control"
+                                placeholder="••••••••"
+                                required
+                                minLength="6"
+                            />
+                        </div>
+                        <div className="form-group">
+                            <label htmlFor="confirmRegisterPassword">Confirm Password</label>
+                            <input
+                                id="confirmRegisterPassword"
+                                type="password"
+                                className="form-control"
+                                placeholder="••••••••"
+                                required
+                            />
+                        </div>
+                        <div className="form-group">
                             <label htmlFor="phone">Phone Number</label>
                             <input
-                                type="tel"
                                 id="phone"
+                                name="phone"
+                                type="tel"
+                                className="form-control"
                                 placeholder="+1234567890"
-                                className="reg-input"
+                                pattern="^\+?[0-9]{10,15}$"
                             />
-                            <span className="help-text">Format: +1234567890 (optional)</span>
+                            <small className="text-muted" style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>Format: +1234567890 (optional)</small>
                         </div>
-
-                        <div className="checkbox-group">
-                            <input type="checkbox" id="terms" required />
-                            <label htmlFor="terms">I agree to the terms of use and privacy policy.</label>
+                        <div className="form-group" style={{ gridColumn: '1 / -1' }}>
+                            <label className="flex items-center gap-2" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.75rem', color: 'var(--text-muted)' }}>
+                                <input type="checkbox" required style={{ margin: 0 }} />
+                                <span>I agree to the terms of use and privacy policy.</span>
+                            </label>
                         </div>
-
-                        <button type="submit" className="btn-create-account">
-                            Create account
-                        </button>
+                        <div className="form-group" style={{ gridColumn: '1 / -1' }}>
+                            <button type="submit" className="btn btn-primary w-full">
+                                <span>Create account</span>
+                            </button>
+                        </div>
                     </form>
 
-                    <div className="register-footer">
-                        <span className="info-text">Already have an account?</span>
-                        <Link to="/auth/patient/login" className="signin-link">Sign in</Link>
+                    <div className="login-footer">
+                        <span>Already have an account?</span>
+                        <Link to="/auth/patient/login" style={{ color: '#38bdf8', textDecoration: 'none', fontWeight: 500 }}>Sign in</Link>
                     </div>
+                </div>
 
+                <div className="login-extra">
+                    <div className="login-kpi">
+                        <h3>Your Health in Your Hands</h3>
+                        <ul style={{ listStyle: 'none', padding: 0, margin: 0, color: 'rgba(255,255,255,0.7)', fontSize: '0.95rem', lineHeight: '1.6' }}>
+                            <li style={{ marginBottom: '0.75rem', display: 'flex', alignItems: 'flex-start', gap: '0.75rem' }}>
+                                <span style={{ color: '#38bdf8' }}>✓</span> Track vital signs and medical history 24/7
+                            </li>
+                            <li style={{ marginBottom: '0.75rem', display: 'flex', alignItems: 'flex-start', gap: '0.75rem' }}>
+                                <span style={{ color: '#38bdf8' }}>✓</span> Book appointments directly with your specialists
+                            </li>
+                            <li style={{ marginBottom: '0.75rem', display: 'flex', alignItems: 'flex-start', gap: '0.75rem' }}>
+                                <span style={{ color: '#38bdf8' }}>✓</span> View and manage your digital prescriptions easily
+                            </li>
+                            <li style={{ display: 'flex', alignItems: 'flex-start', gap: '0.75rem' }}>
+                                <span style={{ color: '#38bdf8' }}>✓</span> Use the AI Health Checker for instant symptom analysis
+                            </li>
+                        </ul>
+                    </div>
+                    <div className="mt-4" style={{ marginTop: '2rem' }}>
+                        <div className="login-badge-secondary">
+                            <span>●</span>
+                            <span>Secure patient onboarding</span>
+                        </div>
+                    </div>
                 </div>
             </div>
-
-            {/* Right Panel: Feature Info Section (Same as Login) */}
-            <div className="register-right-panel">
-                <div className="info-content">
-
-                    <h2 className="info-title">YOUR HEALTH IN YOUR HANDS</h2>
-
-                    <ul className="feature-list">
-                        <li>
-                            <span className="check-icon">✓</span>
-                            Track vital signs and medical history 24/7
-                        </li>
-                        <li>
-                            <span className="check-icon">✓</span>
-                            Book appointments directly with your specialists
-                        </li>
-                        <li>
-                            <span className="check-icon">✓</span>
-                            View and manage your digital prescriptions easily
-                        </li>
-                        <li>
-                            <span className="check-icon">✓</span>
-                            Use the AI Health Checker for instant symptom analysis
-                        </li>
-                    </ul>
-
-                    <div className="secure-badge">
-                        <span className="dot-blue-light"></span>
-                        Secure patient onboarding
-                    </div>
-
-                </div>
-            </div>
-
         </div>
     );
 };

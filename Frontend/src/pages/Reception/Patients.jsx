@@ -1,36 +1,27 @@
 import React, { useState } from 'react';
-import { Search, Filter, MoreVertical, Eye, Edit, Trash2 } from 'lucide-react';
-import '../../styles/Dashboard.css';
+import { Search, Filter, MoreVertical, Eye, Edit, UserX } from 'lucide-react';
 
 const Patients = () => {
   const [searchTerm, setSearchTerm] = useState('');
 
-  const patientList = [
-    { id: 'PAT001', name: 'John Smith', email: 'john.smith@email.com', gender: 'Male', age: 45, status: 'Admitted' },
-    { id: 'PAT002', name: 'Sarah Wilson', email: 'sarah.w@email.com', gender: 'Female', age: 32, status: 'Outpatient' },
-    { id: 'PAT003', name: 'Michael Brown', email: 'm.brown@email.com', gender: 'Male', age: 58, status: 'Admitted' },
-    { id: 'PAT004', name: 'Emily Davis', email: 'emily.d@email.com', gender: 'Female', age: 24, status: 'Outpatient' },
-    { id: 'PAT005', name: 'Robert Johnson', email: 'robt.j@email.com', gender: 'Male', age: 39, status: 'Discharged' },
-    { id: 'PAT006', name: 'Emma Wilson', email: 'emma.w@email.com', gender: 'Female', age: 29, status: 'Outpatient' },
-    { id: 'PAT007', name: 'David Lee', email: 'd.lee@email.com', gender: 'Male', age: 52, status: 'Admitted' },
+  const patients = [
+    { id: 'PAT001', name: 'John Smith', age: 45, gender: 'Male', phone: '+1 234 567 8901', status: 'Active', bloodGroup: 'O+' },
+    { id: 'PAT002', name: 'Sarah Wilson', age: 32, gender: 'Female', phone: '+1 234 567 8902', status: 'Inpatient', bloodGroup: 'A-' },
+    { id: 'PAT003', name: 'Michael Brown', age: 28, gender: 'Male', phone: '+1 234 567 8903', status: 'Active', bloodGroup: 'B+' },
+    { id: 'PAT004', name: 'Emily Davis', age: 19, gender: 'Female', phone: '+1 234 567 8904', status: 'Outpatient', bloodGroup: 'O-' },
+    { id: 'PAT005', name: 'Robert Johnson', age: 62, gender: 'Male', phone: '+1 234 567 8905', status: 'Critical', bloodGroup: 'AB+' },
   ];
 
-  const filteredPatients = patientList.filter(p => 
-    p.name.toLowerCase().includes(searchTerm.toLowerCase()) || 
-    p.id.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    p.email.toLowerCase().includes(searchTerm.toLowerCase())
-  );
-
   return (
-    <div className="dashboard-container">
-      <header className="dashboard-header">
-        <div className="header-text">
-          <h1>Patient Records</h1>
-          <p>Manage and view all registered patients</p>
+    <div className="admin-content">
+      <div className="flex justify-between items-center mb-6">
+        <div>
+          <h2 className="section-title">Patient Directory</h2>
+          <p className="section-subtitle">Manage and view all registered patient records</p>
         </div>
-        <div className="header-actions">
+        <div className="flex gap-3">
           <div className="search-bar">
-            <Search size={18} />
+            <Search className="search-icon" size={18} />
             <input 
               type="text" 
               placeholder="Search patients..." 
@@ -38,55 +29,66 @@ const Patients = () => {
               onChange={(e) => setSearchTerm(e.target.value)}
             />
           </div>
-          <button className="btn-filter">
+          <button className="btn btn-outline">
             <Filter size={18} /> Filter
           </button>
         </div>
-      </header>
+      </div>
 
-      <div className="dashboard-card no-padding overflow-hidden">
-        <div className="table-wrapper">
-          <table className="data-table">
-            <thead>
-              <tr>
-                <th>Patient ID</th>
-                <th>Full Name</th>
-                <th>Gender/Age</th>
-                <th>Contact info</th>
-                <th>Status</th>
-                <th className="text-right">Actions</th>
-              </tr>
-            </thead>
-            <tbody>
-              {filteredPatients.map((patient) => (
-                <tr key={patient.id}>
-                  <td className="fw-bold">{patient.id}</td>
-                  <td>{patient.name}</td>
-                  <td className="text-muted">{patient.gender}, {patient.age}y</td>
-                  <td>{patient.email}</td>
-                  <td>
-                    <span className={`status-pill ${patient.status.toLowerCase()}`}>
-                      {patient.status}
-                    </span>
-                  </td>
-                  <td className="text-right">
-                    <div className="action-icons">
-                      <button className="icon-btn" title="View Detail"><Eye size={16} /></button>
-                      <button className="icon-btn" title="Edit Record"><Edit size={16} /></button>
-                      <button className="icon-btn danger" title="Delete"><Trash2 size={16} /></button>
+      <div className="table-container">
+        <table className="premium-table">
+          <thead>
+            <tr>
+              <th>Patient ID</th>
+              <th>Full Name</th>
+              <th>Age/Gender</th>
+              <th>Blood Group</th>
+              <th>Phone</th>
+              <th>Status</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            {patients.map((patient) => (
+              <tr key={patient.id}>
+                <td><span className="badge-soft">{patient.id}</span></td>
+                <td>
+                  <div className="flex-author">
+                    <div className="header-avatar" style={{ width: '32px', height: '32px', fontSize: '0.85rem' }}>
+                      {patient.name.charAt(0)}
                     </div>
-                  </td>
-                </tr>
-              ))}
-              {filteredPatients.length === 0 && (
-                <tr>
-                  <td colspan="6" className="text-center py-5 text-muted">
-                    No matching patient records found.
-                  </td>
-                </tr>
-              )}
-            </tbody>
-          </table>
+                    <span className="author-name">{patient.name}</span>
+                  </div>
+                </td>
+                <td><span className="author-name">{patient.age}Y</span> <span className="muted">/ {patient.gender}</span></td>
+                <td><span className="chip-neutral">{patient.bloodGroup}</span></td>
+                <td><span className="muted">{patient.phone}</span></td>
+                <td>
+                  <span className={`chip ${
+                    patient.status === 'Critical' ? 'chip-danger' : 
+                    patient.status === 'Inpatient' ? 'chip-warning' : 
+                    'chip'
+                  }`}>
+                    {patient.status}
+                  </span>
+                </td>
+                <td>
+                  <div className="flex gap-2">
+                    <button className="btn-icon" title="View Profile"><Eye size={16} /></button>
+                    <button className="btn-icon" title="Edit Record"><Edit size={16} /></button>
+                  </div>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+      
+      <div className="mt-4 flex justify-between items-center">
+        <span className="muted">Showing {patients.length} patients</span>
+        <div className="flex gap-2">
+          <button className="btn btn-outline" style={{ padding: '0.4rem 0.8rem' }}>Previous</button>
+          <button className="btn btn-primary" style={{ padding: '0.4rem 0.8rem' }}>Next</button>
         </div>
       </div>
     </div>

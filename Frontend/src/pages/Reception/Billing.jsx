@@ -1,117 +1,102 @@
-import React, { useState } from 'react';
-import { Search, CreditCard, Download, Eye, Clock, CheckCircle, AlertCircle } from 'lucide-react';
-import '../../styles/Dashboard.css';
+import React from 'react';
+import { CreditCard, DollarSign, FileText, Download, Filter, Search, CheckCircle, Clock } from 'lucide-react';
 
 const Billing = () => {
-  const [searchTerm, setSearchTerm] = useState('');
-
   const invoices = [
-    { id: 'INV-2026-001', patient: 'John Smith', amount: 1250.00, date: '2026-05-01', status: 'Paid', type: 'Surgery' },
-    { id: 'INV-2026-002', patient: 'Sarah Wilson', amount: 350.00, date: '2026-05-02', status: 'Unpaid', type: 'Consultation' },
-    { id: 'INV-2026-003', patient: 'Michael Brown', amount: 5200.00, date: '2026-05-02', status: 'Partial', type: 'Inpatient' },
-    { id: 'INV-2026-004', patient: 'Emily Davis', amount: 150.00, date: '2026-05-03', status: 'Paid', type: 'Lab Test' },
-    { id: 'INV-2026-005', patient: 'Robert Johnson', amount: 890.00, date: '2026-05-03', status: 'Unpaid', type: 'Treatment' },
-    { id: 'INV-2026-006', patient: 'Emma Wilson', amount: 120.00, date: '2026-05-04', status: 'Paid', type: 'Medicine' },
+    { id: 'INV-2026-001', patient: 'John Smith', amount: 1250.00, date: '2026-05-01', status: 'Paid', method: 'Credit Card' },
+    { id: 'INV-2026-002', patient: 'Sarah Wilson', amount: 450.00, date: '2026-05-02', status: 'Pending', method: 'Insurance' },
+    { id: 'INV-2026-003', patient: 'Michael Brown', amount: 3200.00, date: '2026-05-02', status: 'Paid', method: 'Cash' },
+    { id: 'INV-2026-004', patient: 'Emily Davis', amount: 125.00, date: '2026-05-03', status: 'Pending', method: 'UPI' },
+    { id: 'INV-2026-005', patient: 'Robert Johnson', amount: 890.00, date: '2026-05-03', status: 'Paid', method: 'Credit Card' },
   ];
 
-  const filteredInvoices = invoices.filter(inv => 
-    inv.patient.toLowerCase().includes(searchTerm.toLowerCase()) || 
-    inv.id.toLowerCase().includes(searchTerm.toLowerCase())
-  );
-
   return (
-    <div className="dashboard-container">
-      <header className="dashboard-header">
-        <div className="header-text">
-          <h1>Billing & Invoices</h1>
-          <p>Track payments, generate invoices, and manage patient billing</p>
+    <div className="admin-content">
+      <div className="flex justify-between items-center mb-6">
+        <div>
+          <h2 className="section-title">Billing & Collections</h2>
+          <p className="section-subtitle">Manage patient invoices, payments, and financial records</p>
         </div>
-        <div className="header-actions">
-          <div className="search-bar">
-            <Search size={18} />
-            <input 
-              type="text" 
-              placeholder="Search by invoice or patient..." 
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-            />
-          </div>
-          <button className="btn-primary">
-            <CreditCard size={18} /> New Invoice
-          </button>
-        </div>
-      </header>
+        <button className="btn btn-primary">
+          <FileText size={18} /> Generate Invoice
+        </button>
+      </div>
 
-      <div className="grid grid-3 mb-5">
-        <div className="card stat-card-simple highlight-green">
-          <div className="card-body">
-            <span className="stat-label">Total Collected</span>
-            <h2 className="stat-value">$14,250</h2>
-            <p className="stat-desc">Month-to-date</p>
+      <div className="grid grid-3 mb-6">
+        <div className="card">
+          <div className="card-header">
+            <span className="card-title">Daily Collection</span>
+            <DollarSign className="text-success" size={20} />
           </div>
+          <div className="card-value">$5,915.00</div>
+          <span className="muted">Total collected today</span>
         </div>
-        <div className="card stat-card-simple highlight-yellow">
-          <div className="card-body">
-            <span className="stat-label">Pending Payments</span>
-            <h2 className="stat-value">$3,840</h2>
-            <p className="stat-desc">24 invoices outstanding</p>
+        <div className="card">
+          <div className="card-header">
+            <span className="card-title">Pending Invoices</span>
+            <Clock className="text-warning" size={20} />
           </div>
+          <div className="card-value">14</div>
+          <span className="muted">Awaiting payment verification</span>
         </div>
-        <div className="card stat-card-simple highlight-blue">
-          <div className="card-body">
-            <span className="stat-label">Recent Invoices</span>
-            <h2 className="stat-value">156</h2>
-            <p className="stat-desc">Generated this week</p>
+        <div className="card">
+          <div className="card-header">
+            <span className="card-title">Active Insurances</span>
+            <CheckCircle className="text-primary" size={20} />
           </div>
+          <div className="card-value">182</div>
+          <span className="muted">Verified providers in system</span>
         </div>
       </div>
 
-      <div className="dashboard-card no-padding">
-        <div className="table-wrapper">
-          <table className="data-table">
-            <thead>
-              <tr>
-                <th>Invoice ID</th>
-                <th>Patient</th>
-                <th>Service Type</th>
-                <th>Amount</th>
-                <th>Issue Date</th>
-                <th>Status</th>
-                <th className="text-right">Action</th>
-              </tr>
-            </thead>
-            <tbody>
-              {filteredInvoices.map((inv) => (
-                <tr key={inv.id}>
-                  <td className="fw-bold">{inv.id}</td>
-                  <td>{inv.patient}</td>
-                  <td>{inv.type}</td>
-                  <td className="fw-bold">${inv.amount.toFixed(2)}</td>
-                  <td>{inv.date}</td>
-                  <td>
-                    <span className={`status-pill ${inv.status.toLowerCase()}`}>
-                      {inv.status}
-                    </span>
-                  </td>
-                  <td className="text-right">
-                    <div className="action-icons">
-                      <button className="icon-btn" title="View Detail"><Eye size={16} /></button>
-                      <button className="icon-btn" title="Download PDF"><Download size={16} /></button>
-                      <button className="icon-btn" title="Process Payment"><CreditCard size={16} /></button>
-                    </div>
-                  </td>
-                </tr>
-              ))}
-              {filteredInvoices.length === 0 && (
-                <tr>
-                  <td colspan="7" className="text-center py-5 text-muted">
-                    No matching invoices found.
-                  </td>
-                </tr>
-              )}
-            </tbody>
-          </table>
+      <div className="card mb-6">
+        <div className="flex justify-between items-center">
+          <div className="search-bar" style={{ minWidth: '400px' }}>
+            <Search className="search-icon" size={18} />
+            <input type="text" placeholder="Search by Invoice ID or Patient Name..." />
+          </div>
+          <button className="btn btn-outline">
+            <Filter size={18} /> Filter Records
+          </button>
         </div>
+      </div>
+
+      <div className="table-container">
+        <table className="premium-table">
+          <thead>
+            <tr>
+              <th>Invoice ID</th>
+              <th>Patient</th>
+              <th>Amount</th>
+              <th>Date</th>
+              <th>Method</th>
+              <th>Status</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            {invoices.map((inv) => (
+              <tr key={inv.id}>
+                <td><span className="author-name" style={{ fontSize: '0.85rem' }}>{inv.id}</span></td>
+                <td><span className="author-name">{inv.patient}</span></td>
+                <td><span className="author-name">${inv.amount.toFixed(2)}</span></td>
+                <td><span className="muted">{inv.date}</span></td>
+                <td><span className="chip-neutral">{inv.method}</span></td>
+                <td>
+                  <span className={`chip ${inv.status === 'Paid' ? 'chip' : 'chip-warning'}`}>
+                    {inv.status}
+                  </span>
+                </td>
+                <td>
+                  <div className="flex gap-2">
+                    <button className="btn-icon" title="Download PDF"><Download size={16} /></button>
+                    <button className="btn-icon" title="View Details"><FileText size={16} /></button>
+                  </div>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
       </div>
     </div>
   );
