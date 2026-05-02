@@ -66,7 +66,7 @@ const LabLogin = () => {
               </div>
             </div>
 
-            <button type="submit" className="btn btn-primary w-full" style={{ background: '#10b981', borderColor: '#10b981', padding: '1rem' }}>
+            <button type="submit" className="btn btn-primary w-full" style={{ padding: '1rem' }}>
               Authenticate & Access
             </button>
           </form>
@@ -81,7 +81,7 @@ const LabLogin = () => {
         </div>
 
         {/* Right Side: Visual/KPI */}
-        <div className="login-extra" style={{ background: 'linear-gradient(135deg, #064e3b 0%, #10b981 150%)' }}>
+        <div className="login-extra">
           <div className="login-badge-secondary mb-8">
             <ShieldCheck size={20} />
             <span>CLIA Certified System</span>

@@ -122,13 +122,13 @@ const LabUploadReport = () => {
                 cursor: 'pointer',
                 transition: '0.2s'
               }}
-              onDragOver={(e) => { e.preventDefault(); e.currentTarget.style.borderColor = '#10b981'; }}
+              onDragOver={(e) => { e.preventDefault(); e.currentTarget.style.borderColor = 'var(--primary)'; }}
               onDragLeave={(e) => { e.preventDefault(); e.currentTarget.style.borderColor = 'var(--border)'; }}
               onClick={() => document.getElementById('fileInput').click()}
             >
               <input type="file" id="fileInput" hidden onChange={handleFileChange} />
               <div className="flex-col items-center gap-3">
-                <div className="stat-icon" style={{ width: '64px', height: '64px', background: 'rgba(16, 185, 129, 0.1)', color: '#10b981' }}>
+                <div className="stat-icon" style={{ width: '64px', height: '64px' }}>
                   <Upload size={32} />
                 </div>
                 {selectedFile ? (
@@ -158,14 +158,14 @@ const LabUploadReport = () => {
             ></textarea>
           </div>
 
-          <div className="card mb-6" style={{ background: 'rgba(16, 185, 129, 0.05)', border: '1px solid #10b981' }}>
+          <div className="card mb-6" style={{ background: 'var(--primary-light)', border: '1px solid var(--primary)' }}>
             <div className="flex gap-4">
-              <div className="stat-icon" style={{ width: '40px', height: '40px', background: 'white', color: '#10b981', flexShrink: 0 }}>
+              <div className="stat-icon" style={{ width: '40px', height: '40px', background: 'white', color: 'var(--primary)', flexShrink: 0 }}>
                 <CheckCircle size={20} />
               </div>
               <div>
-                <div className="author-name" style={{ fontSize: '0.9rem', color: '#059669' }}>Laboratory Verification</div>
-                <p className="muted" style={{ fontSize: '0.8rem', marginTop: '0.25rem', color: '#059669' }}>
+                <div className="author-name" style={{ fontSize: '0.9rem', color: 'var(--primary)' }}>Laboratory Verification</div>
+                <p className="muted" style={{ fontSize: '0.8rem', marginTop: '0.25rem', color: 'var(--primary)' }}>
                   By uploading, you confirm that these results have been double-checked and verified by a senior lab technician.
                 </p>
               </div>
@@ -176,7 +176,7 @@ const LabUploadReport = () => {
             <button type="button" className="btn btn-outline" onClick={() => navigate(-1)}>
               <X size={18} /> Discard
             </button>
-            <button type="submit" className="btn btn-primary" style={{ background: '#10b981', borderColor: '#10b981' }}>
+            <button type="submit" className="btn btn-primary">
               <Upload size={18} /> Submit Results
             </button>
           </div>

@@ -52,7 +52,7 @@ const LabPatientSearch = () => {
           <div key={patient.id} className="card">
             <div className="flex justify-between items-start">
               <div className="flex gap-4">
-                <div className="header-avatar" style={{ width: '56px', height: '56px', fontSize: '1.25rem', background: '#10b981' }}>
+                <div className="header-avatar" style={{ width: '56px', height: '56px', fontSize: '1.25rem' }}>
                   {patient.name.split(' ').map(n => n[0]).join('')}
                 </div>
                 <div>
@@ -83,7 +83,6 @@ const LabPatientSearch = () => {
               </button>
               <button 
                 className="btn btn-primary flex-1 btn-sm" 
-                style={{ background: '#10b981', borderColor: '#10b981' }}
                 onClick={() => navigate('/lab/upload-report')}
               >
                 <FlaskConical size={16} /> Add Report

@@ -10,15 +10,16 @@ import {
   UserPlus,
   Upload,
   Activity,
-  History
+  History,
+  Search
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 
 const LabDashboard = () => {
   const stats = [
-    { label: 'Samples Collected', value: '84', icon: <FlaskConical />, color: 'emerald', trend: '+14 today' },
+    { label: 'Samples Collected', value: '84', icon: <FlaskConical />, color: 'blue', trend: '+14 today' },
     { label: 'Pending Tests', value: '18', icon: <Activity />, color: 'yellow', trend: '5 urgent' },
-    { label: 'Reports Ready', value: '12', icon: <CheckCircle />, color: 'blue', trend: 'To be signed' },
+    { label: 'Reports Ready', value: '12', icon: <CheckCircle />, color: 'emerald', trend: 'To be signed' },
     { label: 'Turnaround Time', value: '4.2h', icon: <Clock />, color: 'purple', trend: '-20% improvement' },
   ];
 
@@ -39,8 +40,7 @@ const LabDashboard = () => {
         {stats.map((stat, idx) => (
           <div key={idx} className="card">
             <div className="card-header">
-              <div className={`stat-icon ${stat.color === 'emerald' ? 'success' : stat.color}`} 
-                   style={stat.color === 'emerald' ? {background: 'rgba(16, 185, 129, 0.1)', color: '#10b981'} : {}}>
+              <div className={`stat-icon ${stat.color === 'emerald' ? 'success' : stat.color}`}>
                 {stat.icon}
               </div>
               <span className="badge-soft">{stat.trend}</span>
@@ -96,7 +96,7 @@ const LabDashboard = () => {
         <div className="card">
           <h3 className="card-title mb-6">Laboratory Shortcuts</h3>
           <div className="grid grid-2 gap-4">
-            <Link to="/lab/upload-report" className="btn btn-primary" style={{ background: '#10b981', borderColor: '#10b981', padding: '1.5rem', flexDirection: 'column', gap: '0.75rem' }}>
+            <Link to="/lab/upload-report" className="btn btn-primary" style={{ padding: '1.5rem', flexDirection: 'column', gap: '0.75rem' }}>
               <Upload size={32} />
               <span>Upload Results</span>
             </Link>
@@ -121,7 +121,7 @@ const LabDashboard = () => {
         <h3 className="card-title mb-6">Recent Lab Activity</h3>
         <div className="timeline">
           <div className="timeline-item">
-            <div className="timeline-bullet" style={{ background: '#10b981' }}></div>
+            <div className="timeline-bullet"></div>
             <div className="timeline-content">
               <div>Biochemistry results verified for <strong>Patient #1024</strong></div>
               <div className="timeline-meta">By Chief Pathologist Dr. Adams • 10 mins ago</div>

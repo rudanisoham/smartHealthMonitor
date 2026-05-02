@@ -37,7 +37,7 @@ const LabTests = () => {
           <h2 className="section-title">Diagnostic Test Directory</h2>
           <p className="section-subtitle">Catalog of available laboratory tests, pricing, and reference ranges</p>
         </div>
-        <button className="btn btn-primary" style={{ background: '#10b981', borderColor: '#10b981' }}>
+        <button className="btn btn-primary">
           <Plus size={18} /> Add New Test
         </button>
       </div>
@@ -46,7 +46,7 @@ const LabTests = () => {
         {testCategories.map((cat, idx) => (
           <div key={idx} className="card" style={{ cursor: 'pointer' }}>
             <div className="flex items-center gap-3">
-              <div className="stat-icon" style={{ background: 'rgba(16, 185, 129, 0.1)', color: '#10b981' }}>
+              <div className="stat-icon">
                 {cat.icon}
               </div>
               <div>

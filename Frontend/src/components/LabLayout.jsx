@@ -38,7 +38,7 @@ const LabLayout = () => {
               <input type="text" placeholder="Search tests or patients..." />
             </div>
             
-            <div className="header-pill" style={{ background: 'rgba(16, 185, 129, 0.1)', color: '#10b981' }}>
+            <div className="header-pill">
               Lab Active
             </div>
 
@@ -46,7 +46,7 @@ const LabLayout = () => {
               <Bell size={20} />
             </button>
 
-            <div className="header-avatar" style={{ background: 'linear-gradient(135deg, #10b981, #059669)' }}>
+            <div className="header-avatar">
               <User size={20} />
             </div>
           </div>

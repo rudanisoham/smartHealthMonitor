@@ -36,7 +36,7 @@ const LabHistory = () => {
           <button className="btn btn-outline">
             <Download size={18} /> Export History
           </button>
-          <Link to="/lab/upload-report" className="btn btn-primary" style={{ background: '#10b981', borderColor: '#10b981' }}>
+          <Link to="/lab/upload-report" className="btn btn-primary">
             <FileText size={18} /> New Report
           </Link>
         </div>
@@ -89,7 +89,7 @@ const LabHistory = () => {
                     <span>{item.patient}</span>
                   </div>
                 </td>
-                <td><span className="badge-soft" style={{ background: 'rgba(16, 185, 129, 0.1)', color: '#10b981' }}>{item.test}</span></td>
+                <td><span className="badge-soft">{item.test}</span></td>
                 <td>
                   <div className="flex items-center gap-2 muted" style={{ fontSize: '0.85rem' }}>
                     <Calendar size={14} />
@@ -125,7 +125,7 @@ const LabHistory = () => {
         <p className="muted">Showing 5 of 2,450 records</p>
         <div className="flex gap-2">
           <button className="btn btn-outline btn-sm" disabled>Previous</button>
-          <button className="btn btn-primary btn-sm" style={{ background: '#10b981', borderColor: '#10b981' }}>1</button>
+          <button className="btn btn-primary btn-sm">1</button>
           <button className="btn btn-outline btn-sm">2</button>
           <button className="btn btn-outline btn-sm">Next</button>
         </div>

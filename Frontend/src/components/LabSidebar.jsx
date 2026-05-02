@@ -40,7 +40,7 @@ const LabSidebar = ({ collapsed }) => {
   return (
     <aside className={`admin-sidebar ${collapsed ? 'collapsed' : ''}`}>
       <div className="sidebar-logo">
-        <div className="sidebar-logo-icon" style={{ background: 'linear-gradient(135deg, #10b981, #059669)' }}>
+        <div className="sidebar-logo-icon">
           <FlaskConical size={24} />
         </div>
         {!collapsed && (
