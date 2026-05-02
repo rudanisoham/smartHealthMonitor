@@ -76,6 +76,9 @@ import ReceptionLogin from './pages/Auth/reception/Login';
 import MedicalDashboard from './pages/Medical/Dashboard';
 import MedicalInventory from './pages/Medical/Inventory';
 import MedicalAddMedicine from './pages/Medical/AddMedicine';
+import MedicalPatientSearch from './pages/Medical/PatientSearch';
+import MedicalUploadReport from './pages/Medical/UploadReport';
+import MedicalReports from './pages/Medical/Reports';
 import MedicalLogin from './pages/Auth/medical/Login';
 
 // Styles
@@ -169,6 +172,9 @@ function App() {
           <Route path="dashboard" element={<MedicalDashboard />} />
           <Route path="inventory" element={<MedicalInventory />} />
           <Route path="inventory/add" element={<MedicalAddMedicine />} />
+          <Route path="patient-search" element={<MedicalPatientSearch />} />
+          <Route path="upload-report" element={<MedicalUploadReport />} />
+          <Route path="reports" element={<MedicalReports />} />
         </Route>
 
         {/* Catch-all route */}
