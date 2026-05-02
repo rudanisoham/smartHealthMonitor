@@ -1,7 +1,5 @@
 #root {
-  width: 100%;
   min-height: 100vh;
-  display: flex;
 }
 
 /* Hide internal page headers since we now use the global TopHeader in PatientLayout */

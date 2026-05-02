@@ -1,226 +1,131 @@
 import React, { useState, useEffect } from 'react';
-import { Menu, FileText, Search, Trash2, Plus, CheckCircle2, AlertCircle, FileUp } from 'lucide-react';
-import '../../styles/Reports.css';
+import { Link } from 'react-router-dom';
 
 const Reports = () => {
-    const [reports, setReports] = useState([]);
-    const [searchTerm, setSearchTerm] = useState('');
-    const [newReport, setNewReport] = useState({
-        title: '',
-        description: '',
-        findings: ''
-    });
-    const [statusMessage, setStatusMessage] = useState(null);
-
-    useEffect(() => {
-        const stored = localStorage.getItem('medical_reports');
-        if (stored) {
-            setReports(JSON.parse(stored));
-        } else {
-            const initial = [
-                { id: 1, date: '2026-03-28', title: 'Annual Physical Results', description: 'Routine checkup', findings: 'All vitals within normal range.' },
-                { id: 2, date: '2026-04-01', title: 'Blood Glucose Test', description: 'Fasting test', findings: 'Glucose level: 95 mg/dL (Normal).' }
-            ];
-            setReports(initial);
-            localStorage.setItem('medical_reports', JSON.stringify(initial));
+    // Mock data matching the Java project structure
+    const groupedLabRequests = [
+        {
+            key: 'group1',
+            value: [
+                {
+                    status: 'COMPLETED',
+                    labTest: { name: 'Complete Blood Count (CBC)' },
+                    doctor: { user: { fullName: 'Sarah Jenkins' } },
+                    requestedAt: '2026-03-28T09:00:00',
+                    completedAt: '2026-03-29T14:30:00',
+                    resultFileUrl: '#'
+                },
+                {
+                    status: 'COMPLETED',
+                    labTest: { name: 'Lipid Panel' },
+                    doctor: { user: { fullName: 'Sarah Jenkins' } },
+                    requestedAt: '2026-03-28T09:00:00',
+                    completedAt: '2026-03-29T14:30:00',
+                    resultFileUrl: '#'
+                }
+            ]
+        },
+        {
+            key: 'group2',
+            value: [
+                {
+                    status: 'IN_PROGRESS',
+                    labTest: { name: 'Thyroid Function Test' },
+                    doctor: { user: { fullName: 'Michael Chen' } },
+                    requestedAt: '2026-05-01T10:15:00',
+                    completedAt: null,
+                    resultFileUrl: null
+                }
+            ]
         }
-    }, []);
-
-    const handleSave = () => {
-        if (!newReport.title.trim()) {
-            setStatusMessage({ type: 'error', text: 'Please provide a report title.' });
-            return;
-        }
-
-        const reportToAdd = {
-            id: Date.now(),
-            date: new Date().toISOString().split('T')[0],
-            ...newReport
-        };
-
-        const updated = [reportToAdd, ...reports];
-        setReports(updated);
-        localStorage.setItem('medical_reports', JSON.stringify(updated));
-
-        setNewReport({ title: '', description: '', findings: '' });
-        setStatusMessage({ type: 'success', text: 'Report saved successfully!' });
-        setTimeout(() => setStatusMessage(null), 3000);
-    };
-
-    const handleDelete = (id) => {
-        if (window.confirm('Are you sure you want to delete this report?')) {
-            const updated = reports.filter(r => r.id !== id);
-            setReports(updated);
-            localStorage.setItem('medical_reports', JSON.stringify(updated));
-        }
-    };
-
-    const filteredReports = reports.filter(r =>
-        r.title.toLowerCase().includes(searchTerm.toLowerCase())
-    );
+    ];
 
     return (
-        <div className="reports-container">
-            {/* Top Stat Card */}
-            <div className="top-stat-section">
-                <div className="stat-card-wide">
-                    <div className="stat-icon-bg">
-                        <FileText size={24} className="text-blue-primary" />
-                    </div>
-                    <div className="stat-info">
-                        <h3 className="stat-card-title">Total Medical Reports</h3>
-                        <div className="stat-card-value text-blue-primary">{reports.length}</div>
-                    </div>
-                </div>
+        <>
+            <div style={{ marginBottom: '2rem' }}>
+                <h2 style={{ fontSize: '1.75rem', fontWeight: 800, color: '#1e293b', margin: 0 }}>Diagnostic History</h2>
+                <p className="muted">Access your session-based laboratory findings and reports.</p>
             </div>
 
-            {/* Main Content Grid */}
-            <div className="reports-grid">
-
-                {/* Left Panel: Add New Report */}
-                <div className="report-form-panel">
-                    <div className="panel-header-simple">
-                        <div className="header-icon-wrap">
-                            <Plus size={20} className="text-blue-primary" />
-                        </div>
-                        <div>
-                            <h2>Add New Report</h2>
-                            <p>Manually record results from your medical tests</p>
-                        </div>
-                    </div>
-
-                    {statusMessage && (
-                        <div className={`status-banner ${statusMessage.type}`}>
-                            {statusMessage.type === 'success' ? <CheckCircle2 size={16} /> : <AlertCircle size={16} />}
-                            {statusMessage.text}
-                        </div>
-                    )}
-
-                    <form className="report-form" onSubmit={(e) => e.preventDefault()}>
-                        <div className="form-group">
-                            <label>Report Title / Test Name*</label>
-                            <input
-                                type="text"
-                                className="standard-input"
-                                placeholder="e.g. Blood Test, Chest X-Ray"
-                                value={newReport.title}
-                                onChange={(e) => setNewReport({ ...newReport, title: e.target.value })}
-                            />
-                        </div>
-
-                        <div className="form-group">
-                            <label>Summary / Description</label>
-                            <textarea
-                                className="standard-textarea"
-                                placeholder="Brief reason or context..."
-                                rows="2"
-                                value={newReport.description}
-                                onChange={(e) => setNewReport({ ...newReport, description: e.target.value })}
-                            ></textarea>
-                        </div>
-
-                        <div className="form-group">
-                            <label>Findings & Observations</label>
-                            <textarea
-                                className="standard-textarea"
-                                placeholder="Enter detailed results or conclusions..."
-                                rows="4"
-                                value={newReport.findings}
-                                onChange={(e) => setNewReport({ ...newReport, findings: e.target.value })}
-                            ></textarea>
-                        </div>
-
-                        <div className="form-group pt-2">
-                            <label>Attach PDF/Image (Optional)</label>
-                            <div className="file-upload-zone">
-                                <FileUp size={24} className="upload-icon" />
-                                <span>Choose files or drag & drop</span>
-                                <input type="file" className="hidden-file-input" />
-                            </div>
-                        </div>
-
-                        <button type="button" className="btn-save-report" onClick={handleSave}>
-                            Save Report to History
-                        </button>
-                    </form>
+            {groupedLabRequests.length === 0 ? (
+                <div className="card" style={{ padding: '4rem 2rem', textAlign: 'center' }}>
+                    <div style={{ fontSize: '3rem', marginBottom: '1rem', opacity: 0.3 }}>🔬</div>
+                    <h3 className="muted">No diagnostic history</h3>
+                    <p className="muted mt-1">Your official hospital lab reports will appear here.</p>
                 </div>
+            ) : (
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))', gap: '1.5rem' }}>
+                    {groupedLabRequests.map((entry, idx) => {
+                        const group = entry.value;
+                        const first = group[0];
 
-                {/* Right Panel: Reports History */}
-                <div className="reports-history-panel">
-                    <div className="panel-header-simple history-header">
-                        <div className="header-icon-wrap">
-                            <FileText size={20} className="text-blue-primary" />
-                        </div>
-                        <div className="flex-grow">
-                            <h2>Reports History</h2>
-                            <p>Search and manage your medical records</p>
-                        </div>
-                    </div>
+                        return (
+                            <div key={idx} style={{ border: '2px solid #e2e8f0', borderRadius: '20px', padding: '1.75rem', background: 'white', marginBottom: '2rem' }}>
+                                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '1.5rem', flexWrap: 'wrap', gap: '0.5rem' }}>
+                                    <div>
+                                        <h3 style={{ fontSize: '1.4rem', fontWeight: 800, color: '#1e293b', margin: 0 }}>
+                                            {group.length > 1 ? 'Diagnostic Session' : first.labTest.name}
+                                        </h3>
+                                        <div style={{ fontSize: '0.85rem', color: '#64748b', marginTop: '0.25rem' }}>
+                                            Physician: <strong>Dr. {first.doctor.user.fullName}</strong>
+                                        </div>
+                                    </div>
+                                    <span style={{ 
+                                        padding: '0.35rem 0.75rem', 
+                                        borderRadius: '20px', 
+                                        fontSize: '0.75rem', 
+                                        fontWeight: 700, 
+                                        textTransform: 'uppercase',
+                                        background: first.status === 'COMPLETED' ? '#d1fae5' : (first.status === 'IN_PROGRESS' ? '#e0e7ff' : '#fef3c7'),
+                                        color: first.status === 'COMPLETED' ? '#059669' : (first.status === 'IN_PROGRESS' ? '#4338ca' : '#d97706')
+                                    }}>
+                                        {first.status}
+                                    </span>
+                                </div>
+                                
+                                <div style={{ marginBottom: '1.5rem' }}>
+                                    {group.map((req, i) => (
+                                        <span key={i} style={{ background: '#f1f5f9', color: '#475569', padding: '0.25rem 0.75rem', borderRadius: '100px', fontSize: '0.75rem', fontWeight: 600, marginRight: '0.5rem', marginTop: '0.5rem', display: 'inline-block' }}>
+                                            🧪 {req.labTest.name}
+                                        </span>
+                                    ))}
+                                </div>
 
-                    <div className="search-bar-reports">
-                        <Search size={18} className="search-icon" />
-                        <input
-                            type="text"
-                            placeholder="Filter by title..."
-                            value={searchTerm}
-                            onChange={(e) => setSearchTerm(e.target.value)}
-                        />
-                    </div>
+                                <div style={{ fontSize: '0.85rem', color: '#64748b', padding: '1rem', background: '#f8fafc', borderRadius: '12px', marginBottom: '1.5rem' }}>
+                                    <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.5rem', flexWrap: 'wrap' }}>
+                                        <span>Requested On</span>
+                                        <strong style={{ color: '#1e293b' }}>{first.requestedAt.replace('T', ' ').substring(0, 16)}</strong>
+                                    </div>
+                                    {first.status === 'COMPLETED' && (
+                                        <div style={{ display: 'flex', justifyContent: 'space-between', flexWrap: 'wrap' }}>
+                                            <span>Completed On</span>
+                                            <strong style={{ color: '#1e293b' }}>{first.completedAt.replace('T', ' ').substring(0, 16)}</strong>
+                                        </div>
+                                    )}
+                                </div>
 
-                    <div className="reports-table-wrapper">
-                        <table className="reports-table">
-                            <thead>
-                                <tr>
-                                    <th>DATE</th>
-                                    <th>TITLE</th>
-                                    <th className="actions-header">ACTIONS</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {filteredReports.map(report => (
-                                    <tr key={report.id}>
-                                        <td className="report-date">{report.date}</td>
-                                        <td>
-                                            <div className="report-info-cell">
-                                                <span className="report-title">{report.title}</span>
-                                                <span className="report-desc-preview">{report.description}</span>
-                                            </div>
-                                        </td>
-                                        <td className="actions-cell">
-                                            <div className="report-actions">
-                                                <button
-                                                    className="btn-report-view"
-                                                    onClick={() => alert(`Findings for ${report.title}:\n\n${report.findings}`)}
-                                                >
-                                                    View
-                                                </button>
-                                                <button
-                                                    className="btn-report-delete"
-                                                    onClick={() => handleDelete(report.id)}
-                                                >
-                                                    <Trash2 size={16} />
-                                                </button>
-                                            </div>
-                                        </td>
-                                    </tr>
-                                ))}
-                                {filteredReports.length === 0 && (
-                                    <tr className="empty-row">
-                                        <td colSpan="3">
-                                            <div className="empty-state-reports">
-                                                <Search size={32} />
-                                                <p>No reports found matching your search.</p>
-                                            </div>
-                                        </td>
-                                    </tr>
+                                {first.status === 'COMPLETED' ? (
+                                    <div style={{ marginTop: '1rem', display: 'flex', gap: '1rem', flexWrap: 'wrap' }}>
+                                        {first.resultFileUrl && (
+                                            <a href={first.resultFileUrl} target="_blank" rel="noreferrer" className="btn btn-primary" style={{ flex: 1, minWidth: '150px', justifyContent: 'center', padding: '0.85rem' }}>
+                                                📄 Download Report
+                                            </a>
+                                        )}
+                                        <Link to={`/patient/report-detail/${entry.key}`} className="btn btn-outline" style={{ flex: 1, minWidth: '150px', justifyContent: 'center', padding: '0.85rem' }}>
+                                            ℹ️ View Details
+                                        </Link>
+                                    </div>
+                                ) : (
+                                    <div style={{ marginTop: '1rem', padding: '1rem', background: '#fff7ed', border: '1px solid #ffedd5', borderRadius: '12px', color: '#c2410c', fontSize: '0.85rem', textAlign: 'center' }}>
+                                        ⏳ Testing in progress. Check back soon for results.
+                                    </div>
                                 )}
-                            </tbody>
-                        </table>
-                    </div>
+                            </div>
+                        );
+                    })}
                 </div>
-
-            </div>
-        </div>
+            )}
+        </>
     );
 };
 

@@ -1,59 +1,26 @@
 import React, { useState, useEffect } from 'react';
-import { Heart, Activity, Droplets, Thermometer, Bot, Microscope, CheckCircle2, ChevronRight, AlertTriangle, Search, XCircle, Stethoscope, Brain, Wind, Info } from 'lucide-react';
-import '../../styles/AIChecker.css';
 
 const AIChecker = () => {
+    const [notes, setNotes] = useState('');
     const [selectedSymptoms, setSelectedSymptoms] = useState([]);
-    const [searchTerm, setSearchTerm] = useState('');
-    const [vitals, setVitals] = useState({});
     const [isAnalyzing, setIsAnalyzing] = useState(false);
     const [result, setResult] = useState(null);
+    const [latestMetric, setLatestMetric] = useState(null);
 
-    const symptomCategories = [
-        {
-            name: 'General',
-            icon: <Stethoscope size={16} />,
-            symptoms: [
-                { id: 5, label: 'Fever' },
-                { id: 6, label: 'Fatigue' },
-                { id: 7, label: 'Nausea' },
-                { id: 9, label: 'Excessive Sweating' },
-            ]
-        },
-        {
-            name: 'Cardiovascular',
-            icon: <Heart size={16} />,
-            symptoms: [
-                { id: 1, label: 'Chest Pain' },
-                { id: 8, label: 'Palpitations' },
-                { id: 10, label: 'Swelling in Legs' },
-            ]
-        },
-        {
-            name: 'Respiratory',
-            icon: <Wind size={16} />,
-            symptoms: [
-                { id: 2, label: 'Shortness of Breath' },
-                { id: 13, label: 'Persistent Cough' },
-                { id: 14, label: 'Wheezing' },
-            ]
-        },
-        {
-            name: 'Neurological',
-            icon: <Brain size={16} />,
-            symptoms: [
-                { id: 3, label: 'Dizziness' },
-                { id: 4, label: 'Headache' },
-                { id: 11, label: 'Blurred Vision' },
-                { id: 12, label: 'Muscle Weakness' },
-            ]
-        }
+    const symptomOptions = [
+        { id: 'chest_pain', label: '💔 Chest Pain' },
+        { id: 'breathing', label: '🌬 Difficulty Breathing' },
+        { id: 'dizziness', label: '💫 Dizziness' },
+        { id: 'headache', label: '🤕 Headache' },
+        { id: 'fever', label: '🌡 Fever' },
+        { id: 'fatigue', label: '😴 Constant Tiredness' },
+        { id: 'nausea', label: '🤢 Nausea' }
     ];
 
     useEffect(() => {
-        const stored = JSON.parse(localStorage.getItem('vitals_history') || '[]');
-        if (stored.length > 0) {
-            setVitals(stored[0]);
+        const vitals = JSON.parse(localStorage.getItem('vitals_history') || '[]');
+        if (vitals.length > 0) {
+            setLatestMetric(vitals[0]);
         }
     }, []);
 
@@ -65,248 +32,196 @@ const AIChecker = () => {
         }
     };
 
-    const handleRunCheck = () => {
-        if (selectedSymptoms.length === 0) return;
+    const runAiCheck = () => {
+        if (selectedSymptoms.length === 0 && notes.length < 10) {
+            alert('Please describe your problem (at least 10 letters) or pick a symptom.');
+            return;
+        }
 
         setIsAnalyzing(true);
         setResult(null);
 
+        // Simulate API call
         setTimeout(() => {
-            const hasCritical = selectedSymptoms.some(id => [1, 2, 8].includes(id));
-            const hasNeuro = selectedSymptoms.some(id => [3, 11, 12].includes(id));
-            const isVitalsCritical = parseInt(vitals.heartRate) < 50 || parseInt(vitals.spo2) < 90 || parseInt(vitals.heartRate) > 120;
-
-            let severity = 'stable';
-            let specialist = 'General Practitioner';
-            let confidence = 85;
-
-            if (hasCritical || isVitalsCritical) {
-                severity = 'critical';
-                specialist = 'Cardiologist / Emergency';
-                confidence = 92;
-            } else if (hasNeuro) {
-                severity = 'warning';
-                specialist = 'Neurologist';
-                confidence = 78;
-            }
-
-            const mockResults = {
-                critical: {
-                    status: 'Urgent Attention Required',
-                    advice: 'Emergency protocols suggested. Your combination of symptoms and vitals indicates high risk.',
-                    steps: ['Call emergency services if pain persists', 'Do not exert physically', 'Alert family member'],
-                    specialist: 'Cardiologist'
-                },
-                warning: {
-                    status: 'Potential Neurological Issue',
-                    advice: 'Your symptoms suggest a need for neurological evaluation. Monitor for balance issues.',
-                    steps: ['Avoid driving', 'Rest in a dark room', 'Schedule specialist visit'],
-                    specialist: 'Neurologist'
-                },
-                stable: {
-                    status: 'Symptoms Stable',
-                    advice: 'No immediate emergency detected. Symptoms may be due to fatigue or minor infection.',
-                    steps: ['Stay hydrated', 'Take OTC fever reducers if needed', 'Visit GP if symptoms persist > 48h'],
-                    specialist: 'General Physician'
-                }
-            };
-
-            setResult({
-                ...mockResults[severity],
-                severity,
-                confidence,
-                timestamp: new Date().toLocaleTimeString()
-            });
-
             setIsAnalyzing(false);
+            setResult({
+                riskLevel: selectedSymptoms.includes('chest_pain') || selectedSymptoms.includes('breathing') ? 'HIGH' : 'LOW',
+                summary: 'Based on your symptoms, this appears to be a mild condition but should be monitored. Your vitals are generally stable.',
+                recommendations: [
+                    'Rest and hydrate well today.',
+                    'Monitor your temperature every 4 hours.',
+                    'If symptoms worsen, contact a doctor immediately.'
+                ],
+                disclaimer: 'This is an AI generated summary and not a medical diagnosis.'
+            });
         }, 2000);
     };
 
-    const allSymptoms = symptomCategories.flatMap(c => c.symptoms);
-    const filteredSymptoms = allSymptoms.filter(s =>
-        s.label.toLowerCase().includes(searchTerm.toLowerCase())
-    );
+    const clearAll = () => {
+        setNotes('');
+        setSelectedSymptoms([]);
+        setResult(null);
+        setIsAnalyzing(false);
+    };
 
     return (
-        <div className="ai-checker-container">
-            <div className="ai-checker-grid">
+        <>
+            <style>{`
+                :root {
+                    --ai-primary: #3b82f6;
+                    --ai-bg-light: #f8fafc;
+                    --ai-card-shadow: 0 4px 24px rgba(0,0,0,0.06);
+                    --ai-text-dark: #1e293b;
+                    --ai-text-muted: #64748b;
+                }
 
-                {/* Left Panel: Symptoms Form */}
-                <div className="form-panel">
-                    <div className="panel-title-with-icon">
-                        <div className="icon-circle bg-blue-soft">
-                            <Stethoscope size={20} className="text-blue-primary" />
-                        </div>
-                        <div>
-                            <h2>Symptom Assessment</h2>
-                            <p>Identify your symptoms for rule-based analysis</p>
+                .symptom-chip {
+                    display: inline-flex; align-items: center; gap: 0.5rem;
+                    padding: 0.5rem 1.1rem; border-radius: 99px;
+                    border: 1.5px solid #e2e8f0;
+                    background: #ffffff; color: var(--ai-text-muted);
+                    cursor: pointer; font-size: 0.88rem; transition: all 0.2s;
+                    user-select: none; font-weight: 500;
+                }
+                .symptom-chip:hover { border-color: var(--ai-primary); color: var(--ai-primary); background: var(--ai-bg-light); }
+                .symptom-chip.active {
+                    border-color: var(--ai-primary); background: var(--ai-primary); color: #ffffff;
+                    box-shadow: 0 4px 12px rgba(59, 130, 246, 0.25);
+                }
+                
+                .chips-wrap { display: flex; flex-wrap: wrap; gap: 0.75rem; margin-top: 1rem; }
+                .ai-result-box { border-radius: 16px; padding: 1.75rem; margin-top: 1.5rem; background: #ffffff; border: 1px solid #f1f5f9; box-shadow: var(--ai-card-shadow); animation: fadeIn 0.4s ease; }
+                @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+
+                .risk-low    { border-left: 6px solid #22c55e; }
+                .risk-medium { border-left: 6px solid #f59e0b; }
+                .risk-high   { border-left: 6px solid #ef4444; }
+                
+                .risk-indicator { font-size: 2rem; margin-bottom: 0.5rem; }
+                .risk-label  { font-size: 1.1rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.1em; color: var(--ai-text-muted); }
+                .result-subtitle { font-size: 0.95rem; color: var(--ai-text-muted); font-weight: 500; }
+                .summary-text { font-size: 1.1rem; line-height: 1.7; margin-top: 1.25rem; color: var(--ai-text-dark); font-weight: 500; }
+                
+                .vitals-summary { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 1rem; margin-top: 1.5rem; }
+                .vital-row { background: var(--ai-bg-light); border: 1px solid #f1f5f9; border-radius: 12px; padding: 0.85rem 1.1rem; display: flex; justify-content: space-between; align-items: center; }
+                .vital-row .vname { font-size: 0.8rem; color: var(--ai-text-muted); font-weight: 700; }
+                .vital-row .vval  { font-weight: 800; font-size: 1.1rem; color: var(--ai-text-dark); }
+                
+                .result-card { min-height: 520px; }
+                .next-steps { margin-top: 1.75rem; padding-top: 1.5rem; border-top: 1px dashed #e2e8f0; }
+                .section-title-sm { font-size: 0.95rem; font-weight: 800; color: var(--ai-text-dark); text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 1rem; }
+                .steps-list { list-style: none; padding: 0; margin: 0; }
+                .steps-list li { display: flex; gap: 0.85rem; padding: 0.85rem 1rem; background: #f8fafc; border-radius: 12px; margin-bottom: 0.5rem; border: 1px solid #f1f5f9; font-size: 0.95rem; color: #334155; font-weight: 500; }
+                
+                .typing-indicator { display: flex; gap: 6px; justify-content: center; align-items: center; padding: 2.5rem; }
+                .typing-indicator span { width: 10px; height: 10px; background: var(--ai-primary); border-radius: 50%; opacity: 0.3; animation: blink 1.4s infinite both; }
+                .typing-indicator span:nth-child(2) { animation-delay: 0.2s; }
+                .typing-indicator span:nth-child(3) { animation-delay: 0.4s; }
+                @keyframes blink { 0%, 80%, 100% { opacity: 0.3; transform: scale(0.8); } 40% { opacity: 1; transform: scale(1.1); } }
+            `}</style>
+
+            <div className="grid grid-2" style={{ alignItems: 'stretch' }}>
+                <div className="card">
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '0.5rem' }}>
+                        <span style={{ fontSize: '1.75rem' }}>🩺</span>
+                        <div className="section-title">Health Check-in</div>
+                    </div>
+                    <p className="section-subtitle">Describe how you feel in normal words, or select symptoms below.</p>
+
+                    <div className="form-group mt-4">
+                        <label htmlFor="aiNotes" style={{ fontSize: '0.9rem', fontWeight: 700, color: 'var(--ai-text-dark)' }}>What is the problem?</label>
+                        <textarea 
+                            id="aiNotes" 
+                            className="form-control" 
+                            rows="6" 
+                            placeholder="E.g., 'My stomach has been hurting since morning and I feel like throwing up...'"
+                            value={notes}
+                            onChange={(e) => setNotes(e.target.value)}
+                            style={{ borderRadius: '12px', background: 'var(--ai-bg-light)', border: '1.5px solid #e2e8f0', width: '100%', padding: '0.75rem' }}
+                        ></textarea>
+                        <div className="muted mt-1" style={{ fontSize: '0.75rem' }}>Speak naturally, the AI understands normal language.</div>
+                    </div>
+
+                    <div className="mt-4">
+                        <label style={{ fontSize: '0.75rem', color: 'var(--ai-text-muted)', textTransform: 'uppercase', letterSpacing: '0.1em', fontWeight: 800 }}>Quick Symptom Tags</label>
+                        <div className="chips-wrap">
+                            {symptomOptions.map(sym => (
+                                <span 
+                                    key={sym.id} 
+                                    className={`symptom-chip ${selectedSymptoms.includes(sym.id) ? 'active' : ''}`}
+                                    onClick={() => toggleSymptom(sym.id)}
+                                >
+                                    {sym.label}
+                                </span>
+                            ))}
                         </div>
                     </div>
 
-                    {/* Search Bar */}
-                    <div className="search-container">
-                        <Search size={16} className="search-icon" />
-                        <input
-                            type="text"
-                            placeholder="Search symptoms (e.g. Cough, Pain...)"
-                            value={searchTerm}
-                            onChange={(e) => setSearchTerm(e.target.value)}
-                        />
-                        {searchTerm && <XCircle size={16} className="clear-search" onClick={() => setSearchTerm('')} />}
+                    <div className="mt-4 pt-2">
+                        <button className="btn btn-primary" style={{ width: '100%', borderRadius: '14px', padding: '0.9rem' }} onClick={runAiCheck} disabled={isAnalyzing}>
+                            {isAnalyzing ? '✨ Processing...' : '✨ Analyze Health Problem'}
+                        </button>
+                        <button className="btn btn-outline" style={{ width: '100%', marginTop: '0.5rem', fontSize: '0.85rem', border: 'none', color: 'var(--ai-text-muted)' }} onClick={clearAll}>
+                            🔄 Click here to reset
+                        </button>
                     </div>
 
-                    <div className="symptoms-scroll-area">
-                        {searchTerm ? (
-                            <div className="symptoms-section">
-                                <h3 className="section-label">SEARCH RESULTS</h3>
-                                <div className="symptoms-pills">
-                                    {filteredSymptoms.map(s => (
-                                        <button
-                                            key={s.id}
-                                            className={`symptom-pill ${selectedSymptoms.includes(s.id) ? 'active' : ''}`}
-                                            onClick={() => toggleSymptom(s.id)}
-                                        >
-                                            {s.label}
-                                        </button>
-                                    ))}
-                                    {filteredSymptoms.length === 0 && <p className="no-results">No symptoms found.</p>}
-                                </div>
+                    {latestMetric && (
+                        <div style={{ marginTop: '2rem', paddingTop: '1.5rem', borderTop: '1px dashed #e2e8f0' }}>
+                            <label style={{ fontSize: '0.7rem', color: 'var(--ai-text-muted)', textTransform: 'uppercase', letterSpacing: '0.15em', fontWeight: 800 }}>Reference Health Data</label>
+                            <div className="vitals-summary">
+                                {latestMetric.heartRate && <div className="vital-row"><span className="vname">Heart Rate</span><span className="vval">{latestMetric.heartRate} bpm</span></div>}
+                                {latestMetric.bpSystolic && <div className="vital-row"><span className="vname">Blood Pressure</span><span className="vval">{latestMetric.bpSystolic}/{latestMetric.bpDiastolic}</span></div>}
+                                {latestMetric.spo2 && <div className="vital-row"><span className="vname">Oxygen (SpO2)</span><span className="vval">{latestMetric.spo2}%</span></div>}
                             </div>
-                        ) : (
-                            symptomCategories.map(cat => (
-                                <div key={cat.name} className="symptoms-section">
-                                    <h3 className="section-label">
-                                        {cat.icon} {cat.name.toUpperCase()}
-                                    </h3>
-                                    <div className="symptoms-pills">
-                                        {cat.symptoms.map(s => (
-                                            <button
-                                                key={s.id}
-                                                className={`symptom-pill ${selectedSymptoms.includes(s.id) ? 'active' : ''}`}
-                                                onClick={() => toggleSymptom(s.id)}
-                                            >
-                                                {s.label}
-                                            </button>
-                                        ))}
-                                    </div>
-                                </div>
-                            ))
-                        )}
-                    </div>
-
-                    <div className="vitals-summary-box">
-                        <div className="vitals-box-header">
-                            <h4>Analyzing with Vitals:</h4>
-                            <span className="vitals-time">{vitals.timestamp || 'Latest'}</span>
                         </div>
-                        <div className="vitals-mini-row">
-                            <span title="HR"><Heart size={12} /> {vitals.heartRate || '--'}</span>
-                            <span title="BP"><Activity size={12} /> {vitals.bpSystolic ? `${vitals.bpSystolic}/${vitals.bpDiastolic}` : '--'}</span>
-                            <span title="SpO2"><Droplets size={12} /> {vitals.spo2 || '--'}%</span>
-                            <span title="Temp"><Thermometer size={12} /> {vitals.temperature || '--'}°C</span>
-                        </div>
-                    </div>
-
-                    <div className="form-actions">
-                        <button
-                            className="btn-ai-run"
-                            disabled={selectedSymptoms.length === 0 || isAnalyzing}
-                            onClick={handleRunCheck}
-                        >
-                            <Bot size={18} />
-                            {isAnalyzing ? 'Analyzing System...' : 'Run Analysis'}
-                        </button>
-                        <button className="btn-clear" onClick={() => { setSelectedSymptoms([]); setResult(null); }}>
-                            Reset
-                        </button>
-                    </div>
+                    )}
                 </div>
 
-                {/* Right Panel: AI Prediction */}
-                <div className="prediction-panel">
-                    {!result && !isAnalyzing && (
-                        <div className="empty-state-v2">
-                            <div className="pulse-icon">
-                                <Microscope size={40} className="text-blue-primary" />
-                            </div>
-                            <h3>AI Health Analysis</h3>
-                            <p>Select your symptoms and run the analysis to receive a rule-based health assessment.</p>
-                            <div className="feature-list">
-                                <div className="feature-item"><CheckCircle2 size={14} /> Rule-based clinical logic</div>
-                                <div className="feature-item"><CheckCircle2 size={14} /> Vitals data integration</div>
-                                <div className="feature-item"><CheckCircle2 size={14} /> Specialist recommendations</div>
-                            </div>
+                <div className="card result-card" style={{ display: 'flex', flexDirection: 'column' }}>
+                    {!isAnalyzing && !result && (
+                        <div style={{ textAlign: 'center', padding: '4rem 2rem' }}>
+                            <div style={{ fontSize: '3rem', marginBottom: '1rem' }}>🤔</div>
+                            <div className="muted" style={{ fontSize: '1.1rem', fontWeight: 500 }}>Ready to help. Describe your problem on the left and click analyze.</div>
                         </div>
                     )}
 
                     {isAnalyzing && (
-                        <div className="analyzing-state-v2">
-                            <div className="ai-loader">
-                                <div className="circle"></div>
-                                <Bot size={32} className="bot-blink" />
-                            </div>
-                            <h4>AI Engine Analyzing</h4>
-                            <p>Correlating symptoms with heart rate and blood pressure trends...</p>
+                        <div style={{ textAlign: 'center', padding: '4rem 2rem' }}>
+                            <div className="typing-indicator"><span></span><span></span><span></span></div>
+                            <div style={{ fontWeight: 700, color: 'var(--ai-text-dark)' }}>AI is thinking...</div>
+                            <div style={{ fontSize: '0.85rem', color: 'var(--ai-text-muted)', marginTop: '0.5rem' }}>Analyzing your problem in plain language.</div>
                         </div>
                     )}
 
                     {result && !isAnalyzing && (
-                        <div className={`result-card-v2 ${result.severity}`}>
-                            <div className="result-badge">
-                                <AlertTriangle size={14} /> {result.severity.toUpperCase()}
-                            </div>
-
-                            <div className="result-main-info">
-                                <h3>{result.status}</h3>
-                                <div className="confidence-meter">
-                                    <div className="meter-label">AI Confidence</div>
-                                    <div className="meter-bar">
-                                        <div className="meter-fill" style={{ width: `${result.confidence}%` }}></div>
-                                    </div>
-                                    <div className="meter-value">{result.confidence}%</div>
+                        <div className={`ai-result-box risk-${result.riskLevel.toLowerCase()}`}>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '1.25rem' }}>
+                                <div className="risk-indicator">{result.riskLevel === 'HIGH' ? '🔴' : result.riskLevel === 'MEDIUM' ? '🟡' : '🟢'}</div>
+                                <div>
+                                    <div className="risk-label">{result.riskLevel} RISK</div>
+                                    <div className="result-subtitle">Analysis Complete</div>
                                 </div>
                             </div>
 
-                            <div className="result-details">
-                                <div className="detail-item">
-                                    <label>Analysis Outcome</label>
-                                    <p>{result.advice}</p>
-                                </div>
-                                <div className="detail-item">
-                                    <label>Recommended Specialist</label>
-                                    <div className="specialist-tag">
-                                        <Stethoscope size={14} /> {result.specialist}
-                                    </div>
-                                </div>
-                                <div className="detail-item">
-                                    <label>Recommended Next Steps</label>
-                                    <ul className="steps-list">
-                                        {result.steps.map((step, idx) => (
-                                            <li key={idx}><ChevronRight size={14} /> {step}</li>
-                                        ))}
-                                    </ul>
-                                </div>
-                            </div>
+                            <div className="summary-text">{result.summary}</div>
 
-                            <div className="result-actions">
-                                <button className="btn-action-primary" onClick={() => window.location.href = '/patient/appointments'}>
-                                    Book {result.specialist}
-                                </button>
-                                <button className="btn-action-outline" onClick={() => setResult(null)}>
-                                    New Analysis
-                                </button>
+                            <div className="next-steps">
+                                <div className="section-title-sm">Suggested Next Steps</div>
+                                <ul className="steps-list">
+                                    {result.recommendations.map((rec, i) => (
+                                        <li key={i}><span className="icon">👉</span><span>{rec}</span></li>
+                                    ))}
+                                    <li style={{ background: 'none', border: 'none', marginTop: '1rem' }}>
+                                        <span style={{ fontSize: '0.8rem', color: 'var(--ai-text-muted)', fontStyle: 'italic' }}>{result.disclaimer}</span>
+                                    </li>
+                                </ul>
                             </div>
                         </div>
                     )}
-
-                    <div className="prediction-disclaimer">
-                        <Info size={14} />
-                        <span>This tool provides rule-based information, not a medical diagnosis. In case of emergency, call 911 immediately.</span>
-                    </div>
                 </div>
-
             </div>
-        </div>
+        </>
     );
 };
 
