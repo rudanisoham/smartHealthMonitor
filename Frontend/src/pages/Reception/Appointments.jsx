@@ -82,10 +82,20 @@ const Appointments = () => {
                 <td>
                   <div className="flex gap-2">
                     {app.status === 'Pending' && (
-                      <button className="btn-icon text-success" title="Confirm"><CheckCircle size={16} /></button>
+                      <button 
+                        className="btn-icon text-success" 
+                        title="Confirm"
+                        onClick={() => navigate(`/reception/appointments/${app.id}/assign`)}
+                      >
+                        <CheckCircle size={16} />
+                      </button>
                     )}
-                    <button className="btn-icon text-danger" title="Cancel"><XCircle size={16} /></button>
-                    <button className="btn-icon" title="Details"><ChevronRight size={16} /></button>
+                    <button className="btn-icon text-danger" title="Cancel">
+                      <XCircle size={16} />
+                    </button>
+                    <button className="btn-icon" title="Details">
+                      <ChevronRight size={16} />
+                    </button>
                   </div>
                 </td>
               </tr>

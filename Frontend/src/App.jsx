@@ -56,11 +56,11 @@ import PatientDoctorProfile from './pages/patient/DoctorProfile';
 import PatientWriteReview from './pages/patient/WriteReview';
 import PatientPrescriptionDetail from './pages/patient/PrescriptionDetail';
 import PatientReportDetail from './pages/patient/ReportDetail';
-import PatientLogin from './pages/auth/patient/Login';
-import PatientRegister from './pages/auth/patient/Register';
-import PatientResetPassword from './pages/auth/patient/ResetPassword';
-import PatientVerifyOTP from './pages/auth/patient/VerifyOTP';
-import PatientSetNewPassword from './pages/auth/patient/SetNewPassword';
+import PatientLogin from './pages/Auth/patient/Login';
+import PatientRegister from './pages/Auth/patient/Register';
+import PatientResetPassword from './pages/Auth/patient/ResetPassword';
+import PatientVerifyOTP from './pages/Auth/patient/VerifyOTP';
+import PatientSetNewPassword from './pages/Auth/patient/SetNewPassword';
 
 // Reception Pages
 import ReceptionDashboard from './pages/Reception/Dashboard';
@@ -70,10 +70,10 @@ import ReceptionAppointments from './pages/Reception/Appointments';
 import ReceptionBeds from './pages/Reception/BedManagement';
 import ReceptionBilling from './pages/Reception/Billing';
 import ReceptionSettings from './pages/Reception/Settings';
-import ReceptionLogin from './pages/auth/reception/Login';
+import AssignAppointment from './pages/Reception/AssignAppointment';
+import ReceptionLogin from './pages/Auth/reception/Login';
 
 // Styles
-import './App.css';
 import './styles/admin.css';
 import './styles/patient.css';
 
@@ -151,6 +151,7 @@ function App() {
           <Route path="patients" element={<ReceptionPatients />} />
           <Route path="patient-entry" element={<ReceptionPatientEntry />} />
           <Route path="appointments" element={<ReceptionAppointments />} />
+          <Route path="appointments/:id/assign" element={<AssignAppointment />} />
           <Route path="beds" element={<ReceptionBeds />} />
           <Route path="billing" element={<ReceptionBilling />} />
           <Route path="settings" element={<ReceptionSettings />} />

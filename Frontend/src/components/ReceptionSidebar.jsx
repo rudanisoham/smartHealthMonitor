@@ -29,10 +29,10 @@ const ReceptionSidebar = ({ isCollapsed }) => {
     <aside className={`admin-sidebar ${isCollapsed ? 'collapsed' : ''}`}>
       <div className="sidebar-logo">
         <div className="sidebar-logo-icon">
-          <Hospital size={22} strokeWidth={2.5} />
+          <Hospital className="nav-icon" style={{ width: '22px', height: '22px', strokeWidth: '2.5' }} />
         </div>
         <div className="sidebar-logo-text sidebar-text">
-          <div>Smart Health</div>
+          Smart Health
           <span>Reception Desk</span>
         </div>
       </div>
@@ -45,7 +45,9 @@ const ReceptionSidebar = ({ isCollapsed }) => {
             to={item.path}
             className={({ isActive }) => `sidebar-link ${isActive ? 'active' : ''}`}
           >
-            <span className="icon">{item.icon}</span>
+            <span className="icon">
+              {React.cloneElement(item.icon, { className: 'nav-icon' })}
+            </span>
             <span className="sidebar-text">{item.name}</span>
           </NavLink>
         ))}
@@ -55,10 +57,10 @@ const ReceptionSidebar = ({ isCollapsed }) => {
       <div className="sidebar-nav">
         <button 
           onClick={() => navigate('/auth/reception/login')} 
-          className="sidebar-link"
-          style={{ width: '100%', cursor: 'pointer' }}
+          className="sidebar-link w-full"
+          style={{ cursor: 'pointer', textAlign: 'left' }}
         >
-          <span className="icon"><LogOut size={18} /></span>
+          <span className="icon"><LogOut className="nav-icon" /></span>
           <span className="sidebar-text">Sign out</span>
         </button>
       </div>

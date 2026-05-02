@@ -96,7 +96,11 @@ const Dashboard = () => {
                     <td><span className="badge-soft">{item.dept}</span></td>
                     <td><span className="muted">{item.time}</span></td>
                     <td>
-                      <button className="btn-icon" title="Assign Doctor">
+                      <button 
+                        className="btn-icon" 
+                        title="Assign Doctor"
+                        onClick={() => navigate(`/reception/appointments/${item.id}/assign`)}
+                      >
                         <ArrowRight size={14} />
                       </button>
                     </td>
