@@ -79,6 +79,7 @@ import MedicalAddMedicine from './pages/Medical/AddMedicine';
 import MedicalPatientSearch from './pages/Medical/PatientSearch';
 import MedicalUploadReport from './pages/Medical/UploadReport';
 import MedicalReports from './pages/Medical/Reports';
+import MedicalPrescriptions from './pages/Medical/Prescriptions';
 import MedicalLogin from './pages/Auth/medical/Login';
 
 // Styles
@@ -175,6 +176,7 @@ function App() {
           <Route path="patient-search" element={<MedicalPatientSearch />} />
           <Route path="upload-report" element={<MedicalUploadReport />} />
           <Route path="reports" element={<MedicalReports />} />
+          <Route path="prescriptions" element={<MedicalPrescriptions />} />
         </Route>
 
         {/* Catch-all route */}

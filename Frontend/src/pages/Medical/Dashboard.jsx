@@ -7,7 +7,9 @@ import {
   Clock, 
   CheckCircle,
   FileText,
-  UserPlus
+  UserPlus,
+  Upload,
+  PlusCircle
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 
