@@ -2,30 +2,37 @@ import React from 'react';
 import { NavLink } from 'react-router-dom';
 import { 
   LayoutDashboard, 
-  Pill, 
+  FlaskConical, 
   FileText, 
   Upload, 
   Search, 
   Settings, 
   LogOut,
-  PlusCircle,
-  ClipboardList
+  ClipboardList,
+  History
 } from 'lucide-react';
 
-const MedicalSidebar = ({ collapsed }) => {
+const LabSidebar = ({ collapsed }) => {
   const navItems = [
     { 
       section: 'Main',
       items: [
-        { path: '/medical/dashboard', icon: <LayoutDashboard className="nav-icon" />, label: 'Dashboard' },
-        { path: '/medical/inventory', icon: <Pill className="nav-icon" />, label: 'Medicine Inventory' },
-        { path: '/medical/prescriptions', icon: <ClipboardList className="nav-icon" />, label: 'Prescriptions' },
+        { path: '/lab/dashboard', icon: <LayoutDashboard className="nav-icon" />, label: 'Dashboard' },
+        { path: '/lab/patient-search', icon: <Search className="nav-icon" />, label: 'Patient Lookup' },
+      ]
+    },
+    {
+      section: 'Reports',
+      items: [
+        { path: '/lab/upload-report', icon: <Upload className="nav-icon" />, label: 'Upload Report' },
+        { path: '/lab/history', icon: <History className="nav-icon" />, label: 'Report History' },
+        { path: '/lab/tests', icon: <FlaskConical className="nav-icon" />, label: 'Test Directory' },
       ]
     },
     {
       section: 'System',
       items: [
-        { path: '/medical/settings', icon: <Settings className="nav-icon" />, label: 'Settings' },
+        { path: '/lab/settings', icon: <Settings className="nav-icon" />, label: 'Settings' },
       ]
     }
   ];
@@ -33,12 +40,12 @@ const MedicalSidebar = ({ collapsed }) => {
   return (
     <aside className={`admin-sidebar ${collapsed ? 'collapsed' : ''}`}>
       <div className="sidebar-logo">
-        <div className="sidebar-logo-icon">
-          <Pill size={24} />
+        <div className="sidebar-logo-icon" style={{ background: 'linear-gradient(135deg, #10b981, #059669)' }}>
+          <FlaskConical size={24} />
         </div>
         {!collapsed && (
           <div className="sidebar-logo-text">
-            Smart Health <span>Medical Portal</span>
+            Smart Health <span>Laboratory Portal</span>
           </div>
         )}
       </div>
@@ -66,8 +73,7 @@ const MedicalSidebar = ({ collapsed }) => {
           className="sidebar-link w-full text-danger" 
           style={{ cursor: 'pointer', textAlign: 'left', background: 'none', border: 'none' }}
           onClick={() => {
-            // handle logout
-            window.location.href = '/auth/medical/login';
+            window.location.href = '/auth/lab/login';
           }}
         >
           <span className="icon" style={{ background: 'var(--danger-light)', color: 'var(--danger)' }}>
@@ -80,4 +86,4 @@ const MedicalSidebar = ({ collapsed }) => {
   );
 };
 
-export default MedicalSidebar;
+export default LabSidebar;

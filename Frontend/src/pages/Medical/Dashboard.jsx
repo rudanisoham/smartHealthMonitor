@@ -9,7 +9,8 @@ import {
   FileText,
   UserPlus,
   Upload,
-  PlusCircle
+  PlusCircle,
+  Settings
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 
@@ -18,7 +19,7 @@ const MedicalDashboard = () => {
     { label: 'Total Medicines', value: '1,248', icon: <Pill />, color: 'blue', trend: '+12 this week' },
     { label: 'Pending Prescriptions', value: '28', icon: <ClipboardList />, color: 'yellow', trend: '8 urgent' },
     { label: 'Low Stock Alerts', value: '14', icon: <AlertTriangle />, color: 'red', trend: 'Immediate action' },
-    { label: 'Reports Pending', value: '42', icon: <FileText />, color: 'blue', trend: 'Due today' },
+    { label: 'Dispensed Today', value: '36', icon: <CheckCircle />, color: 'blue', trend: 'Steady flow' },
   ];
 
   const pendingPrescriptions = [
@@ -132,21 +133,21 @@ const MedicalDashboard = () => {
         <div className="card">
           <h3 className="card-title mb-4">Quick Actions</h3>
           <div className="grid grid-2 gap-3">
-            <Link to="/medical/upload-report" className="btn btn-primary" style={{ padding: '1rem', flexDirection: 'column', gap: '0.5rem' }}>
-              <Upload size={24} />
-              <span style={{ fontSize: '0.85rem' }}>Upload Report</span>
-            </Link>
-            <Link to="/medical/inventory/add" className="btn btn-outline" style={{ padding: '1rem', flexDirection: 'column', gap: '0.5rem' }}>
+            <Link to="/medical/inventory/add" className="btn btn-primary" style={{ padding: '1rem', flexDirection: 'column', gap: '0.5rem' }}>
               <PlusCircle size={24} />
               <span style={{ fontSize: '0.85rem' }}>Add Medicine</span>
             </Link>
-            <Link to="/medical/patient-search" className="btn btn-outline" style={{ padding: '1rem', flexDirection: 'column', gap: '0.5rem' }}>
-              <UserPlus size={24} />
-              <span style={{ fontSize: '0.85rem' }}>Patient Search</span>
+            <Link to="/medical/inventory" className="btn btn-outline" style={{ padding: '1rem', flexDirection: 'column', gap: '0.5rem' }}>
+              <Pill size={24} />
+              <span style={{ fontSize: '0.85rem' }}>Inventory</span>
             </Link>
-            <Link to="/medical/reports" className="btn btn-outline" style={{ padding: '1rem', flexDirection: 'column', gap: '0.5rem' }}>
-              <FileText size={24} />
-              <span style={{ fontSize: '0.85rem' }}>View Reports</span>
+            <Link to="/medical/prescriptions" className="btn btn-outline" style={{ padding: '1rem', flexDirection: 'column', gap: '0.5rem' }}>
+              <ClipboardList size={24} />
+              <span style={{ fontSize: '0.85rem' }}>Prescriptions</span>
+            </Link>
+            <Link to="/medical/settings" className="btn btn-outline" style={{ padding: '1rem', flexDirection: 'column', gap: '0.5rem' }}>
+              <Settings size={24} />
+              <span style={{ fontSize: '0.85rem' }}>Settings</span>
             </Link>
           </div>
         </div>
