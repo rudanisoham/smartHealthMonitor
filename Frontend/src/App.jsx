@@ -14,6 +14,16 @@ import Register from './pages/auth/patient/Register';
 import ResetPassword from './pages/auth/patient/ResetPassword';
 import VerifyOTP from './pages/auth/patient/VerifyOTP';
 import SetNewPassword from './pages/auth/patient/SetNewPassword';
+
+import ReceptionLayout from './components/ReceptionLayout';
+import ReceptionDashboard from './pages/Reception/Dashboard';
+import ReceptionPatients from './pages/Reception/Patients';
+import ReceptionPatientEntry from './pages/Reception/PatientEntry';
+import ReceptionAppointments from './pages/Reception/Appointments';
+import ReceptionBeds from './pages/Reception/BedManagement';
+import ReceptionBilling from './pages/Reception/Billing';
+import ReceptionSettings from './pages/Reception/Settings';
+import ReceptionLogin from './pages/auth/reception/Login';
 import './App.css';
 
 function App() {
@@ -28,6 +38,7 @@ function App() {
         <Route path="/auth/patient/reset-password" element={<ResetPassword />} />
         <Route path="/auth/patient/verify-otp" element={<VerifyOTP />} />
         <Route path="/auth/patient/set-new-password" element={<SetNewPassword />} />
+        <Route path="/auth/reception/login" element={<ReceptionLogin />} />
 
         {/* Patient Panel Routes */}
         <Route path="/patient" element={<PatientLayout />}>
@@ -40,6 +51,17 @@ function App() {
           <Route path="reports" element={<Reports />} />
           <Route path="notifications" element={<Notifications />} />
           <Route path="profile" element={<Profile />} />
+        </Route>
+
+        {/* Reception Panel Routes */}
+        <Route path="/reception" element={<ReceptionLayout />}>
+          <Route path="dashboard" element={<ReceptionDashboard />} />
+          <Route path="patients" element={<ReceptionPatients />} />
+          <Route path="patient-entry" element={<ReceptionPatientEntry />} />
+          <Route path="appointments" element={<ReceptionAppointments />} />
+          <Route path="beds" element={<ReceptionBeds />} />
+          <Route path="billing" element={<ReceptionBilling />} />
+          <Route path="settings" element={<ReceptionSettings />} />
         </Route>
       </Routes>
     </Router>
