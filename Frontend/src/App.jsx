@@ -4,6 +4,7 @@ import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-d
 import PatientLayout from './components/PatientLayout';
 import DoctorLayout from './components/DoctorLayout';
 import ReceptionLayout from './components/ReceptionLayout';
+import MedicalLayout from './components/MedicalLayout';
 
 // Public Pages
 import Landing from './pages/Landing';
@@ -72,6 +73,10 @@ import ReceptionBilling from './pages/Reception/Billing';
 import ReceptionSettings from './pages/Reception/Settings';
 import AssignAppointment from './pages/Reception/AssignAppointment';
 import ReceptionLogin from './pages/Auth/reception/Login';
+import MedicalDashboard from './pages/Medical/Dashboard';
+import MedicalInventory from './pages/Medical/Inventory';
+import MedicalAddMedicine from './pages/Medical/AddMedicine';
+import MedicalLogin from './pages/Auth/medical/Login';
 
 // Styles
 import './styles/admin.css';
@@ -155,6 +160,15 @@ function App() {
           <Route path="beds" element={<ReceptionBeds />} />
           <Route path="billing" element={<ReceptionBilling />} />
           <Route path="settings" element={<ReceptionSettings />} />
+        </Route>
+
+        {/* Medical Routes */}
+        <Route path="/auth/medical/login" element={<MedicalLogin />} />
+        <Route path="/medical" element={<MedicalLayout />}>
+          <Route index element={<Navigate to="dashboard" replace />} />
+          <Route path="dashboard" element={<MedicalDashboard />} />
+          <Route path="inventory" element={<MedicalInventory />} />
+          <Route path="inventory/add" element={<MedicalAddMedicine />} />
         </Route>
 
         {/* Catch-all route */}
