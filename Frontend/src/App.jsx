@@ -4,6 +4,7 @@ import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-d
 import PatientLayout from './components/PatientLayout';
 import DoctorLayout from './components/DoctorLayout';
 import ReceptionLayout from './components/ReceptionLayout';
+import MedicalLayout from './components/MedicalLayout';
 
 // Public Pages
 import Landing from './pages/Landing';
@@ -72,6 +73,23 @@ import ReceptionBilling from './pages/Reception/Billing';
 import ReceptionSettings from './pages/Reception/Settings';
 import AssignAppointment from './pages/Reception/AssignAppointment';
 import ReceptionLogin from './pages/Auth/reception/Login';
+import MedicalDashboard from './pages/Medical/Dashboard';
+import MedicalInventory from './pages/Medical/Inventory';
+import MedicalAddMedicine from './pages/Medical/AddMedicine';
+import MedicalPatientSearch from './pages/Medical/PatientSearch';
+import MedicalUploadReport from './pages/Medical/UploadReport';
+import MedicalReports from './pages/Medical/Reports';
+import MedicalPrescriptions from './pages/Medical/Prescriptions';
+import MedicalLogin from './pages/Auth/medical/Login';
+
+// Lab Panel Components
+import LabLayout from './components/LabLayout';
+import LabDashboard from './pages/Lab/Dashboard';
+import LabPatientSearch from './pages/Lab/PatientSearch';
+import LabUploadReport from './pages/Lab/UploadReport';
+import LabHistory from './pages/Lab/History';
+import LabTests from './pages/Lab/Tests';
+import LabLogin from './pages/Auth/lab/Login';
 
 // Styles
 import './styles/admin.css';
@@ -155,6 +173,27 @@ function App() {
           <Route path="beds" element={<ReceptionBeds />} />
           <Route path="billing" element={<ReceptionBilling />} />
           <Route path="settings" element={<ReceptionSettings />} />
+        </Route>
+
+        {/* Medical Routes */}
+        <Route path="/auth/medical/login" element={<MedicalLogin />} />
+        <Route path="/medical" element={<MedicalLayout />}>
+          <Route index element={<Navigate to="dashboard" replace />} />
+          <Route path="dashboard" element={<MedicalDashboard />} />
+          <Route path="inventory" element={<MedicalInventory />} />
+          <Route path="inventory/add" element={<MedicalAddMedicine />} />
+          <Route path="prescriptions" element={<MedicalPrescriptions />} />
+        </Route>
+
+        {/* Lab Panel Routes */}
+        <Route path="/auth/lab/login" element={<LabLogin />} />
+        <Route path="/lab" element={<LabLayout />}>
+          <Route index element={<Navigate to="dashboard" replace />} />
+          <Route path="dashboard" element={<LabDashboard />} />
+          <Route path="patient-search" element={<LabPatientSearch />} />
+          <Route path="upload-report" element={<LabUploadReport />} />
+          <Route path="history" element={<LabHistory />} />
+          <Route path="tests" element={<LabTests />} />
         </Route>
 
         {/* Catch-all route */}
