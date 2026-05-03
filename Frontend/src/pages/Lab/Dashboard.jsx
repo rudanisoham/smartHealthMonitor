@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { 
   FlaskConical, 
   ClipboardList, 
@@ -14,20 +14,35 @@ import {
   Search
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
+import { getLabDashboard } from '../../utils/api';
 
 const LabDashboard = () => {
+  const [data, setData] = useState(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchDashboard = async () => {
+      try {
+        const res = await getLabDashboard();
+        setData(res.data.data);
+      } catch (err) {
+        console.error("Failed to fetch lab dashboard", err);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchDashboard();
+  }, []);
   const stats = [
-    { label: 'Samples Collected', value: '84', icon: <FlaskConical />, color: 'blue', trend: '+14 today' },
-    { label: 'Pending Tests', value: '18', icon: <Activity />, color: 'yellow', trend: '5 urgent' },
-    { label: 'Reports Ready', value: '12', icon: <CheckCircle />, color: 'emerald', trend: 'To be signed' },
-    { label: 'Turnaround Time', value: '4.2h', icon: <Clock />, color: 'purple', trend: '-20% improvement' },
+    { label: 'Samples Collected', value: data?.stats?.samplesCollected || 0, icon: <FlaskConical />, color: 'blue', trend: 'Latest' },
+    { label: 'Pending Tests', value: data?.stats?.pendingTests || 0, icon: <Activity />, color: 'yellow', trend: 'In Queue' },
+    { label: 'Reports Ready', value: data?.stats?.reportsReady || 0, icon: <CheckCircle />, color: 'emerald', trend: 'To be signed' },
+    { label: 'Turnaround Time', value: data?.stats?.turnaroundTime || 'N/A', icon: <Clock />, color: 'purple', trend: 'Average' },
   ];
 
-  const recentRequests = [
-    { id: 'LAB-501', patient: 'Sarah Miller', test: 'Complete Blood Count', priority: 'Urgent', status: 'In Progress' },
-    { id: 'LAB-502', patient: 'James Wilson', test: 'Lipid Profile', priority: 'Normal', status: 'Pending' },
-    { id: 'LAB-503', patient: 'Linda Chen', test: 'Urine Analysis', priority: 'Normal', status: 'Pending' },
-  ];
+  const recentRequests = data?.recentRequests || [];
+
+  if (loading) return <div style={{ padding: '2rem', textAlign: 'center' }}>Loading dashboard...</div>;
 
   return (
     <div className="lab-dashboard">
@@ -71,8 +86,8 @@ const LabDashboard = () => {
               </thead>
               <tbody>
                 {recentRequests.map((req) => (
-                  <tr key={req.id}>
-                    <td><strong>{req.id}</strong></td>
+                  <tr key={req._id}>
+                    <td><strong>{req._id.slice(-6).toUpperCase()}</strong></td>
                     <td>{req.patient}</td>
                     <td><span className="badge-soft">{req.test}</span></td>
                     <td>

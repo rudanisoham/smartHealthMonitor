@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { 
   Clock, 
@@ -10,32 +10,58 @@ import {
   ArrowRight,
   MoreVertical
 } from 'lucide-react';
+import { getReceptionDashboard, getReceptionBeds } from '../../utils/api';
 
 const Dashboard = () => {
   const navigate = useNavigate();
+  const [data, setData] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [bedOverview, setBedOverview] = useState([]);
+
+  useEffect(() => {
+    const fetchDashboard = async () => {
+      try {
+        const [dashRes, bedRes] = await Promise.all([
+          getReceptionDashboard(),
+          getReceptionBeds()
+        ]);
+        setData(dashRes.data.data);
+        
+        const beds = (bedRes.data.data || []).slice(0, 5).map(d => {
+          const percent = d.total > 0 ? Math.round((d.occupied / d.total) * 100) : 0;
+          let status = 'Available';
+          if (percent >= 100) status = 'Full';
+          else if (percent > 90) status = 'Critical';
+          else if (percent > 70) status = 'Limited';
+          
+          return {
+            dept: d.name,
+            available: d.total - d.occupied,
+            total: d.total,
+            status,
+            percent
+          };
+        });
+        setBedOverview(beds);
+      } catch (err) {
+        console.error("Failed to fetch reception dashboard", err);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchDashboard();
+  }, []);
 
   const stats = [
-    { label: 'Awaiting Assignment', value: '12', subtext: 'Patients in queue', color: '#f59e0b', icon: <Clock size={22} /> },
-    { label: "Today's Appointments", value: '28', subtext: 'Scheduled for today', color: '#3b82f6', icon: <Calendar size={22} /> },
-    { label: 'Total Appointments', value: '154', subtext: 'All time records', color: '#10b981', icon: <Layers size={22} /> },
-    { label: 'Total Patients', value: '432', subtext: 'Registered in system', color: '#6366f1', icon: <Users size={22} /> },
+    { label: 'Awaiting Assignment', value: data?.stats?.pendingAppointments || 0, subtext: 'Patients in queue', color: '#f59e0b', icon: <Clock size={22} /> },
+    { label: "Today's Appointments", value: data?.stats?.todaysAppointments || 0, subtext: 'Scheduled for today', color: '#3b82f6', icon: <Calendar size={22} /> },
+    { label: 'Total Appointments', value: data?.stats?.totalAppointments || 0, subtext: 'All time records', color: '#10b981', icon: <Layers size={22} /> },
+    { label: 'Total Patients', value: data?.stats?.totalPatients || 0, subtext: 'Registered in system', color: '#6366f1', icon: <Users size={22} /> },
   ];
 
-  const pendingQueue = [
-    { id: '1', name: 'John Smith', email: 'john.smith@email.com', time: '10:30 AM', dept: 'Cardiology' },
-    { id: '2', name: 'Sarah Wilson', email: 'sarah.w@email.com', time: '11:15 AM', dept: 'General Medicine' },
-    { id: '3', name: 'Michael Brown', email: 'm.brown@email.com', time: '01:45 PM', dept: 'Neurology' },
-    { id: '4', name: 'Emily Davis', email: 'emily.d@email.com', time: '02:30 PM', dept: 'Pediatrics' },
-    { id: '5', name: 'Robert Johnson', email: 'robt.j@email.com', time: '03:15 PM', dept: 'Cardiology' },
-  ];
+  const pendingQueue = data?.pendingQueue || [];
 
-  const bedOverview = [
-    { dept: 'Cardiology', available: 5, total: 20, status: 'Available', percent: 75 },
-    { dept: 'Neurology', available: 2, total: 15, status: 'Limited', percent: 86 },
-    { dept: 'Pediatrics', available: 0, total: 10, status: 'Full', percent: 100 },
-    { dept: 'General Medicine', available: 8, total: 40, status: 'Available', percent: 80 },
-    { dept: 'ICU', available: 1, total: 12, status: 'Critical', percent: 92 },
-  ];
+  if (loading) return <div style={{ padding: '2rem', textAlign: 'center' }}>Loading dashboard...</div>;
 
   return (
     <div className="admin-content">
@@ -82,11 +108,11 @@ const Dashboard = () => {
               </thead>
               <tbody>
                 {pendingQueue.map((item) => (
-                  <tr key={item.id}>
+                  <tr key={item._id}>
                     <td>
                       <div className="flex-author">
                         <div className="header-avatar" style={{ width: '32px', height: '32px', fontSize: '0.8rem' }}>
-                          {item.name.charAt(0)}
+                          {item.name ? item.name.charAt(0).toUpperCase() : 'U'}
                         </div>
                         <div className="author-info">
                           <span className="author-name" style={{ fontSize: '0.85rem' }}>{item.name}</span>
@@ -99,7 +125,7 @@ const Dashboard = () => {
                       <button 
                         className="btn-icon" 
                         title="Assign Doctor"
-                        onClick={() => navigate(`/reception/appointments/${item.id}/assign`)}
+                        onClick={() => navigate(`/reception/appointments/${item._id}/assign`)}
                       >
                         <ArrowRight size={14} />
                       </button>

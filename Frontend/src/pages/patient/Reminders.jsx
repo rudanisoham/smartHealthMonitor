@@ -1,6 +1,11 @@
 import React, { useState, useEffect } from 'react';
+import { getPatientMe, updatePatientMe } from '../../utils/api';
+import { Loader, Bell, Clock, Plus, CheckCircle } from 'lucide-react';
 
 const Reminders = () => {
+    const [loading, setLoading] = useState(true);
+    const [saving, setSaving] = useState(false);
+    const [successMsg, setSuccessMsg] = useState('');
     const [preferences, setPreferences] = useState({
         enabled: true,
         morning: '08:00',
@@ -8,183 +13,162 @@ const Reminders = () => {
         night: '21:00'
     });
 
-    const [customReminders, setCustomReminders] = useState([
-        { id: 1, title: 'Drink Water', type: 'DAILY', time: '10:00' },
-        { id: 2, title: 'Evening Walk', type: 'DAILY', time: '18:00' }
-    ]);
+    const [customReminders, setCustomReminders] = useState([]);
+    const [newReminder, setNewReminder] = useState({ title: '', time: '' });
 
-    const activeMedicines = [
-        { id: 1, name: 'Paracetamol', dosage: '500mg', timing: '1-0-1', doctor: 'John Doe', endDate: '2023-11-05' },
-        { id: 2, name: 'Amoxicillin', dosage: '250mg', timing: '1-1-1', doctor: 'Jane Smith', endDate: '2023-10-30' }
-    ];
+    useEffect(() => {
+        fetchReminders();
+    }, []);
 
-    const handleSavePreferences = (e) => {
+    const fetchReminders = async () => {
+        try {
+            setLoading(true);
+            const res = await getPatientMe();
+            if (res.data.success) {
+                const patient = res.data.data;
+                // Load reminders from patient profile if they exist
+                if (patient.reminderPreferences) {
+                    setPreferences(patient.reminderPreferences);
+                }
+                if (patient.customReminders) {
+                    setCustomReminders(patient.customReminders);
+                }
+            }
+        } catch (err) {
+            console.error('Error fetching reminders:', err);
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const handleSavePreferences = async (e) => {
         e.preventDefault();
-        alert('Preferences saved successfully!');
+        setSaving(true);
+        try {
+            await updatePatientMe({
+                reminderPreferences: preferences,
+                customReminders: customReminders
+            });
+            setSuccessMsg('Preferences saved to database!');
+            setTimeout(() => setSuccessMsg(''), 3000);
+        } catch (err) {
+            console.error('Error saving preferences:', err);
+        } finally {
+            setSaving(false);
+        }
     };
 
     const handleAddReminder = (e) => {
         e.preventDefault();
-        alert('Reminder added successfully!');
+        if (!newReminder.title || !newReminder.time) return;
+        const updated = [...customReminders, { id: Date.now(), ...newReminder, type: 'DAILY' }];
+        setCustomReminders(updated);
+        setNewReminder({ title: '', time: '' });
     };
 
-    const deleteReminder = (id) => {
+    const handleDeleteReminder = (id) => {
         setCustomReminders(customReminders.filter(r => r.id !== id));
     };
 
-    const renderTimingBadges = (timing) => {
-        const parts = timing.split('-');
+    if (loading) {
         return (
-            <div style={{ display: 'flex', gap: '4px' }}>
-                {parts[0] === '1' && <span className="chip-warning" style={{ fontSize: '0.7rem' }}>☀ Morning</span>}
-                {parts[1] === '1' && <span className="chip-primary" style={{ fontSize: '0.7rem' }}>🌤 Afternoon</span>}
-                {parts[2] === '1' && <span className="chip-neutral" style={{ fontSize: '0.7rem' }}>🌙 Night</span>}
+            <div className="admin-content flex justify-center items-center" style={{ minHeight: '400px' }}>
+                <Loader className="animate-spin text-primary" size={48} />
             </div>
         );
-    };
+    }
 
     return (
-        <div className="grid grid-2">
-            {/* Medicine Preferences */}
-            <div className="card">
-                <div className="card-header">
-                    <div>
-                        <div className="section-title">Medicine Timings</div>
-                        <div className="section-subtitle">Set your preferred times for automated medicine reminders</div>
-                    </div>
+        <>
+            {successMsg && (
+                <div style={{ padding: '0.75rem 1rem', background: 'rgba(52,211,153,0.15)', border: '1px solid #34d399', borderRadius: '8px', color: '#10b981', marginBottom: '1rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                    <CheckCircle size={18} /> {successMsg}
                 </div>
-                <form onSubmit={handleSavePreferences} className="mt-2">
-                    <div className="form-group mb-3">
-                        <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', cursor: 'pointer' }}>
-                            <input type="checkbox" checked={preferences.enabled} onChange={(e) => setPreferences({...preferences, enabled: e.target.checked})} />
-                            <strong>Enable automated medicine reminders</strong>
-                        </label>
-                        <div className="muted" style={{ marginLeft: '1.5rem', fontSize: '0.85rem' }}>
-                            Automatically pulls medicines prescribed by your doctors and alerts you at the correct times.
-                        </div>
-                    </div>
-                    
-                    <div className="grid grid-3" style={{ gap: '1rem' }}>
-                        <div className="form-group">
-                            <label className="form-label">Morning</label>
-                            <input type="time" className="form-control" value={preferences.morning} onChange={(e) => setPreferences({...preferences, morning: e.target.value})} />
-                        </div>
-                        <div className="form-group">
-                            <label className="form-label">Afternoon</label>
-                            <input type="time" className="form-control" value={preferences.afternoon} onChange={(e) => setPreferences({...preferences, afternoon: e.target.value})} />
-                        </div>
-                        <div className="form-group">
-                            <label className="form-label">Night</label>
-                            <input type="time" className="form-control" value={preferences.night} onChange={(e) => setPreferences({...preferences, night: e.target.value})} />
-                        </div>
-                    </div>
-                    
-                    <div className="mt-3" style={{ textAlign: 'right' }}>
-                        <button type="submit" className="btn btn-primary">Save Preferences</button>
-                    </div>
-                </form>
-            </div>
+            )}
 
-            {/* Active Medicines Detected */}
-            <div className="card">
-                <div className="card-header">
-                    <div>
-                        <div className="section-title">Active Prescribed Medicines</div>
-                        <div className="section-subtitle">Medicines automatically synced from your doctor</div>
-                    </div>
-                </div>
-                <div className="table-container mt-2">
-                    <table>
-                        <thead>
-                            <tr>
-                                <th>Medicine</th>
-                                <th>Timing</th>
-                                <th>Doctor</th>
-                                <th>End Date</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {activeMedicines.map(med => (
-                                <tr key={med.id}>
-                                    <td><strong>{med.name}</strong><br/><small className="muted">{med.dosage}</small></td>
-                                    <td>{renderTimingBadges(med.timing)}</td>
-                                    <td>Dr. {med.doctor}</td>
-                                    <td>{med.endDate}</td>
-                                </tr>
-                            ))}
-                        </tbody>
-                    </table>
-                </div>
-            </div>
-
-            {/* Add Custom Reminder */}
-            <div className="card mt-4">
-                <div className="card-header">
-                    <div>
-                        <div className="section-title">Add Custom Reminder</div>
-                        <div className="section-subtitle">Water, exercise, or custom health notes</div>
-                    </div>
-                </div>
-                <form onSubmit={handleAddReminder} className="mt-2">
-                    <div className="form-group mb-3">
-                        <label className="form-label">Reminder Title</label>
-                        <input type="text" className="form-control" placeholder="e.g., Drink Water" required />
-                    </div>
-                    <div className="form-group mb-3">
-                        <label className="form-label">Description (Optional)</label>
-                        <textarea className="form-control" rows="2" placeholder="Any extra notes..."></textarea>
-                    </div>
-                    <div className="grid grid-2" style={{ gap: '1rem' }}>
-                        <div className="form-group mb-3">
-                            <label className="form-label">Type</label>
-                            <select className="form-control" required>
-                                <option value="DAILY">Every Day</option>
-                                <option value="ONE_TIME">One Time</option>
-                            </select>
-                        </div>
-                        <div className="form-group mb-3">
-                            <label className="form-label">Time</label>
-                            <input type="time" className="form-control" required />
+            <div className="grid grid-2">
+                {/* Medicine Reminder Preferences */}
+                <div className="card">
+                    <div className="card-header">
+                        <div>
+                            <div className="section-title"><Bell size={18} style={{ display: 'inline', marginRight: '0.5rem' }} />Reminder Settings</div>
+                            <div className="section-subtitle">Configure your daily medicine reminder times — saved to database</div>
                         </div>
                     </div>
-                    <button type="submit" className="btn btn-primary" style={{ width: '100%' }}>Create Reminder</button>
-                </form>
-            </div>
 
-            {/* Custom Reminders List */}
-            <div className="card mt-4">
-                <div className="card-header">
-                    <div>
-                        <div className="section-title">Your Custom Reminders</div>
-                        <div className="section-subtitle">Active manual reminders</div>
+                    <form onSubmit={handleSavePreferences} className="mt-4">
+                        <div className="form-group" style={{ marginBottom: '1.5rem' }}>
+                            <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', cursor: 'pointer' }}>
+                                <input
+                                    type="checkbox"
+                                    checked={preferences.enabled}
+                                    onChange={(e) => setPreferences({ ...preferences, enabled: e.target.checked })}
+                                />
+                                <span style={{ fontWeight: 600 }}>Enable Medicine Reminders</span>
+                            </label>
+                        </div>
+
+                        <div className="form-grid form-2">
+                            <div className="form-group">
+                                <label>Morning Time</label>
+                                <input type="time" className="form-control" value={preferences.morning} onChange={(e) => setPreferences({ ...preferences, morning: e.target.value })} />
+                            </div>
+                            <div className="form-group">
+                                <label>Afternoon Time</label>
+                                <input type="time" className="form-control" value={preferences.afternoon} onChange={(e) => setPreferences({ ...preferences, afternoon: e.target.value })} />
+                            </div>
+                            <div className="form-group">
+                                <label>Night Time</label>
+                                <input type="time" className="form-control" value={preferences.night} onChange={(e) => setPreferences({ ...preferences, night: e.target.value })} />
+                            </div>
+                        </div>
+
+                        <button type="submit" className="btn btn-primary mt-4" disabled={saving}>
+                            {saving ? 'Saving...' : 'Save Preferences'}
+                        </button>
+                    </form>
+                </div>
+
+                {/* Custom Reminders */}
+                <div className="card">
+                    <div className="card-header">
+                        <div>
+                            <div className="section-title"><Clock size={18} style={{ display: 'inline', marginRight: '0.5rem' }} />Custom Reminders</div>
+                            <div className="section-subtitle">Add personal health reminders</div>
+                        </div>
+                        <span className="chip-neutral">{customReminders.length} active</span>
+                    </div>
+
+                    <form onSubmit={handleAddReminder} className="mt-4" style={{ display: 'flex', gap: '0.75rem', alignItems: 'flex-end' }}>
+                        <div className="form-group" style={{ flex: 2 }}>
+                            <label>Reminder Title</label>
+                            <input type="text" className="form-control" placeholder="e.g. Drink Water" value={newReminder.title} onChange={(e) => setNewReminder({ ...newReminder, title: e.target.value })} required />
+                        </div>
+                        <div className="form-group" style={{ flex: 1 }}>
+                            <label>Time</label>
+                            <input type="time" className="form-control" value={newReminder.time} onChange={(e) => setNewReminder({ ...newReminder, time: e.target.value })} required />
+                        </div>
+                        <button type="submit" className="btn btn-primary" style={{ height: '42px' }}>
+                            <Plus size={16} />
+                        </button>
+                    </form>
+
+                    <div className="mt-4">
+                        {customReminders.length > 0 ? customReminders.map(r => (
+                            <div key={r.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '0.75rem 0', borderBottom: '1px solid #f1f5f9' }}>
+                                <div>
+                                    <strong>{r.title}</strong>
+                                    <div className="muted" style={{ fontSize: '0.8rem' }}>{r.type} at {r.time}</div>
+                                </div>
+                                <button className="btn btn-outline btn-sm" onClick={() => handleDeleteReminder(r.id)} style={{ color: '#ef4444', borderColor: '#fecaca' }}>Remove</button>
+                            </div>
+                        )) : (
+                            <p className="muted text-center py-4">No custom reminders yet.</p>
+                        )}
                     </div>
                 </div>
-                <div className="table-container mt-2">
-                    <table>
-                        <thead>
-                            <tr>
-                                <th>Title</th>
-                                <th>Type</th>
-                                <th>Time</th>
-                                <th>Action</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {customReminders.map(rem => (
-                                <tr key={rem.id}>
-                                    <td><strong>{rem.title}</strong></td>
-                                    <td><span className="chip-neutral">{rem.type}</span></td>
-                                    <td><strong>{rem.time}</strong></td>
-                                    <td>
-                                        <button onClick={() => deleteReminder(rem.id)} className="btn btn-danger btn-sm" style={{ padding: '0.25rem 0.5rem', fontSize: '0.75rem', background: '#ef4444', color: 'white' }}>Delete</button>
-                                    </td>
-                                </tr>
-                            ))}
-                        </tbody>
-                    </table>
-                </div>
             </div>
-        </div>
+        </>
     );
 };
 

@@ -1,24 +1,69 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Save } from 'lucide-react';
+import { getDoctorProfile, updateDoctorProfile } from '../../utils/api';
 
 const ProfilePage = () => {
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
   const [formData, setFormData] = useState({
-    fullName: "Renish",
-    phone: "09316202895",
-    email: "renish@gmail.com",
-    bio: "I am a profesional doctor",
-    specialty: "Neurology",
-    licenseNumber: "ASDASDsd",
-    experience: "0",
-    department: "Neurology"
+    fullName: "",
+    phone: "",
+    email: "",
+    bio: "",
+    specialty: "",
+    licenseNumber: "",
+    experience: "",
+    department: ""
   });
+
+  useEffect(() => {
+    const fetchProfile = async () => {
+      try {
+        const res = await getDoctorProfile();
+        const doc = res.data.data;
+        setFormData({
+          fullName: doc.user?.fullName || "",
+          phone: doc.user?.phone || doc.phone || "",
+          email: doc.user?.email || "",
+          bio: doc.bio || "",
+          specialty: doc.specialty || "",
+          licenseNumber: doc.licenseNumber || "",
+          experience: doc.experience || "",
+          department: doc.department || ""
+        });
+      } catch (err) {
+        console.error("Failed to load profile", err);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchProfile();
+  }, []);
 
   const handleChange = (e) => setFormData({...formData, [e.target.name]: e.target.value});
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    alert('Profile saved (mock)');
+    setSaving(true);
+    try {
+      await updateDoctorProfile({
+        bio: formData.bio,
+        specialty: formData.specialty,
+        licenseNumber: formData.licenseNumber,
+        experience: formData.experience,
+        department: formData.department,
+        phone: formData.phone
+      });
+      alert('Profile updated successfully!');
+    } catch (err) {
+      console.error(err);
+      alert('Failed to update profile');
+    } finally {
+      setSaving(false);
+    }
   };
+
+  if (loading) return <div style={{ padding: '2rem', textAlign: 'center' }}>Loading profile...</div>;
 
   return (
     <>
@@ -40,11 +85,11 @@ const ProfilePage = () => {
             display: 'flex', alignItems: 'center', justifyContent: 'center',
             fontSize: '2.5rem', fontWeight: 700
           }}>
-            R
+            {formData.fullName ? formData.fullName.charAt(0).toUpperCase() : 'D'}
           </div>
           <div>
-            <h2 style={{fontSize: '1.4rem', fontWeight: 700, margin: 0, color: 'var(--text-main)'}}>Dr. Renish</h2>
-            <div className="muted" style={{fontSize: '0.95rem', margin: '0.25rem 0 0.5rem 0'}}>{formData.specialty} - {formData.department}</div>
+            <h2 style={{fontSize: '1.4rem', fontWeight: 700, margin: 0, color: 'var(--text-main)'}}>Dr. {formData.fullName}</h2>
+            <div className="muted" style={{fontSize: '0.95rem', margin: '0.25rem 0 0.5rem 0'}}>{formData.specialty || 'General'} - {formData.department || 'Not Assigned'}</div>
             <span className="chip" style={{fontSize: '0.75rem'}}>Verified Practitioner</span>
           </div>
         </div>
@@ -113,8 +158,8 @@ const ProfilePage = () => {
           </div>
 
           <div style={{display:'flex', justifyContent:'flex-end', marginTop: '2rem'}}>
-            <button type="submit" className="btn btn-primary" style={{gap: '0.4rem'}}>
-              <Save size={16} /> Save Changes
+            <button type="submit" className="btn btn-primary" style={{gap: '0.4rem'}} disabled={saving}>
+              <Save size={16} /> {saving ? 'Saving...' : 'Save Changes'}
             </button>
           </div>
 

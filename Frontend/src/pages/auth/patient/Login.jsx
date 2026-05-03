@@ -1,13 +1,40 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
+import { login as apiLogin } from '../../../utils/api';
+import { ArrowLeft, Loader } from 'lucide-react';
 
 const Login = () => {
     const navigate = useNavigate();
+    const [email, setEmail] = useState('');
+    const [password, setPassword] = useState('');
+    const [loading, setLoading] = useState(false);
+    const [error, setError] = useState(null);
 
-    const handleLogin = (e) => {
+    const handleLogin = async (e) => {
         e.preventDefault();
-        // In a real app, perform authentication here
-        navigate('/patient/dashboard');
+        setLoading(true);
+        setError(null);
+
+        try {
+            const res = await apiLogin({ email, password });
+
+            if (res.data.success) {
+                localStorage.setItem('token', res.data.token);
+                localStorage.setItem('user', JSON.stringify(res.data.user));
+
+                // Check role and redirect
+                if (res.data.user.role === 'PATIENT') {
+                    navigate('/patient/dashboard');
+                } else {
+                    setError('This portal is for patients only. Please use the appropriate staff login.');
+                }
+            }
+        } catch (err) {
+            console.error('Login error:', err);
+            setError(err.response?.data?.error || 'Login failed. Please check your credentials.');
+        } finally {
+            setLoading(false);
+        }
     };
 
     return (
@@ -15,7 +42,7 @@ const Login = () => {
             <div className="login-card">
                 <div className="login-main">
                     <Link to="/" className="btn-back-home">
-                        <i className="fas fa-arrow-left"></i> Back to Home
+                        <ArrowLeft size={16} /> Back to Home
                     </Link>
                     <div className="login-badge">
                         <span>Smart Health Monitor · Patient</span>
@@ -24,6 +51,12 @@ const Login = () => {
                     <p className="login-subtitle">
                         View your health, appointments, prescriptions and alerts in one secure place.
                     </p>
+
+                    {error && (
+                        <div style={{ padding: '0.75rem 1rem', background: 'rgba(239, 68, 68, 0.1)', border: '1px solid #ef4444', borderRadius: '8px', color: '#ef4444', marginBottom: '1rem', fontSize: '0.85rem' }}>
+                            {error}
+                        </div>
+                    )}
 
                     <form className="form-grid" onSubmit={handleLogin}>
                         <div className="form-group">
@@ -35,6 +68,9 @@ const Login = () => {
                                 className="form-control"
                                 placeholder="you@example.com"
                                 required
+                                value={email}
+                                onChange={(e) => setEmail(e.target.value)}
+                                disabled={loading}
                             />
                         </div>
                         <div className="form-group">
@@ -47,15 +83,22 @@ const Login = () => {
                                 placeholder="••••••••"
                                 required
                                 minLength="6"
+                                value={password}
+                                onChange={(e) => setPassword(e.target.value)}
+                                disabled={loading}
                             />
                         </div>
                         <div className="flex justify-between items-center mt-1">
                             <span className="text-xs text-muted" style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>Login with your registered email</span>
-                            <Link to="/auth/patient/reset-password" style={{ fontSize: '0.75rem', color: 'inherit', textDecoration: 'underline' }}>Forgot password?</Link>
+                            <Link to="/auth/forgot" style={{ fontSize: '0.75rem', color: 'inherit', textDecoration: 'underline' }}>Forgot password?</Link>
                         </div>
                         <div className="mt-3">
-                            <button type="submit" className="btn btn-primary w-full">
-                                <span>Sign in</span>
+                            <button type="submit" className="btn btn-primary w-full" disabled={loading}>
+                                {loading ? (
+                                    <Loader className="animate-spin" size={18} />
+                                ) : (
+                                    <span>Sign in</span>
+                                )}
                             </button>
                         </div>
                     </form>

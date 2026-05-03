@@ -1,16 +1,38 @@
 import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
-import { Check } from 'lucide-react';
+import { Check, Loader } from 'lucide-react';
+import { login as apiLogin } from '../../../utils/api';
 
 const LoginPage = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
   const navigate = useNavigate();
 
-  const handleLogin = (e) => {
+  const handleLogin = async (e) => {
     e.preventDefault();
-    // Proceed to dashboard on any submission for UI testing
-    navigate('/doctor/dashboard');
+    setLoading(true);
+    setError(null);
+
+    try {
+      const res = await apiLogin({ email, password });
+      
+      if (res.data.success) {
+        localStorage.setItem('token', res.data.token);
+        localStorage.setItem('user', JSON.stringify(res.data.user));
+        
+        if (res.data.user.role === 'DOCTOR' || res.data.user.role === 'ADMIN') {
+          navigate('/doctor/dashboard');
+        } else {
+          setError('This portal is for Doctors only.');
+        }
+      }
+    } catch (err) {
+      setError(err.response?.data?.error || 'Login failed. Check your credentials.');
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -24,6 +46,12 @@ const LoginPage = () => {
           <p className="login-subtitle">
             Access patients, appointments, prescriptions, alerts and reports in one place.
           </p>
+
+          {error && (
+            <div style={{ padding: '0.75rem 1rem', background: 'rgba(239, 68, 68, 0.1)', border: '1px solid #ef4444', borderRadius: '8px', color: '#ef4444', marginBottom: '1rem', fontSize: '0.85rem' }}>
+              {error}
+            </div>
+          )}
 
           <form onSubmit={handleLogin} style={{display: 'flex', flexDirection: 'column', gap: '1.25rem'}}>
             <div className="form-group">
@@ -51,11 +79,11 @@ const LoginPage = () => {
 
             <div style={{display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '0.25rem'}}>
               <span className="muted" style={{marginTop: 0}}>Login with your registered email</span>
-              <a href="#" style={{color: 'var(--primary)', fontWeight: 600, fontSize: '0.9rem'}}>Forgot password?</a>
+              <Link to="/auth/forgot" style={{color: 'var(--primary)', fontWeight: 600, fontSize: '0.9rem'}}>Forgot password?</Link>
             </div>
 
-            <button type="submit" className="btn btn-primary w-full mt-3" style={{padding: '0.85rem'}}>
-              Sign in
+            <button type="submit" className="btn btn-primary w-full mt-3" style={{padding: '0.85rem'}} disabled={loading}>
+              {loading ? <Loader className="animate-spin" size={18} /> : 'Sign in'}
             </button>
           </form>
 

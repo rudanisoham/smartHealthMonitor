@@ -1,18 +1,38 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Search, Calendar as CalendarIcon, CheckCircle, XCircle, Clock, ChevronRight } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
+import { getReceptionAppointments } from '../../utils/api';
 
 const Appointments = () => {
   const [filter, setFilter] = useState('All');
+  const [appointments, setAppointments] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const navigate = useNavigate();
 
-  const appointments = [
-    { id: 'APP001', patient: 'John Smith', doctor: 'Dr. Sarah Connor', date: '2026-05-10', time: '10:30 AM', status: 'Confirmed', dept: 'Cardiology' },
-    { id: 'APP002', patient: 'Emma Watson', doctor: 'Dr. James Wilson', date: '2026-05-10', time: '11:15 AM', status: 'Pending', dept: 'Neurology' },
-    { id: 'APP003', patient: 'Robert Dow', doctor: 'Dr. Lisa Cuddy', date: '2026-05-10', time: '01:45 PM', status: 'Cancelled', dept: 'Pediatrics' },
-    { id: 'APP004', patient: 'Sarah Jane', doctor: 'Dr. Eric Foreman', date: '2026-05-11', time: '09:00 AM', status: 'Confirmed', dept: 'General Medicine' },
-    { id: 'APP005', patient: 'Bruce Wayne', doctor: 'Dr. Sarah Connor', date: '2026-05-11', time: '10:00 AM', status: 'Confirmed', dept: 'Cardiology' },
-  ];
+  useEffect(() => {
+    const fetchAppointments = async () => {
+      try {
+        const res = await getReceptionAppointments();
+        setAppointments(res.data.data);
+      } catch (err) {
+        console.error("Failed to load appointments", err);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchAppointments();
+  }, []);
 
-  const filteredApps = filter === 'All' ? appointments : appointments.filter(a => a.status === filter);
+  // We will map 'Pending' to 'PENDING', 'Confirmed' to 'SCHEDULED' / 'COMPLETED' etc if needed
+  // Adjust filter map based on exact DB status strings if necessary, but assuming we want to match exactly what is in filter
+  const filteredApps = filter === 'All' ? appointments : appointments.filter(a => {
+    if (filter === 'Pending') return a.status === 'PENDING' || a.status === 'AWAITING_ASSIGNMENT';
+    if (filter === 'Confirmed') return a.status === 'SCHEDULED';
+    if (filter === 'Cancelled') return a.status === 'CANCELLED';
+    return true;
+  });
+
+  if (loading) return <div style={{ padding: '2rem', textAlign: 'center' }}>Loading appointments...</div>;
 
   return (
     <div className="admin-content">
@@ -54,8 +74,8 @@ const Appointments = () => {
           </thead>
           <tbody>
             {filteredApps.map((app) => (
-              <tr key={app.id}>
-                <td><span className="badge-soft">{app.id}</span></td>
+              <tr key={app._id}>
+                <td><span className="badge-soft">{app._id.slice(-6).toUpperCase()}</span></td>
                 <td><span className="author-name">{app.patient}</span></td>
                 <td>
                   <div className="author-info">
@@ -72,8 +92,8 @@ const Appointments = () => {
                 </td>
                 <td>
                   <span className={`chip ${
-                    app.status === 'Confirmed' ? 'chip' : 
-                    app.status === 'Pending' ? 'chip-warning' : 
+                    app.status === 'SCHEDULED' ? 'chip' : 
+                    (app.status === 'PENDING' || app.status === 'AWAITING_ASSIGNMENT') ? 'chip-warning' : 
                     'chip-danger'
                   }`}>
                     {app.status}
@@ -81,11 +101,11 @@ const Appointments = () => {
                 </td>
                 <td>
                   <div className="flex gap-2">
-                    {app.status === 'Pending' && (
+                    {(app.status === 'PENDING' || app.status === 'AWAITING_ASSIGNMENT') && (
                       <button 
                         className="btn-icon text-success" 
                         title="Confirm"
-                        onClick={() => navigate(`/reception/appointments/${app.id}/assign`)}
+                        onClick={() => navigate(`/reception/appointments/${app._id}/assign`)}
                       >
                         <CheckCircle size={16} />
                       </button>

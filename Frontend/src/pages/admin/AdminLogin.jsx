@@ -1,7 +1,39 @@
-import React from 'react';
-import { Link } from 'react-router-dom';
+import React, { useState } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
+import { Loader } from 'lucide-react';
+import { login as apiLogin } from '../../utils/api';
 
 export default function AdminLogin() {
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
+  const navigate = useNavigate();
+
+  const handleLogin = async (e) => {
+    e.preventDefault();
+    setLoading(true);
+    setError(null);
+
+    try {
+      const res = await apiLogin({ email, password });
+      
+      if (res.data.success) {
+        localStorage.setItem('token', res.data.token);
+        localStorage.setItem('user', JSON.stringify(res.data.user));
+        
+        if (res.data.user.role === 'ADMIN') {
+          navigate('/admin/dashboard');
+        } else {
+          setError('Unauthorized: This portal is for Administrators only.');
+        }
+      }
+    } catch (err) {
+      setError(err.response?.data?.error || 'Login failed. Please check your credentials.');
+    } finally {
+      setLoading(false);
+    }
+  };
   return (
     <div style={{display: 'flex', minHeight: '100vh', width: '100vw', fontFamily: 'var(--font-family)', margin: 0, overflow: 'hidden'}}>
       {/* Left Column */}
@@ -22,15 +54,21 @@ export default function AdminLogin() {
             Monitor your hospital in real-time. Review doctors, patients, departments and analytics from one clean console.
           </p>
 
-          <form style={{display: 'flex', flexDirection: 'column', gap: '1.25rem'}}>
+          {error && (
+            <div style={{ padding: '0.75rem 1rem', background: 'rgba(239, 68, 68, 0.1)', border: '1px solid #ef4444', borderRadius: '8px', color: '#ef4444', marginBottom: '1rem', fontSize: '0.85rem' }}>
+              {error}
+            </div>
+          )}
+
+          <form onSubmit={handleLogin} style={{display: 'flex', flexDirection: 'column', gap: '1.25rem'}}>
             <div>
               <label style={{display: 'block', fontWeight: '800', fontSize: '0.75rem', color: '#0F172A', marginBottom: '0.5rem'}}>Work email</label>
-              <input type="email" defaultValue="admin" style={{width: '100%', padding: '1rem', borderRadius: '8px', border: '1px solid transparent', background: '#F8FAFC', color: '#0F172A', fontSize: '1rem', outline: 'none', transition: 'border 0.2s', boxSizing: 'border-box'}} onFocus={(e) => e.target.style.border = '1px solid #2563EB'} onBlur={(e) => e.target.style.border = '1px solid transparent'} />
+              <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} required style={{width: '100%', padding: '1rem', borderRadius: '8px', border: '1px solid transparent', background: '#F8FAFC', color: '#0F172A', fontSize: '1rem', outline: 'none', transition: 'border 0.2s', boxSizing: 'border-box'}} onFocus={(e) => e.target.style.border = '1px solid #2563EB'} onBlur={(e) => e.target.style.border = '1px solid transparent'} />
             </div>
             
             <div>
               <label style={{display: 'block', fontWeight: '800', fontSize: '0.75rem', color: '#0F172A', marginBottom: '0.5rem'}}>Password</label>
-              <input type="password" defaultValue="password123" style={{width: '100%', padding: '1rem', borderRadius: '8px', border: '1px solid transparent', background: '#F8FAFC', color: '#0F172A', fontSize: '1rem', outline: 'none', transition: 'border 0.2s', boxSizing: 'border-box'}} onFocus={(e) => e.target.style.border = '1px solid #2563EB'} onBlur={(e) => e.target.style.border = '1px solid transparent'} />
+              <input type="password" value={password} onChange={(e) => setPassword(e.target.value)} required style={{width: '100%', padding: '1rem', borderRadius: '8px', border: '1px solid transparent', background: '#F8FAFC', color: '#0F172A', fontSize: '1rem', outline: 'none', transition: 'border 0.2s', boxSizing: 'border-box'}} onFocus={(e) => e.target.style.border = '1px solid #2563EB'} onBlur={(e) => e.target.style.border = '1px solid transparent'} />
             </div>
 
             <div style={{display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '0.5rem'}}>
@@ -41,9 +79,9 @@ export default function AdminLogin() {
               <a href="#" style={{color: '#38BDF8', fontSize: '0.85rem', fontWeight: '600', textDecoration: 'none'}}>Forgot password?</a>
             </div>
 
-            <Link to="/admin/dashboard" style={{display: 'block', width: '100%', padding: '1.1rem', background: '#2563EB', color: 'white', border: 'none', borderRadius: '8px', fontSize: '1rem', fontWeight: '700', cursor: 'pointer', textAlign: 'center', marginTop: '1.5rem', textDecoration: 'none', transition: 'background 0.2s'}} onMouseOver={(e) => e.target.style.background = '#1D4ED8'} onMouseOut={(e) => e.target.style.background = '#2563EB'}>
-              Sign in to Admin Panel
-            </Link>
+            <button type="submit" disabled={loading} style={{display: 'flex', justifyContent: 'center', alignItems: 'center', width: '100%', padding: '1.1rem', background: '#2563EB', color: 'white', border: 'none', borderRadius: '8px', fontSize: '1rem', fontWeight: '700', cursor: 'pointer', marginTop: '1.5rem', transition: 'background 0.2s'}} onMouseOver={(e) => e.target.style.background = '#1D4ED8'} onMouseOut={(e) => e.target.style.background = '#2563EB'}>
+              {loading ? <Loader className="animate-spin" size={20} /> : 'Sign in to Admin Panel'}
+            </button>
           </form>
         </div>
 

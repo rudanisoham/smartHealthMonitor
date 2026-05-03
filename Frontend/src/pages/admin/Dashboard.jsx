@@ -1,11 +1,60 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import AdminLayout from '../../components/AdminLayout';
+import { getAdminDashboard } from '../../utils/api';
 
 export default function Dashboard() {
+  const [stats, setStats] = useState({
+    totalPatients: 0,
+    totalDoctors: 0,
+    pendingDoctors: 0,
+    totalAppointments: 0,
+    totalDepartments: 0
+  });
+  const [logs, setLogs] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [logsLoading, setLogsLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchDashboard = async () => {
+      try {
+        const res = await getAdminDashboard();
+        setStats(res.data.data);
+      } catch (err) {
+        console.error("Failed to fetch admin dashboard data", err);
+      } finally {
+        setLoading(false);
+      }
+    };
+    
+    const fetchLogs = async () => {
+      try {
+        const { getAdminLogs } = await import('../../utils/api');
+        const res = await getAdminLogs();
+        setLogs(res.data.data);
+      } catch (err) {
+        console.error("Failed to fetch system logs", err);
+      } finally {
+        setLogsLoading(false);
+      }
+    };
+
+    fetchDashboard();
+    fetchLogs();
+  }, []);
+
+  if (loading) return (
+    <AdminLayout title="Admin Dashboard" subtitle="System overview and realtime metrics">
+        <div style={{ padding: '5rem', textAlign: 'center' }}>
+            <div className="animate-spin" style={{margin: '0 auto', width: '40px', height: '40px', border: '4px solid var(--primary-light)', borderTopColor: 'var(--primary)', borderRadius: '50%'}}></div>
+            <p className="muted mt-4">Initializing dashboard...</p>
+        </div>
+    </AdminLayout>
+  );
+
   return (
     <AdminLayout title="Admin Dashboard" subtitle="System overview and realtime metrics">
-      <div className="grid grid-4 mb-6">
+      <div className="grid grid-5 mb-6">
         
         <div className="card">
           <div className="card-header">
@@ -14,7 +63,7 @@ export default function Dashboard() {
               <div className="muted mt-1">Registered in system</div>
             </div>
           </div>
-          <div className="card-value" style={{color: '#1E40AF'}}>4</div>
+          <div className="card-value" style={{color: '#1E40AF'}}>{stats.totalPatients}</div>
         </div>
 
         <div className="card">
@@ -24,7 +73,18 @@ export default function Dashboard() {
               <div className="muted mt-1">Active practitioners</div>
             </div>
           </div>
-          <div className="card-value" style={{color: '#3B82F6'}}>2</div>
+          <div className="card-value" style={{color: '#3B82F6'}}>{stats.totalDoctors}</div>
+        </div>
+
+        <div className="card">
+          <div className="card-header">
+            <div>
+              <div className="card-title">Pending Approvals</div>
+              <div className="muted mt-1">Awaiting verification</div>
+            </div>
+          </div>
+          <div className="card-value" style={{color: '#F59E0B'}}>{stats.pendingDoctors}</div>
+          <Link to="/admin/doctors/requests" style={{fontSize: '0.8rem', color: '#F59E0B', fontWeight: '600', textDecoration: 'none', marginTop: '0.5rem', display: 'block'}}>View Requests →</Link>
         </div>
 
         <div className="card">
@@ -34,7 +94,7 @@ export default function Dashboard() {
               <div className="muted mt-1">Over all time</div>
             </div>
           </div>
-          <div className="card-value" style={{color: '#10B981'}}>5</div>
+          <div className="card-value" style={{color: '#10B981'}}>{stats.totalAppointments}</div>
         </div>
 
         <div className="card">
@@ -44,7 +104,7 @@ export default function Dashboard() {
               <div className="muted mt-1">Hospital units</div>
             </div>
           </div>
-          <div className="card-value" style={{color: '#8B5CF6'}}>0</div>
+          <div className="card-value" style={{color: '#8B5CF6'}}>{stats.totalDepartments}</div>
         </div>
 
       </div>
@@ -99,18 +159,17 @@ export default function Dashboard() {
             <div style={{display: 'flex', flexDirection: 'column', position: 'relative'}}>
               {/* Scrollable container with right scrollbar */}
               <div style={{maxHeight: '300px', overflowY: 'auto', paddingRight: '1rem', display: 'flex', flexDirection: 'column', gap: '1.25rem'}}>
-                {[
-                  { action: 'User logged in: admin@health.com', user: 'System Admin', time: '2026-04-01 21:53' },
-                  { action: 'User logged in: soham@gmail.com', user: 'Soham Rudani', time: '2026-04-01 11:09' },
-                  { action: 'New patient registered: soham@gmail.com', user: 'Soham Rudani', time: '2026-04-01 11:09' },
-                  { action: 'User logged out: admin@health.com', user: 'System Admin', time: '2026-04-01 11:07' }
-                ].map((log, i) => (
-                  <div key={i} style={{display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start'}}>
-                    <div>
+                {logsLoading ? (
+                  <div className="muted text-center py-4">Loading logs...</div>
+                ) : logs.length === 0 ? (
+                  <div className="muted text-center py-4">No logs recorded yet.</div>
+                ) : logs.map((log, i) => (
+                  <div key={log._id || i} style={{display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start'}}>
+                    <div style={{flex: 1}}>
                       <div style={{fontWeight: '600', fontSize: '0.85rem', color: '#0F172A'}}>{log.action}</div>
-                      <div style={{fontSize: '0.75rem', color: '#64748B', marginTop: '0.2rem'}}>By: {log.user}</div>
+                      <div style={{fontSize: '0.75rem', color: '#64748B', marginTop: '0.2rem'}}>By: {log.user} ({log.role})</div>
                     </div>
-                    <div style={{fontSize: '0.75rem', color: '#64748B'}}>{log.time}</div>
+                    <div style={{fontSize: '0.75rem', color: '#94A3B8', marginLeft: '1rem'}}>{new Date(log.createdAt).toLocaleTimeString()}</div>
                   </div>
                 ))}
               </div>

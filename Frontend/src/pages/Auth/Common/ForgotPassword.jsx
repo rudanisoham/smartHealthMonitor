@@ -1,15 +1,27 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { ArrowLeft, Send, ShieldCheck } from 'lucide-react';
+import { ArrowLeft, Send, ShieldCheck, Loader } from 'lucide-react';
+import { forgotPassword } from '../../../utils/api';
 
 const ForgotPassword = () => {
   const [email, setEmail] = useState('');
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
   const navigate = useNavigate();
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    // Simulate OTP send
-    navigate('/auth/verify-otp');
+    setLoading(true);
+    setError(null);
+    try {
+      await forgotPassword({ email });
+      localStorage.setItem('resetEmail', email);
+      navigate('/auth/verify-otp');
+    } catch (err) {
+      setError(err.response?.data?.error || 'Failed to send OTP');
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -27,6 +39,12 @@ const ForgotPassword = () => {
             Enter the email associated with your account. We’ll send reset instructions.
           </p>
 
+          {error && (
+            <div style={{ padding: '0.75rem 1rem', background: 'rgba(239, 68, 68, 0.1)', border: '1px solid #ef4444', borderRadius: '8px', color: '#ef4444', marginBottom: '1rem', fontSize: '0.85rem' }}>
+              {error}
+            </div>
+          )}
+
           <form onSubmit={handleSubmit} className="form-grid">
             <div className="form-group">
               <label htmlFor="resetEmail">Register Email Address</label>
@@ -42,9 +60,13 @@ const ForgotPassword = () => {
               />
             </div>
             <div className="form-group">
-              <button type="submit" className="btn btn-primary w-full">
-                <span>Send OTP Code</span>
-                <Send size={16} className="ml-2" />
+              <button type="submit" className="btn btn-primary w-full" disabled={loading}>
+                {loading ? <Loader className="animate-spin" size={16} /> : (
+                  <>
+                    <span>Send OTP Code</span>
+                    <Send size={16} className="ml-2" />
+                  </>
+                )}
               </button>
             </div>
           </form>

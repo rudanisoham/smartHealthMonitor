@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { 
   Pill, 
   ClipboardList, 
@@ -13,14 +13,34 @@ import {
   ChevronRight
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
+import { getMedicalPrescriptions } from '../../utils/api';
 
 const MedicalPrescriptions = () => {
-  const prescriptions = [
-    { id: 'PRX-901', patient: 'Michael Johnson', doctor: 'Dr. Sarah Connor', date: '2026-05-02', status: 'Pending', items: 3 },
-    { id: 'PRX-902', patient: 'Emma Watson', doctor: 'Dr. James Wilson', date: '2026-05-02', status: 'In Progress', items: 1 },
-    { id: 'PRX-903', patient: 'Chris Evans', doctor: 'Dr. Lisa Cuddy', date: '2026-05-01', status: 'Pending', items: 4 },
-    { id: 'PRX-899', patient: 'Scarlett Johansson', doctor: 'Dr. Sarah Connor', date: '2026-04-30', status: 'Dispensed', items: 2 },
-  ];
+  const [filter, setFilter] = useState('All');
+  const [search, setSearch] = useState('');
+  const [prescriptions, setPrescriptions] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchPrescriptions = async () => {
+      try {
+        const res = await getMedicalPrescriptions();
+        setPrescriptions(res.data.data);
+      } catch (err) {
+        console.error("Failed to load prescriptions", err);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchPrescriptions();
+  }, []);
+  const filteredPrx = prescriptions.filter(p => {
+    if (filter !== 'All' && p.status !== filter) return false;
+    if (search && !p._id.toLowerCase().includes(search.toLowerCase()) && !p.patient.toLowerCase().includes(search.toLowerCase())) return false;
+    return true;
+  });
+
+  if (loading) return <div style={{ padding: '2rem', textAlign: 'center' }}>Loading prescriptions...</div>;
 
   return (
     <div className="medical-prescriptions">
@@ -32,13 +52,13 @@ const MedicalPrescriptions = () => {
       <div className="card mb-6">
         <div className="flex justify-between items-center">
           <div className="flex gap-4">
-            <button className="filter-chip active">All Requests</button>
-            <button className="filter-chip">Pending</button>
-            <button className="filter-chip">Dispensed</button>
+            <button className={`filter-chip ${filter === 'All' ? 'active' : ''}`} onClick={() => setFilter('All')}>All Requests</button>
+            <button className={`filter-chip ${filter === 'Pending' ? 'active' : ''}`} onClick={() => setFilter('Pending')}>Pending</button>
+            <button className={`filter-chip ${filter === 'Dispensed' ? 'active' : ''}`} onClick={() => setFilter('Dispensed')}>Dispensed</button>
           </div>
           <div className="search-bar" style={{ minWidth: '300px' }}>
             <FileText size={18} className="text-muted" />
-            <input type="text" placeholder="Search by PRX ID..." />
+            <input type="text" placeholder="Search by PRX ID or Patient..." value={search} onChange={(e) => setSearch(e.target.value)} />
           </div>
         </div>
       </div>
@@ -56,9 +76,9 @@ const MedicalPrescriptions = () => {
             </tr>
           </thead>
           <tbody>
-            {prescriptions.map((prx) => (
-              <tr key={prx.id}>
-                <td><strong>{prx.id}</strong></td>
+            {filteredPrx.map((prx) => (
+              <tr key={prx._id}>
+                <td><strong>{prx._id.slice(-6).toUpperCase()}</strong></td>
                 <td>{prx.patient}</td>
                 <td>{prx.doctor}</td>
                 <td><span className="badge-soft">{prx.items} Medicines</span></td>

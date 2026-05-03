@@ -1,9 +1,10 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Link, useLocation } from 'react-router-dom';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import '../styles/admin.css';
 
 export default function AdminLayout({ children, title, subtitle }) {
   const location = useLocation();
+  const navigate = useNavigate();
   const currentPath = location.pathname;
   const sidebarRef = useRef(null);
   
@@ -52,6 +53,14 @@ export default function AdminLayout({ children, title, subtitle }) {
     }
   };
 
+  const handleLogout = (e) => {
+    e.preventDefault();
+    localStorage.removeItem('token');
+    localStorage.removeItem('user');
+    sessionStorage.clear();
+    navigate('/');
+  };
+
   return (
     <div className={`admin-app ${!isMobile && isCollapsed ? 'sidebar-collapsed' : ''} ${isMobile && isMobileOpen ? 'mobile-sidebar-open' : ''}`}>
       
@@ -88,7 +97,7 @@ export default function AdminLayout({ children, title, subtitle }) {
             </span>
             <span className="sidebar-text">Dashboard</span>
           </Link>
-          <Link to="/admin/doctors" className={`sidebar-link ${currentPath.startsWith('/admin/doctors') ? 'active' : ''}`} title={isCollapsed && !isMobile ? "Doctors" : ""}>
+          <Link to="/admin/doctors" className={`sidebar-link ${currentPath === '/admin/doctors' ? 'active' : ''}`} title={isCollapsed && !isMobile ? "Doctors" : ""}>
             <span className="icon">
               <svg className="nav-icon" viewBox="0 0 24 24" aria-hidden="true">
                   <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
@@ -96,6 +105,14 @@ export default function AdminLayout({ children, title, subtitle }) {
               </svg>
             </span>
             <span className="sidebar-text">Doctors</span>
+          </Link>
+          <Link to="/admin/doctors/requests" className={`sidebar-link ${currentPath === '/admin/doctors/requests' ? 'active' : ''}`} title={isCollapsed && !isMobile ? "Pending Approvals" : ""}>
+            <span className="icon">
+              <svg className="nav-icon" viewBox="0 0 24 24" aria-hidden="true">
+                  <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
+              </svg>
+            </span>
+            <span className="sidebar-text">Pending Approvals</span>
           </Link>
           <Link to="/admin/patients" className={`sidebar-link ${currentPath.startsWith('/admin/patients') ? 'active' : ''}`} title={isCollapsed && !isMobile ? "Patients" : ""}>
             <span className="icon">
@@ -229,7 +246,7 @@ export default function AdminLayout({ children, title, subtitle }) {
 
         <div className="sidebar-section-label sidebar-text">Session</div>
         <div className="sidebar-nav">
-          <Link to="/auth/admin/login" className="sidebar-link" title={isCollapsed && !isMobile ? "Sign out" : ""}>
+          <a href="#" onClick={handleLogout} className="sidebar-link" title={isCollapsed && !isMobile ? "Sign out" : ""}>
             <span className="icon">
               <svg className="nav-icon" viewBox="0 0 24 24" aria-hidden="true">
                   <path d="M10 16l-4-4 4-4"></path>
@@ -238,7 +255,7 @@ export default function AdminLayout({ children, title, subtitle }) {
               </svg>
             </span>
             <span className="sidebar-text">Sign out</span>
-          </Link>
+          </a>
         </div>
 
         {/* Footer */}

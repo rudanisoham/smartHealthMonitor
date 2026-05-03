@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { getVitals } from '../../utils/api';
 
 const AIChecker = () => {
     const [notes, setNotes] = useState('');
@@ -6,6 +7,7 @@ const AIChecker = () => {
     const [isAnalyzing, setIsAnalyzing] = useState(false);
     const [result, setResult] = useState(null);
     const [latestMetric, setLatestMetric] = useState(null);
+    const [loading, setLoading] = useState(true);
 
     const symptomOptions = [
         { id: 'chest_pain', label: '💔 Chest Pain' },
@@ -18,10 +20,19 @@ const AIChecker = () => {
     ];
 
     useEffect(() => {
-        const vitals = JSON.parse(localStorage.getItem('vitals_history') || '[]');
-        if (vitals.length > 0) {
-            setLatestMetric(vitals[0]);
-        }
+        const fetchLatestVital = async () => {
+            try {
+                const res = await getVitals();
+                if (res.data.success && res.data.data.length > 0) {
+                    setLatestMetric(res.data.data[0]);
+                }
+            } catch (err) {
+                console.error('Error fetching vitals:', err);
+            } finally {
+                setLoading(false);
+            }
+        };
+        fetchLatestVital();
     }, []);
 
     const toggleSymptom = (id) => {

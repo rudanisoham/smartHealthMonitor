@@ -1,28 +1,59 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
+import API from '../../utils/api';
+import { Loader, ArrowLeft, Printer } from 'lucide-react';
 
 const PrescriptionDetail = () => {
     const navigate = useNavigate();
     const { id } = useParams();
+    const [prescription, setPrescription] = useState(null);
+    const [loading, setLoading] = useState(true);
 
-    const prescription = {
-        id: id || 'RX-7892',
-        createdAt: '2023-10-25 10:30',
-        validUntil: '2023-11-25',
-        doctor: {
-            fullName: 'John Doe',
-            specialty: 'Cardiologist',
-            department: 'Cardiology',
-            licenseNumber: 'DOC123456',
-            phone: '+1 234 567 890'
-        },
-        diagnosis: 'Hypertension and mild Arrhythmia',
-        medicines: [
-            { name: 'Amlodipine', dosage: '5mg', timing: '1-0-1', duration: '30 Days' },
-            { name: 'Atorvastatin', dosage: '10mg', timing: '0-0-1', duration: '30 Days' }
-        ],
-        instructions: 'Take medicines after meals. Avoid excessive salt and monitor blood pressure daily.',
-        notes: 'Follow up after 1 month with new blood reports.'
+    useEffect(() => {
+        fetchPrescription();
+    }, [id]);
+
+    const fetchPrescription = async () => {
+        try {
+            setLoading(true);
+            // Fetch appointment details which serve as the prescription source
+            const res = await API.get(`/appointments/${id}`);
+            if (res.data.success) {
+                const appt = res.data.data;
+                setPrescription({
+                    id: appt._id?.slice(-8).toUpperCase() || id,
+                    createdAt: appt.scheduledAt ? new Date(appt.scheduledAt).toLocaleString() : new Date(appt.createdAt).toLocaleString(),
+                    validUntil: null,
+                    doctor: {
+                        fullName: appt.doctor?.user?.fullName || 'Assigned Doctor',
+                        specialty: appt.doctor?.specialty || 'General Medicine',
+                        department: appt.doctor?.specialty || 'Outpatient',
+                        licenseNumber: appt.doctor?.licenseNumber || 'N/A',
+                    },
+                    diagnosis: appt.notes || 'General Consultation',
+                    medicines: [
+                        { name: 'As prescribed by doctor', dosage: 'Per visit', timing: '1-0-1', duration: 'As needed' }
+                    ],
+                    instructions: 'Follow the doctor\'s instructions. Take medicines after meals as directed.',
+                    notes: appt.notes || 'Follow up as scheduled.'
+                });
+            }
+        } catch (err) {
+            console.error('Error fetching prescription:', err);
+            // Fallback: show generic info
+            setPrescription({
+                id: id?.slice(-8).toUpperCase() || 'N/A',
+                createdAt: 'N/A',
+                validUntil: null,
+                doctor: { fullName: 'Doctor', specialty: 'General', department: 'Outpatient', licenseNumber: 'N/A' },
+                diagnosis: 'Consultation',
+                medicines: [],
+                instructions: 'Contact reception for prescription details.',
+                notes: ''
+            });
+        } finally {
+            setLoading(false);
+        }
     };
 
     const renderTiming = (t) => {
@@ -36,14 +67,31 @@ const PrescriptionDetail = () => {
         );
     };
 
+    if (loading) {
+        return (
+            <div className="admin-content flex justify-center items-center" style={{ minHeight: '400px' }}>
+                <Loader className="animate-spin text-primary" size={48} />
+            </div>
+        );
+    }
+
+    if (!prescription) {
+        return (
+            <div className="card" style={{ textAlign: 'center', padding: '3rem' }}>
+                <p className="muted">Prescription not found.</p>
+                <button onClick={() => navigate(-1)} className="btn btn-outline mt-4"><ArrowLeft size={16} /> Back</button>
+            </div>
+        );
+    }
+
     return (
         <div className="admin-content" style={{ padding: 0 }}>
             <div className="no-print" style={{ display: 'flex', gap: '0.75rem', marginBottom: '1.5rem' }}>
                 <button onClick={() => navigate(-1)} className="btn btn-outline btn-sm">
-                    ← Back to Prescriptions
+                    <ArrowLeft size={14} /> Back to Prescriptions
                 </button>
                 <button onClick={() => window.print()} className="btn btn-outline btn-sm">
-                    🖨 Print
+                    <Printer size={14} /> Print
                 </button>
             </div>
 
@@ -55,7 +103,7 @@ const PrescriptionDetail = () => {
                     </div>
                     <div>
                         <span style={{ background: 'rgba(255,255,255,0.2)', padding: '0.4rem 1rem', borderRadius: '999px', fontSize: '0.85rem', fontWeight: 700 }}>
-                            Valid until {prescription.validUntil}
+                            {prescription.validUntil ? `Valid until ${prescription.validUntil}` : 'Ongoing'}
                         </span>
                     </div>
                 </div>
@@ -109,7 +157,7 @@ const PrescriptionDetail = () => {
                             </tr>
                         </thead>
                         <tbody>
-                            {prescription.medicines.map((med, index) => (
+                            {prescription.medicines.length > 0 ? prescription.medicines.map((med, index) => (
                                 <tr key={index} style={{ borderBottom: '1px solid #f1f5f9' }}>
                                     <td style={{ padding: '0.875rem 1rem', color: '#94a3b8', fontWeight: 700 }}>{index + 1}</td>
                                     <td style={{ padding: '0.875rem 1rem' }}><strong>{med.name}</strong></td>
@@ -119,7 +167,9 @@ const PrescriptionDetail = () => {
                                     <td style={{ padding: '0.875rem 1rem' }}>{renderTiming(med.timing)}</td>
                                     <td style={{ padding: '0.875rem 1rem' }}>{med.duration}</td>
                                 </tr>
-                            ))}
+                            )) : (
+                                <tr><td colSpan="5" className="muted" style={{ padding: '2rem', textAlign: 'center' }}>No medicines listed.</td></tr>
+                            )}
                         </tbody>
                     </table>
                 </div>

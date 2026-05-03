@@ -74,8 +74,10 @@ const MedicalSidebar = ({ collapsed }) => {
           className="sidebar-link w-full text-danger" 
           style={{ cursor: 'pointer', textAlign: 'left', background: 'none', border: 'none' }}
           onClick={() => {
-            // handle logout
-            window.location.href = '/auth/medical/login';
+            localStorage.removeItem('token');
+            localStorage.removeItem('user');
+            sessionStorage.clear();
+            window.location.href = '/';
           }}
         >
           <span className="icon" style={{ background: 'var(--danger-light)', color: 'var(--danger)' }}>

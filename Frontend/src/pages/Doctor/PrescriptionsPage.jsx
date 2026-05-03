@@ -1,15 +1,12 @@
-import React, { useState } from 'react';
-
-const mockPrescriptions = [
-  { id: 1, date: "2026-04-01", patient: "neha", diagnosis: "For fiver", expiry: "2026-04-04", medicines: "Paracetamol 500mg, 1 tablet 3 times a day\nVitamin C 1000mg, 1 tablet daily", instructions: "Rest and stay hydrated. Do not skip meals." },
-  { id: 2, date: "2026-04-01", patient: "soham", diagnosis: "For fiver", expiry: "2026-04-04", medicines: "Ibuprofen 400mg, as needed for pain", instructions: "Take after food to avoid stomach upset." },
-  { id: 3, date: "2026-04-01", patient: "Soham Rudani", diagnosis: "efe", expiry: "2026-04-04", medicines: "Loratadine 10mg, 1 tablet daily", instructions: "Avoid known allergens." },
-  { id: 4, date: "2026-04-01", patient: "Soham Rudani", diagnosis: "For fiver", expiry: "Ongoing", medicines: "Amoxicillin 500mg, 1 capsule 3 times a day", instructions: "Complete the full 7-day course." },
-];
+import React, { useState, useEffect } from 'react';
+import { getDoctorPrescriptions, createPrescription, getDoctorPatients } from '../../utils/api';
 
 const PrescriptionsPage = () => {
+  const [prescriptions, setPrescriptions] = useState([]);
+  const [patients, setPatients] = useState([]);
+  const [loading, setLoading] = useState(true);
   const [formData, setFormData] = useState({
-    patient: '',
+    patientId: '',
     diagnosis: '',
     medicines: '',
     instructions: '',
@@ -17,12 +14,48 @@ const PrescriptionsPage = () => {
   });
   const [selectedPresc, setSelectedPresc] = useState(null);
 
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const [prescRes, patientRes] = await Promise.all([
+          getDoctorPrescriptions(),
+          getDoctorPatients()
+        ]);
+        setPrescriptions(prescRes.data.data);
+        setPatients(patientRes.data.data);
+      } catch (err) {
+        console.error('Failed to load data', err);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchData();
+  }, []);
+
   const handleChange = (e) => setFormData({...formData, [e.target.name]: e.target.value});
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    alert('Prescription issued (mock)');
+    try {
+      await createPrescription(formData);
+      alert('Prescription issued successfully');
+      // Refresh list
+      const prescRes = await getDoctorPrescriptions();
+      setPrescriptions(prescRes.data.data);
+      setFormData({
+        patientId: '',
+        diagnosis: '',
+        medicines: '',
+        instructions: '',
+        validUntil: ''
+      });
+    } catch (err) {
+      alert('Failed to issue prescription');
+      console.error(err);
+    }
   };
+
+  if (loading) return <div style={{ padding: '2rem', textAlign: 'center' }}>Loading...</div>;
 
   return (
     <div className="grid grid-2" style={{alignItems: 'start'}}>
@@ -39,10 +72,11 @@ const PrescriptionsPage = () => {
         <form onSubmit={handleSubmit} className="form-grid mt-3">
           <div className="form-group">
             <label>Select Patient</label>
-            <select name="patient" className="form-select" value={formData.patient} onChange={handleChange} required>
+            <select name="patientId" className="form-select" value={formData.patientId} onChange={handleChange} required>
               <option value="" disabled>Choose patient...</option>
-              <option value="1">Neha</option>
-              <option value="2">Soham Rudani</option>
+              {patients.map(p => (
+                <option key={p._id} value={p._id}>{p.user?.fullName}</option>
+              ))}
             </select>
           </div>
           
@@ -89,17 +123,19 @@ const PrescriptionsPage = () => {
                 <th style={{background: 'transparent', padding: '1rem 0.5rem'}}>DATE</th>
                 <th style={{background: 'transparent', padding: '1rem 0.5rem'}}>PATIENT</th>
                 <th style={{background: 'transparent', padding: '1rem 0.5rem'}}>DIAGNOSIS</th>
-                <th style={{background: 'transparent', padding: '1rem 0.5rem'}}>EXPIRY</th>
+                <th style={{background: 'transparent', padding: '1rem 0.5rem'}}>STATUS</th>
                 <th style={{background: 'transparent', padding: '1rem 0.5rem', textAlign: 'center'}}>ACTION</th>
               </tr>
             </thead>
             <tbody>
-              {mockPrescriptions.map(presc => (
-                <tr key={presc.id}>
-                  <td style={{padding: '1rem 0.5rem', color: 'var(--text-main)', fontSize: '0.9rem'}}><strong>{presc.date}</strong></td>
-                  <td style={{padding: '1rem 0.5rem', color: 'var(--text-main)', fontSize: '0.9rem', fontWeight: 600}}>{presc.patient}</td>
-                  <td style={{padding: '1rem 0.5rem', color: 'var(--text-main)', fontSize: '0.9rem'}}>{presc.diagnosis}</td>
-                  <td style={{padding: '1rem 0.5rem', color: 'var(--text-muted)', fontSize: '0.9rem'}}>{presc.expiry}</td>
+              {prescriptions.map(presc => (
+                <tr key={presc._id}>
+                  <td style={{padding: '1rem 0.5rem', color: 'var(--text-main)', fontSize: '0.9rem'}}><strong>{new Date(presc.createdAt).toLocaleDateString()}</strong></td>
+                  <td style={{padding: '1rem 0.5rem', color: 'var(--text-main)', fontSize: '0.9rem', fontWeight: 600}}>{presc.patient?.user?.fullName}</td>
+                  <td style={{padding: '1rem 0.5rem', color: 'var(--text-main)', fontSize: '0.9rem'}}>{presc.diagnosis || 'General'}</td>
+                  <td style={{padding: '1rem 0.5rem', color: 'var(--text-muted)', fontSize: '0.9rem'}}>
+                    <span className="chip-neutral" style={{fontSize: '0.7rem'}}>{presc.status}</span>
+                  </td>
                   <td style={{padding: '1rem 0.5rem', textAlign: 'center'}}>
                     <button className="btn btn-outline btn-sm" style={{padding: '0.4rem 1rem', fontSize: '0.8rem'}} onClick={() => setSelectedPresc(presc)}>Details</button>
                   </td>
@@ -121,7 +157,7 @@ const PrescriptionsPage = () => {
             <div className="card-header" style={{ marginBottom: 0 }}>
               <div>
                 <div className="section-title" style={{ fontSize: '1.25rem' }}>Prescription Details</div>
-                <div className="section-subtitle">Issued on {selectedPresc.date}</div>
+                <div className="section-subtitle">Issued on {new Date(selectedPresc.createdAt).toLocaleDateString()}</div>
               </div>
               <button className="btn-icon" onClick={() => setSelectedPresc(null)} style={{ border: 'none', background: '#f1f5f9' }}>✕</button>
             </div>
@@ -129,11 +165,11 @@ const PrescriptionsPage = () => {
             <div className="form-grid mt-3">
               <div>
                 <span className="muted" style={{fontSize: '0.8rem', textTransform: 'uppercase', fontWeight: 600}}>Patient</span>
-                <div style={{fontWeight: 600, color: 'var(--text-main)', marginTop: '0.3rem', fontSize: '1.1rem'}}>{selectedPresc.patient}</div>
+                <div style={{fontWeight: 600, color: 'var(--text-main)', marginTop: '0.3rem', fontSize: '1.1rem'}}>{selectedPresc.patient?.user?.fullName}</div>
               </div>
               <div>
                 <span className="muted" style={{fontSize: '0.8rem', textTransform: 'uppercase', fontWeight: 600}}>Diagnosis</span>
-                <div style={{fontWeight: 600, color: 'var(--text-main)', marginTop: '0.3rem', fontSize: '1.1rem'}}>{selectedPresc.diagnosis}</div>
+                <div style={{fontWeight: 600, color: 'var(--text-main)', marginTop: '0.3rem', fontSize: '1.1rem'}}>{selectedPresc.diagnosis || 'N/A'}</div>
               </div>
               
               <div style={{gridColumn: '1 / -1'}}>
@@ -143,7 +179,7 @@ const PrescriptionsPage = () => {
                    border: '1px solid #e2e8f0', marginTop: '0.5rem',
                    whiteSpace: 'pre-wrap', color: 'var(--primary)', fontSize: '0.95rem', fontWeight: 500, lineHeight: 1.5
                 }}>
-                  {selectedPresc.medicines}
+                  {selectedPresc.medicinesText}
                 </div>
               </div>
 
@@ -154,19 +190,19 @@ const PrescriptionsPage = () => {
                    border: '1px solid #fecaca', marginTop: '0.5rem',
                    color: '#b91c1c', fontSize: '0.95rem', fontWeight: 500
                 }}>
-                  {selectedPresc.instructions || "None provided."}
+                  {selectedPresc.notes || "None provided."}
                 </div>
               </div>
               
               <div>
-                <span className="muted" style={{fontSize: '0.8rem', textTransform: 'uppercase', fontWeight: 600}}>Valid Until</span>
-                <div style={{fontWeight: 600, color: 'var(--text-main)', marginTop: '0.3rem', fontSize: '1.1rem'}}>{selectedPresc.expiry}</div>
+                <span className="muted" style={{fontSize: '0.8rem', textTransform: 'uppercase', fontWeight: 600}}>Status</span>
+                <div style={{fontWeight: 600, color: 'var(--text-main)', marginTop: '0.3rem', fontSize: '1.1rem'}}>{selectedPresc.status}</div>
               </div>
             </div>
             
             <div style={{marginTop: '2rem', display: 'flex', justifyContent: 'flex-end', gap: '1rem', borderTop: '1px solid var(--border)', paddingTop: '1.5rem'}}>
                <button type="button" className="btn btn-outline" onClick={() => setSelectedPresc(null)}>Close</button>
-               <button type="button" className="btn btn-primary" onClick={() => { setSelectedPresc(null); alert("Print prescription sequence initialized (mock)"); }}>Print Prescription</button>
+               <button type="button" className="btn btn-primary" onClick={() => { setSelectedPresc(null); window.print(); }}>Print Prescription</button>
             </div>
           </div>
         </div>

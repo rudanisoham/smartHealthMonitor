@@ -1,15 +1,40 @@
-import React from 'react';
-import { Bed, Users, AlertTriangle, ArrowRight, Activity } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { Bed, Users, AlertTriangle, ArrowRight, Activity, Loader } from 'lucide-react';
+import { getReceptionBeds } from '../../utils/api';
 
 const BedManagement = () => {
-  const departments = [
-    { id: '1', name: 'Cardiology', occupied: 15, total: 20, critical: 3 },
-    { id: '2', name: 'Neurology', occupied: 13, total: 15, critical: 1 },
-    { id: '3', name: 'Pediatrics', occupied: 10, total: 10, critical: 0 },
-    { id: '4', name: 'General Medicine', occupied: 32, total: 40, critical: 5 },
-    { id: '5', name: 'ICU', occupied: 11, total: 12, critical: 8 },
-    { id: '6', name: 'Emergency', occupied: 5, total: 10, critical: 2 },
-  ];
+  const [departments, setDepartments] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+
+  useEffect(() => {
+    fetchBeds();
+  }, []);
+
+  const fetchBeds = async () => {
+    try {
+      setLoading(true);
+      const res = await getReceptionBeds();
+      if (res.data.success) {
+        setDepartments(res.data.data);
+      }
+    } catch (err) {
+      setError("Failed to load bed statistics");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const totalCapacity = departments.reduce((acc, d) => acc + (d.total || 0), 0);
+  const totalOccupied = departments.reduce((acc, d) => acc + (d.occupied || 0), 0);
+  const totalCritical = departments.reduce((acc, d) => acc + (d.critical || 0), 0);
+  const occupancyRate = totalCapacity > 0 ? ((totalOccupied / totalCapacity) * 100).toFixed(1) : 0;
+
+  if (loading) return (
+    <div className="admin-content flex justify-center items-center py-20">
+      <Loader className="animate-spin text-primary" size={48} />
+    </div>
+  );
 
   return (
     <div className="admin-content">
@@ -19,11 +44,13 @@ const BedManagement = () => {
           <p className="section-subtitle">Real-time occupancy tracking and capacity planning</p>
         </div>
         <div className="flex gap-3">
-          <div className="header-pill">
-            <Activity size={14} className="me-2" /> Live Updates
-          </div>
+          <button className="header-pill" onClick={fetchBeds}>
+            <Activity size={14} className="me-2" /> Refresh Data
+          </button>
         </div>
       </div>
+
+      {error && <div className="alert alert-danger mb-6">{error}</div>}
 
       <div className="grid grid-3 mb-6">
         <div className="card" style={{ borderLeft: '4px solid var(--primary)' }}>
@@ -31,7 +58,7 @@ const BedManagement = () => {
             <span className="card-title">Total Capacity</span>
             <Bed className="text-primary" size={20} />
           </div>
-          <div className="card-value">107</div>
+          <div className="card-value">{totalCapacity}</div>
           <span className="muted">Across all departments</span>
         </div>
         <div className="card" style={{ borderLeft: '4px solid var(--warning)' }}>
@@ -39,24 +66,24 @@ const BedManagement = () => {
             <span className="card-title">Occupied Beds</span>
             <Users className="text-warning" size={20} />
           </div>
-          <div className="card-value">86</div>
-          <span className="muted">80.3% Occupancy rate</span>
+          <div className="card-value">{totalOccupied}</div>
+          <span className="muted">{occupancyRate}% Occupancy rate</span>
         </div>
         <div className="card" style={{ borderLeft: '4px solid var(--danger)' }}>
           <div className="card-header">
             <span className="card-title">Critical Patients</span>
             <AlertTriangle className="text-danger" size={20} />
           </div>
-          <div className="card-value">19</div>
-          <span className="muted">Requiring high monitoring</span>
+          <div className="card-value">{totalCritical}</div>
+          <span className="muted">Estimated high monitoring</span>
         </div>
       </div>
 
       <div className="grid grid-2">
         {departments.map((dept) => {
-          const percent = Math.round((dept.occupied / dept.total) * 100);
+          const percent = dept.total > 0 ? Math.round((dept.occupied / dept.total) * 100) : 0;
           return (
-            <div key={dept.id} className="card">
+            <div key={dept._id} className="card">
               <div className="flex justify-between items-start mb-4">
                 <div>
                   <h3 className="author-name" style={{ fontSize: '1.1rem' }}>{dept.name} Department</h3>

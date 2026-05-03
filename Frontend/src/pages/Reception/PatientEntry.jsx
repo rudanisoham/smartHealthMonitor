@@ -1,38 +1,61 @@
-import React, { useState } from 'react';
-import { Search, UserPlus, ArrowRight, CheckCircle2, User, UserCheck, LayoutPanelLeft } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { Search, UserPlus, ArrowRight, CheckCircle2, User, UserCheck, LayoutPanelLeft, Loader } from 'lucide-react';
+import { getReceptionPatients, createAppointment, getReceptionBeds } from '../../utils/api';
 
 const PatientEntry = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedPatient, setSelectedPatient] = useState(null);
   const [selectedDept, setSelectedDept] = useState('');
   const [successMsg, setSuccessMsg] = useState('');
+  const [patients, setPatients] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [submitting, setSubmitting] = useState(false);
 
-  const patients = [
-    { id: 'PAT001', name: 'John Smith', email: 'john.smith@email.com', phone: '+1 234 567 8901' },
-    { id: 'PAT002', name: 'Sarah Wilson', email: 'sarah.w@email.com', phone: '+1 234 567 8902' },
-    { id: 'PAT003', name: 'Michael Brown', email: 'm.brown@email.com', phone: '+1 234 567 8903' },
-  ];
+  const [departments, setDepartments] = useState([]);
 
-  const departments = [
-    { id: 'DEPT1', name: 'Cardiology', beds: 5 },
-    { id: 'DEPT2', name: 'Neurology', beds: 2 },
-    { id: 'DEPT3', name: 'Pediatrics', beds: 0 },
-    { id: 'DEPT4', name: 'General Medicine', beds: 8 },
-  ];
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const [patRes, deptRes] = await Promise.all([
+          getReceptionPatients(),
+          getReceptionBeds()
+        ]);
+        setPatients(patRes.data.data);
+        setDepartments(deptRes.data.data);
+      } catch (err) {
+        console.error('Failed to load data', err);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchData();
+  }, []);
 
   const filteredPatients = patients.filter(p => 
     p.name.toLowerCase().includes(searchTerm.toLowerCase()) || 
     p.id.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
-  const handleAssign = (e) => {
+  const handleAssign = async (e) => {
     e.preventDefault();
     if (selectedPatient && selectedDept) {
-      setSuccessMsg(`Patient ${selectedPatient.name} has been assigned to ${selectedDept} successfully.`);
-      setTimeout(() => setSuccessMsg(''), 5000);
-      setSelectedPatient(null);
-      setSelectedDept('');
-      setSearchTerm('');
+      setSubmitting(true);
+      try {
+        await createAppointment({
+          patient: selectedPatient._id,
+          notes: `Department: ${selectedDept}`,
+          status: 'AWAITING_ASSIGNMENT'
+        });
+        setSuccessMsg(`Patient ${selectedPatient.name} has been assigned to ${selectedDept} successfully.`);
+        setTimeout(() => setSuccessMsg(''), 5000);
+        setSelectedPatient(null);
+        setSelectedDept('');
+        setSearchTerm('');
+      } catch (err) {
+        alert(err.response?.data?.error || 'Failed to create appointment');
+      } finally {
+        setSubmitting(false);
+      }
     }
   };
 
@@ -139,8 +162,8 @@ const PatientEntry = () => {
               >
                 <option value="">Choose a department...</option>
                 {departments.map(d => (
-                  <option key={d.id} value={d.name} disabled={d.beds === 0}>
-                    {d.name} ({d.beds} beds available)
+                  <option key={d._id} value={d.name} disabled={(d.total - d.occupied) <= 0}>
+                    {d.name} ({d.total - d.occupied} beds available)
                   </option>
                 ))}
               </select>

@@ -1,74 +1,99 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
+import { getReports } from '../../utils/api';
+import { Loader, FileText, Download, Eye, Clock, CheckCircle, AlertTriangle } from 'lucide-react';
 
 const Reports = () => {
-    // Mock data matching the Java project structure
-    const groupedLabRequests = [
-        {
-            key: 'group1',
-            value: [
-                {
-                    status: 'COMPLETED',
-                    labTest: { name: 'Complete Blood Count (CBC)' },
-                    doctor: { user: { fullName: 'Sarah Jenkins' } },
-                    requestedAt: '2026-03-28T09:00:00',
-                    completedAt: '2026-03-29T14:30:00',
-                    resultFileUrl: '#'
-                },
-                {
-                    status: 'COMPLETED',
-                    labTest: { name: 'Lipid Panel' },
-                    doctor: { user: { fullName: 'Sarah Jenkins' } },
-                    requestedAt: '2026-03-28T09:00:00',
-                    completedAt: '2026-03-29T14:30:00',
-                    resultFileUrl: '#'
-                }
-            ]
-        },
-        {
-            key: 'group2',
-            value: [
-                {
-                    status: 'IN_PROGRESS',
-                    labTest: { name: 'Thyroid Function Test' },
-                    doctor: { user: { fullName: 'Michael Chen' } },
-                    requestedAt: '2026-05-01T10:15:00',
-                    completedAt: null,
-                    resultFileUrl: null
-                }
-            ]
+    const [reports, setReports] = useState([]);
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState(null);
+
+    useEffect(() => {
+        fetchReports();
+    }, []);
+
+    const fetchReports = async () => {
+        try {
+            setLoading(true);
+            const res = await getReports();
+            if (res.data.success) {
+                setReports(res.data.data);
+            }
+        } catch (err) {
+            console.error('Error fetching reports:', err);
+            setError('Failed to load reports.');
+        } finally {
+            setLoading(false);
         }
-    ];
+    };
+
+    const getStatusStyle = (status) => {
+        switch (status) {
+            case 'NORMAL': return { bg: '#d1fae5', color: '#059669' };
+            case 'ABNORMAL': return { bg: '#fee2e2', color: '#dc2626' };
+            case 'REVIEWED': return { bg: '#e0e7ff', color: '#4338ca' };
+            case 'PENDING':
+            default: return { bg: '#fef3c7', color: '#d97706' };
+        }
+    };
+
+    const getTypeLabel = (type) => {
+        const labels = {
+            'BLOOD_TEST': '🩸 Blood Test',
+            'X_RAY': '📷 X-Ray',
+            'MRI': '🧲 MRI',
+            'ECG': '💓 ECG',
+            'CT_SCAN': '🔬 CT Scan',
+            'URINE_TEST': '🧪 Urine Test',
+            'OTHER': '📋 Other',
+        };
+        return labels[type] || '📋 Test';
+    };
+
+    if (loading) {
+        return (
+            <div className="admin-content flex justify-center items-center" style={{ minHeight: '400px' }}>
+                <Loader className="animate-spin text-primary" size={48} />
+            </div>
+        );
+    }
 
     return (
         <>
             <div style={{ marginBottom: '2rem' }}>
                 <h2 style={{ fontSize: '1.75rem', fontWeight: 800, color: '#1e293b', margin: 0 }}>Diagnostic History</h2>
-                <p className="muted">Access your session-based laboratory findings and reports.</p>
+                <p className="muted">Access your laboratory findings and reports from the database.</p>
             </div>
 
-            {groupedLabRequests.length === 0 ? (
+            {error && (
+                <div className="card mb-4" style={{ background: 'rgba(239, 68, 68, 0.1)', border: '1px solid #ef4444', padding: '1rem' }}>
+                    <p className="text-danger" style={{ margin: 0 }}>{error}</p>
+                </div>
+            )}
+
+            {reports.length === 0 ? (
                 <div className="card" style={{ padding: '4rem 2rem', textAlign: 'center' }}>
                     <div style={{ fontSize: '3rem', marginBottom: '1rem', opacity: 0.3 }}>🔬</div>
                     <h3 className="muted">No diagnostic history</h3>
-                    <p className="muted mt-1">Your official hospital lab reports will appear here.</p>
+                    <p className="muted mt-1">Your official hospital lab reports will appear here once uploaded by laboratory staff.</p>
                 </div>
             ) : (
                 <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))', gap: '1.5rem' }}>
-                    {groupedLabRequests.map((entry, idx) => {
-                        const group = entry.value;
-                        const first = group[0];
+                    {reports.map((report) => {
+                        const statusStyle = getStatusStyle(report.status);
 
                         return (
-                            <div key={idx} style={{ border: '2px solid #e2e8f0', borderRadius: '20px', padding: '1.75rem', background: 'white', marginBottom: '2rem' }}>
+                            <div key={report._id} style={{ border: '2px solid #e2e8f0', borderRadius: '20px', padding: '1.75rem', background: 'white' }}>
                                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '1.5rem', flexWrap: 'wrap', gap: '0.5rem' }}>
                                     <div>
-                                        <h3 style={{ fontSize: '1.4rem', fontWeight: 800, color: '#1e293b', margin: 0 }}>
-                                            {group.length > 1 ? 'Diagnostic Session' : first.labTest.name}
+                                        <h3 style={{ fontSize: '1.25rem', fontWeight: 800, color: '#1e293b', margin: 0 }}>
+                                            {report.title}
                                         </h3>
-                                        <div style={{ fontSize: '0.85rem', color: '#64748b', marginTop: '0.25rem' }}>
-                                            Physician: <strong>Dr. {first.doctor.user.fullName}</strong>
-                                        </div>
+                                        {report.uploadedBy && (
+                                            <div style={{ fontSize: '0.85rem', color: '#64748b', marginTop: '0.25rem' }}>
+                                                Uploaded by: <strong>{report.uploadedBy}</strong>
+                                            </div>
+                                        )}
                                     </div>
                                     <span style={{ 
                                         padding: '0.35rem 0.75rem', 
@@ -76,50 +101,55 @@ const Reports = () => {
                                         fontSize: '0.75rem', 
                                         fontWeight: 700, 
                                         textTransform: 'uppercase',
-                                        background: first.status === 'COMPLETED' ? '#d1fae5' : (first.status === 'IN_PROGRESS' ? '#e0e7ff' : '#fef3c7'),
-                                        color: first.status === 'COMPLETED' ? '#059669' : (first.status === 'IN_PROGRESS' ? '#4338ca' : '#d97706')
+                                        background: statusStyle.bg,
+                                        color: statusStyle.color
                                     }}>
-                                        {first.status}
+                                        {report.status}
                                     </span>
                                 </div>
                                 
                                 <div style={{ marginBottom: '1.5rem' }}>
-                                    {group.map((req, i) => (
-                                        <span key={i} style={{ background: '#f1f5f9', color: '#475569', padding: '0.25rem 0.75rem', borderRadius: '100px', fontSize: '0.75rem', fontWeight: 600, marginRight: '0.5rem', marginTop: '0.5rem', display: 'inline-block' }}>
-                                            🧪 {req.labTest.name}
-                                        </span>
-                                    ))}
+                                    <span style={{ background: '#f1f5f9', color: '#475569', padding: '0.25rem 0.75rem', borderRadius: '100px', fontSize: '0.75rem', fontWeight: 600, marginRight: '0.5rem', display: 'inline-block' }}>
+                                        {getTypeLabel(report.reportType)}
+                                    </span>
                                 </div>
+
+                                {report.description && (
+                                    <p style={{ fontSize: '0.9rem', color: '#64748b', marginBottom: '1rem', lineHeight: 1.5 }}>
+                                        {report.description}
+                                    </p>
+                                )}
 
                                 <div style={{ fontSize: '0.85rem', color: '#64748b', padding: '1rem', background: '#f8fafc', borderRadius: '12px', marginBottom: '1.5rem' }}>
                                     <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.5rem', flexWrap: 'wrap' }}>
-                                        <span>Requested On</span>
-                                        <strong style={{ color: '#1e293b' }}>{first.requestedAt.replace('T', ' ').substring(0, 16)}</strong>
+                                        <span>Uploaded On</span>
+                                        <strong style={{ color: '#1e293b' }}>{new Date(report.createdAt).toLocaleDateString()} {new Date(report.createdAt).toLocaleTimeString()}</strong>
                                     </div>
-                                    {first.status === 'COMPLETED' && (
+                                    {report.results && (
                                         <div style={{ display: 'flex', justifyContent: 'space-between', flexWrap: 'wrap' }}>
-                                            <span>Completed On</span>
-                                            <strong style={{ color: '#1e293b' }}>{first.completedAt.replace('T', ' ').substring(0, 16)}</strong>
+                                            <span>Result Summary</span>
+                                            <strong style={{ color: '#1e293b' }}>{report.results}</strong>
                                         </div>
                                     )}
                                 </div>
 
-                                {first.status === 'COMPLETED' ? (
-                                    <div style={{ marginTop: '1rem', display: 'flex', gap: '1rem', flexWrap: 'wrap' }}>
-                                        {first.resultFileUrl && (
-                                            <a href={first.resultFileUrl} target="_blank" rel="noreferrer" className="btn btn-primary" style={{ flex: 1, minWidth: '150px', justifyContent: 'center', padding: '0.85rem' }}>
-                                                📄 Download Report
-                                            </a>
-                                        )}
-                                        <Link to={`/patient/report-detail/${entry.key}`} className="btn btn-outline" style={{ flex: 1, minWidth: '150px', justifyContent: 'center', padding: '0.85rem' }}>
-                                            ℹ️ View Details
-                                        </Link>
-                                    </div>
-                                ) : (
-                                    <div style={{ marginTop: '1rem', padding: '1rem', background: '#fff7ed', border: '1px solid #ffedd5', borderRadius: '12px', color: '#c2410c', fontSize: '0.85rem', textAlign: 'center' }}>
-                                        ⏳ Testing in progress. Check back soon for results.
+                                {report.doctorComments && (
+                                    <div style={{ padding: '1rem', background: '#eff6ff', border: '1px solid #bfdbfe', borderRadius: '12px', marginBottom: '1rem', fontSize: '0.85rem' }}>
+                                        <strong style={{ color: '#1e40af' }}>Doctor's Comment:</strong>
+                                        <p style={{ margin: '0.5rem 0 0', color: '#1e3a5f' }}>{report.doctorComments}</p>
                                     </div>
                                 )}
+
+                                <div style={{ marginTop: '1rem', display: 'flex', gap: '1rem', flexWrap: 'wrap' }}>
+                                    {report.filePath && (
+                                        <a href={report.filePath} target="_blank" rel="noreferrer" className="btn btn-primary" style={{ flex: 1, minWidth: '150px', justifyContent: 'center', padding: '0.85rem' }}>
+                                            <Download size={16} /> Download Report
+                                        </a>
+                                    )}
+                                    <Link to={`/patient/report-detail/${report._id}`} className="btn btn-outline" style={{ flex: 1, minWidth: '150px', justifyContent: 'center', padding: '0.85rem' }}>
+                                        <Eye size={16} /> View Details
+                                    </Link>
+                                </div>
                             </div>
                         );
                     })}

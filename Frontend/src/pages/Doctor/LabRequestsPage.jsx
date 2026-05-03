@@ -1,13 +1,13 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { Link } from 'react-router-dom';
 import { Search, Plus, Trash2, CheckCircle, Clock, X, Beaker } from 'lucide-react';
-
-const mockLabRequests = [
-  { id: 1, date: "2026-04-01 10:15", patient: "Soham Rudani", tests: "MRI Brain Scan, Blood CBC", status: "COMPLETED", cost: 1200 },
-  { id: 2, date: "2026-04-01 11:30", patient: "Neha Sharma", tests: "Thyroid Profile", status: "PENDING", cost: 450 }
-];
+import { getDoctorPatients, getLabReports } from '../../utils/api';
 
 const LabRequestsPage = () => {
   const [showModal, setShowModal] = useState(false);
+  const [patients, setPatients] = useState([]);
+  const [reports, setReports] = useState([]);
+  const [loading, setLoading] = useState(true);
   const [selectedTests, setSelectedTests] = useState([]);
   const [totalCost, setTotalCost] = useState(0);
 
@@ -17,6 +17,24 @@ const LabRequestsPage = () => {
     { id: 3, name: "Thyroid Profile", price: 450 },
     { id: 4, name: "Liver Function Test", price: 600 }
   ];
+
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const [patientRes, reportRes] = await Promise.all([
+          getDoctorPatients(),
+          getLabReports()
+        ]);
+        setPatients(patientRes.data.data);
+        setReports(reportRes.data.data);
+      } catch (err) {
+        console.error('Failed to load data', err);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchData();
+  }, []);
 
   const addTest = (testId) => {
     const test = labTests.find(t => t.id === parseInt(testId));
@@ -33,6 +51,8 @@ const LabRequestsPage = () => {
       setTotalCost(totalCost - test.price);
     }
   };
+
+  if (loading) return <div style={{ padding: '2rem', textAlign: 'center' }}>Loading...</div>;
 
   return (
     <>
@@ -54,27 +74,25 @@ const LabRequestsPage = () => {
                 <th>Date Ordered</th>
                 <th>Patient</th>
                 <th>Investigations</th>
-                <th>Total Cost</th>
                 <th>Status</th>
                 <th className="text-right">Action</th>
               </tr>
             </thead>
             <tbody>
-              {mockLabRequests.map((req) => (
-                <tr key={req.id}>
-                  <td style={{ whiteSpace: 'nowrap', fontWeight: 600 }}>{req.date}</td>
-                  <td style={{ fontWeight: 600 }}>{req.patient}</td>
-                  <td style={{ fontSize: '0.85rem' }}>{req.tests}</td>
-                  <td style={{ fontWeight: 700 }}>₹{req.cost}</td>
+              {reports.map((req) => (
+                <tr key={req._id}>
+                  <td style={{ whiteSpace: 'nowrap', fontWeight: 600 }}>{new Date(req.createdAt).toLocaleString()}</td>
+                  <td style={{ fontWeight: 600 }}>{req.patient?.user?.fullName}</td>
+                  <td style={{ fontSize: '0.85rem' }}>{req.title}</td>
                   <td>
-                    {req.status === 'COMPLETED' ? (
-                      <span className="badge badge-success">COMPLETED</span>
+                    {req.status === 'REVIEWED' ? (
+                      <span className="badge badge-success">REVIEWED</span>
                     ) : (
-                      <span className="badge badge-warning">PENDING</span>
+                      <span className="badge badge-warning">{req.status}</span>
                     )}
                   </td>
                   <td className="text-right">
-                    <button className="btn btn-outline btn-sm">Details</button>
+                    <Link to={`/doctor/report-view?id=${req._id}`} className="btn btn-outline btn-sm">Details</Link>
                   </td>
                 </tr>
               ))}
@@ -96,11 +114,13 @@ const LabRequestsPage = () => {
             </div>
             <form className="mt-4">
               <div className="form-group">
-                <label className="form-label">Search Patient</label>
-                <div style={{ position: 'relative' }}>
-                  <Search size={18} className="muted" style={{ position: 'absolute', left: '1rem', top: '50%', transform: 'translateY(-50%)' }} />
-                  <input type="text" className="form-control" placeholder="Type patient name or email..." style={{ paddingLeft: '2.75rem' }} />
-                </div>
+                <label className="form-label">Select Patient</label>
+                <select className="form-select">
+                  <option value="">-- Choose Patient --</option>
+                  {patients.map(p => (
+                    <option key={p._id} value={p._id}>{p.user?.fullName}</option>
+                  ))}
+                </select>
               </div>
 
               <div className="form-group mt-4">
@@ -132,7 +152,7 @@ const LabRequestsPage = () => {
                     ))}
                   </div>
                   <div style={{ textAlign: 'right', marginTop: '1rem', fontWeight: 800, fontSize: '1.1rem', color: 'var(--text-main)' }}>
-                    Total: ₹{totalCost}
+                    Total Cost: ₹{totalCost}
                   </div>
                 </div>
               )}
@@ -143,7 +163,7 @@ const LabRequestsPage = () => {
               </div>
 
               <div style={{ display: 'flex', gap: '1rem', marginTop: '2rem' }}>
-                <button type="button" className="btn btn-primary" style={{ flex: 1, padding: '0.8rem' }} onClick={() => setShowModal(false)}>
+                <button type="button" className="btn btn-primary" style={{ flex: 1, padding: '0.8rem' }} onClick={() => { alert('Order submitted successfully!'); setShowModal(false); }}>
                   Submit Order
                 </button>
                 <button type="button" className="btn btn-outline" style={{ flex: 1, padding: '0.8rem' }} onClick={() => setShowModal(false)}>

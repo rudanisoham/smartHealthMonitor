@@ -1,21 +1,42 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import AdminLayout from '../../components/AdminLayout';
-
-const mockAppointments = [
-  { id: 1, time: "2026-04-01 00:45", doc: "Dr. Soham Rudani", pat: "Soham Rudani", status: "CANCELLED", statusColor: "#EF4444", statusBg: "#FEE2E2" },
-  { id: 2, time: "2026-04-01 10:00", doc: "Dr. Renish", pat: "Soham Rudani", status: "Completed", statusColor: "#475569", statusBg: "#F1F5F9" },
-  { id: 3, time: "2026-04-02 15:41", doc: "Dr. Renish", pat: "soham", status: "Completed", statusColor: "#475569", statusBg: "#F1F5F9" },
-  { id: 4, time: "2026-04-03 09:15", doc: "Dr. Soham Rudani", pat: "neha", status: "Scheduled", statusColor: "#D97706", statusBg: "#FEF3C7" }
-];
+import { getAdminReports, getAdminDashboard } from '../../utils/api';
 
 export default function Reports() {
   const [search, setSearch] = useState('');
+  const [appointments, setAppointments] = useState([]);
+  const [stats, setStats] = useState(null);
+  const [loading, setLoading] = useState(true);
 
-  const filteredAppointments = mockAppointments.filter(app => 
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const [reportRes, dashRes] = await Promise.all([
+          getAdminReports(),
+          getAdminDashboard()
+        ]);
+        setAppointments(reportRes.data.data);
+        setStats(dashRes.data.data.chartData);
+      } catch (err) {
+        console.error("Failed to load reports data", err);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchData();
+  }, []);
+
+  const filteredAppointments = appointments.filter(app => 
     app.doc.toLowerCase().includes(search.toLowerCase()) ||
     app.pat.toLowerCase().includes(search.toLowerCase()) ||
     app.status.toLowerCase().includes(search.toLowerCase())
+  );
+
+  if (loading) return (
+    <AdminLayout title="Platform Reports" subtitle="System analytics and financial overviews">
+      <div style={{padding: '5rem', textAlign: 'center'}}>Initializing reports ledger...</div>
+    </AdminLayout>
   );
 
   return (
@@ -31,7 +52,7 @@ export default function Reports() {
              <div style={{
                 width: '180px', height: '180px', 
                 borderRadius: '50%', 
-                background: 'conic-gradient(#2F5233 0% 65%, #C2D57D 65% 85%, #598356 85% 100%)',
+                background: stats ? `conic-gradient(#2563EB 0% ${stats.patientsPct}%, #10B981 ${stats.patientsPct}% ${stats.patientsPct + stats.doctorsPct}%, #8B5CF6 ${stats.patientsPct + stats.doctorsPct}% 100%)` : '#F1F5F9',
                 position: 'relative',
                 boxShadow: '0 4px 12px rgba(0,0,0,0.05)',
                 transition: 'transform 0.3s ease'
@@ -40,7 +61,7 @@ export default function Reports() {
                    position: 'absolute', top: '22%', left: '22%', width: '56%', height: '56%', backgroundColor: '#FFFFFF', borderRadius: '50%',
                    display: 'flex', alignItems: 'center', justifyContent: 'center', flexDirection: 'column'
                 }}>
-                   <span style={{fontSize: '1.2rem', fontWeight: '800', color: '#0F172A'}}>3</span>
+                   <span style={{fontSize: '1.2rem', fontWeight: '800', color: '#0F172A'}}>{stats?.totalNodes || 0}</span>
                    <span style={{fontSize: '0.7rem', color: '#64748B', fontWeight: '600'}}>Total Nodes</span>
                 </div>
              </div>
@@ -48,16 +69,16 @@ export default function Reports() {
              {/* Legend */}
              <div style={{display: 'flex', gap: '2rem', marginTop: '2.5rem', justifyContent: 'center', flexWrap: 'wrap'}}>
                 <div style={{display: 'flex', alignItems: 'center', gap: '0.75rem', background: '#F8FAFC', padding: '0.5rem 1rem', borderRadius: '8px'}}>
-                   <div style={{width: '14px', height: '14px', background: '#2F5233', borderRadius: '4px'}}></div>
-                   <div style={{fontSize: '0.8rem', color: '#334155', fontWeight: '700'}}>Registered Patients (65%)</div>
+                   <div style={{width: '14px', height: '14px', background: '#2563EB', borderRadius: '4px'}}></div>
+                   <div style={{fontSize: '0.8rem', color: '#334155', fontWeight: '700'}}>Registered Patients ({stats?.patientsPct || 0}%)</div>
                 </div>
                 <div style={{display: 'flex', alignItems: 'center', gap: '0.75rem', background: '#F8FAFC', padding: '0.5rem 1rem', borderRadius: '8px'}}>
-                   <div style={{width: '14px', height: '14px', background: '#C2D57D', borderRadius: '4px'}}></div>
-                   <div style={{fontSize: '0.8rem', color: '#334155', fontWeight: '700'}}>Verified Doctors (20%)</div>
+                   <div style={{width: '14px', height: '14px', background: '#10B981', borderRadius: '4px'}}></div>
+                   <div style={{fontSize: '0.8rem', color: '#334155', fontWeight: '700'}}>Verified Doctors ({stats?.doctorsPct || 0}%)</div>
                 </div>
                 <div style={{display: 'flex', alignItems: 'center', gap: '0.75rem', background: '#F8FAFC', padding: '0.5rem 1rem', borderRadius: '8px'}}>
-                   <div style={{width: '14px', height: '14px', background: '#598356', borderRadius: '4px'}}></div>
-                   <div style={{fontSize: '0.8rem', color: '#334155', fontWeight: '700'}}>Active Departments (15%)</div>
+                   <div style={{width: '14px', height: '14px', background: '#8B5CF6', borderRadius: '4px'}}></div>
+                   <div style={{fontSize: '0.8rem', color: '#334155', fontWeight: '700'}}>Active Departments ({stats?.departmentsPct || 0}%)</div>
                 </div>
              </div>
           </div>

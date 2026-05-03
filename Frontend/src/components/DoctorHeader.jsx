@@ -17,7 +17,7 @@ const DoctorHeader = ({ title, subtitle, onToggleSidebar, doctorName = "Dr. Smit
       <div className="header-right">
         <div className="header-pill">Available</div>
         <div className="header-avatar" title={doctorName}>
-          {doctorName.charAt(4)} {/* 'Dr. S' -> 'S' */}
+          {(doctorName.startsWith('Dr.') ? doctorName.substring(3).trim() : doctorName).charAt(0).toUpperCase()}
         </div>
       </div>
     </header>

@@ -73,9 +73,9 @@ import PatientPrescriptionDetail from './pages/patient/PrescriptionDetail';
 import PatientReportDetail from './pages/patient/ReportDetail';
 import PatientLogin from './pages/Auth/patient/Login';
 import PatientRegister from './pages/Auth/patient/Register';
-import PatientResetPassword from './pages/Auth/patient/ResetPassword';
-import PatientVerifyOTP from './pages/Auth/patient/VerifyOTP';
-import PatientSetNewPassword from './pages/Auth/patient/SetNewPassword';
+import ForgotPassword from './pages/Auth/Common/ForgotPassword';
+import VerifyOTP from './pages/Auth/Common/VerifyOTP';
+import ResetPassword from './pages/Auth/Common/ResetPassword';
 
 // Reception Pages
 import ReceptionDashboard from './pages/Reception/Dashboard';
@@ -108,6 +108,7 @@ import LabLogin from './pages/Auth/lab/Login';
 // Styles
 import './styles/admin.css';
 import './styles/patient.css';
+import './styles/doctor.css';
 
 function App() {
   return (
@@ -169,9 +170,11 @@ function App() {
         {/* Patient Routes */}
         <Route path="/auth/patient/login" element={<PatientLogin />} />
         <Route path="/auth/patient/register" element={<PatientRegister />} />
-        <Route path="/auth/patient/reset-password" element={<PatientResetPassword />} />
-        <Route path="/auth/patient/verify-otp" element={<PatientVerifyOTP />} />
-        <Route path="/auth/patient/set-new-password" element={<PatientSetNewPassword />} />
+        
+        {/* Common Auth Routes for Password Reset */}
+        <Route path="/auth/forgot" element={<ForgotPassword />} />
+        <Route path="/auth/verify-otp" element={<VerifyOTP />} />
+        <Route path="/auth/reset-password" element={<ResetPassword />} />
         <Route path="/patient" element={<PatientLayout />}>
           <Route index element={<Navigate to="dashboard" replace />} />
           <Route path="dashboard" element={<PatientDashboard />} />

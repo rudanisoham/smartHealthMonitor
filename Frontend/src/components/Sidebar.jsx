@@ -153,7 +153,13 @@ const Sidebar = ({ isCollapsed }) => {
 
             <div className="sidebar-section-label sidebar-text">Session</div>
             <div className="sidebar-nav">
-                <NavLink to="/auth/patient/login" className="sidebar-link">
+                <a href="#" onClick={(e) => {
+                    e.preventDefault();
+                    localStorage.removeItem('token');
+                    localStorage.removeItem('user');
+                    sessionStorage.clear();
+                    window.location.href = '/';
+                }} className="sidebar-link">
                     <span className="icon">
                         <svg className="nav-icon" viewBox="0 0 24 24" aria-hidden="true">
                             <path d="M10 16l-4-4 4-4"></path>
@@ -162,7 +168,7 @@ const Sidebar = ({ isCollapsed }) => {
                         </svg>
                     </span>
                     <span className="sidebar-text">Sign out</span>
-                </NavLink>
+                </a>
             </div>
 
             <div className="sidebar-footer sidebar-text">

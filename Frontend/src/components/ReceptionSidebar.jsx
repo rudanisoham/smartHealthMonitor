@@ -56,9 +56,14 @@ const ReceptionSidebar = ({ isCollapsed }) => {
       <div className="sidebar-section-label sidebar-text">Session</div>
       <div className="sidebar-nav">
         <button 
-          onClick={() => navigate('/auth/reception/login')} 
+          onClick={() => {
+            localStorage.removeItem('token');
+            localStorage.removeItem('user');
+            sessionStorage.clear();
+            navigate('/');
+          }} 
           className="sidebar-link w-full"
-          style={{ cursor: 'pointer', textAlign: 'left' }}
+          style={{ cursor: 'pointer', textAlign: 'left', border: 'none', background: 'none' }}
         >
           <span className="icon"><LogOut className="nav-icon" /></span>
           <span className="sidebar-text">Sign out</span>

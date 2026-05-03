@@ -1,20 +1,34 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import AdminLayout from '../../components/AdminLayout';
-
-const mockDoctors = [
-  { id: 1, name: "Dr. Soham Rudani", lic: "ASDASD", email: "rudanisoham@gmail.com", phone: "+919316202895", specialty: "Cardiology", dept: "Cardiology", status: "INACTIVE", initial: "S", bg: "#1E293B" },
-  { id: 2, name: "Dr. Renish", lic: "ASDASdsd", email: "renish@gmail.com", phone: "—", specialty: "Neurology", dept: "Neurology", status: "Active", initial: "R", bg: "#0F172A" }
-];
+import { getAdminDoctors } from '../../utils/api';
 
 export default function Doctors() {
   const [search, setSearch] = useState('');
+  const [doctors, setDoctors] = useState([]);
+  const [loading, setLoading] = useState(true);
 
-  const filteredDoctors = mockDoctors.filter(d => 
-    d.name.toLowerCase().includes(search.toLowerCase()) || 
-    d.specialty.toLowerCase().includes(search.toLowerCase()) || 
-    d.dept.toLowerCase().includes(search.toLowerCase())
+  useEffect(() => {
+    const fetchDoctors = async () => {
+      try {
+        const res = await getAdminDoctors();
+        setDoctors(res.data.data);
+      } catch (err) {
+        console.error("Failed to load doctors", err);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchDoctors();
+  }, []);
+
+  const filteredDoctors = doctors.filter(d => 
+    d.name?.toLowerCase().includes(search.toLowerCase()) || 
+    d.specialty?.toLowerCase().includes(search.toLowerCase()) || 
+    d.department?.toLowerCase().includes(search.toLowerCase())
   );
+
+  if (loading) return <div style={{ padding: '2rem', textAlign: 'center' }}>Loading doctors...</div>;
 
   return (
     <AdminLayout title="Manage Doctors" subtitle="View and filter all registered medical professionals">
@@ -23,13 +37,15 @@ export default function Doctors() {
       <div className="grid grid-2 mb-6">
         <div className="card" style={{padding: '1.75rem 2rem', display: 'flex', flexDirection: 'column', justifyContent: 'center'}}>
           <div style={{fontWeight: '700', fontSize: '0.95rem', color: '#1E293B', marginBottom: '0.5rem'}}>Total Doctors</div>
-          <div style={{fontSize: '2.5rem', fontWeight: '800', color: '#1D4ED8', lineHeight: '1.2'}}>{mockDoctors.length}</div>
+          <div style={{fontSize: '2.5rem', fontWeight: '800', color: '#1D4ED8', lineHeight: '1.2'}}>{doctors.length}</div>
         </div>
         
         <div className="card" style={{padding: '1.75rem 2rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center'}}>
           <div>
             <div style={{fontWeight: '700', fontSize: '0.95rem', color: '#F59E0B', marginBottom: '0.5rem'}}>Pending Approvals</div>
-            <div style={{fontSize: '2.5rem', fontWeight: '800', color: '#1D4ED8', lineHeight: '1.2'}}>0</div>
+            <div style={{fontSize: '2.5rem', fontWeight: '800', color: '#F59E0B', lineHeight: '1.2'}}>
+              {doctors.filter(d => !d.isApproved).length}
+            </div>
           </div>
           <div>
             <Link to="/admin/doctors/requests" style={{padding: '0.6rem 1.25rem', background: '#FFFFFF', border: '1px solid #E2E8F0', borderRadius: '8px', fontSize: '0.9rem', fontWeight: '600', color: '#1E293B', cursor: 'pointer', transition: 'all 0.2s', boxShadow: '0 1px 2px rgba(0,0,0,0.02)', textDecoration: 'none'}} onMouseOver={(e) => e.currentTarget.style.background = '#F8FAFC'} onMouseOut={(e) => e.currentTarget.style.background = '#FFFFFF'}>Review All</Link>
@@ -77,13 +93,15 @@ export default function Doctors() {
             <tbody>
               
               {filteredDoctors.map((doc, i) => (
-              <tr key={i} style={{background: '#FFFFFF', transition: 'background 0.2s'}} onMouseOver={(e) => e.currentTarget.style.background = '#F8FAFC'} onMouseOut={(e) => e.currentTarget.style.background = '#FFFFFF'}>
+              <tr key={doc._id} style={{background: '#FFFFFF', transition: 'background 0.2s'}} onMouseOver={(e) => e.currentTarget.style.background = '#F8FAFC'} onMouseOut={(e) => e.currentTarget.style.background = '#FFFFFF'}>
                 <td style={{padding: '1.25rem 1.5rem', borderBottom: i === filteredDoctors.length - 1 ? 'none' : '1px solid #F1F5F9'}}>
                   <div className="flex-author" style={{gap: '1rem', display: 'flex', alignItems: 'center'}}>
-                    <div style={{width: '36px', height: '36px', borderRadius: '50%', background: doc.bg, color: '#FFFFFF', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.9rem', fontWeight: '600'}}>{doc.initial}</div>
+                    <div style={{width: '36px', height: '36px', borderRadius: '50%', background: '#0F172A', color: '#FFFFFF', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.9rem', fontWeight: '600'}}>
+                      {doc.name ? doc.name.charAt(0).toUpperCase() : 'D'}
+                    </div>
                     <div className="author-info" style={{display: 'flex', flexDirection: 'column'}}>
                       <span className="author-name" style={{fontSize: '0.9rem', fontWeight: '700', color: '#0F172A'}}>{doc.name}</span>
-                      <span className="author-sub" style={{fontSize: '0.8rem', color: '#64748B', marginTop: '0.1rem'}}>Lic: {doc.lic}</span>
+                      <span className="author-sub" style={{fontSize: '0.8rem', color: '#64748B', marginTop: '0.1rem'}}>Lic: {doc.licenseNumber}</span>
                     </div>
                   </div>
                 </td>
@@ -95,10 +113,14 @@ export default function Doctors() {
                   {doc.specialty}
                 </td>
                 <td style={{padding: '1.25rem 1.5rem', borderBottom: i === filteredDoctors.length - 1 ? 'none' : '1px solid #F1F5F9'}}>
-                  <span style={{background: '#F1F5F9', color: '#64748B', padding: '0.35rem 0.8rem', borderRadius: '999px', fontSize: '0.75rem', fontWeight: '700'}}>{doc.dept}</span>
+                  <span style={{background: '#F1F5F9', color: '#64748B', padding: '0.35rem 0.8rem', borderRadius: '999px', fontSize: '0.75rem', fontWeight: '700'}}>{doc.department}</span>
                 </td>
                 <td style={{padding: '1.25rem 1.5rem', borderBottom: i === filteredDoctors.length - 1 ? 'none' : '1px solid #F1F5F9'}}>
-                  <span style={{background: doc.status === 'Active' ? '#DCFCE7' : '#FEE2E2', color: doc.status === 'Active' ? '#10B981' : '#EF4444', padding: '0.35rem 0.8rem', borderRadius: '999px', fontSize: '0.75rem', fontWeight: '700', textTransform: 'uppercase'}}>{doc.status}</span>
+                  {!doc.isApproved ? (
+                    <span style={{background: '#FEF3C7', color: '#92400E', padding: '0.35rem 0.8rem', borderRadius: '999px', fontSize: '0.75rem', fontWeight: '700', textTransform: 'uppercase'}}>Pending Approval</span>
+                  ) : (
+                    <span style={{background: doc.isActive ? '#DCFCE7' : '#FEE2E2', color: doc.isActive ? '#10B981' : '#EF4444', padding: '0.35rem 0.8rem', borderRadius: '999px', fontSize: '0.75rem', fontWeight: '700', textTransform: 'uppercase'}}>{doc.isActive ? 'Active' : 'Inactive'}</span>
+                  )}
                 </td>
                 <td style={{padding: '1.25rem 1.5rem', borderBottom: i === filteredDoctors.length - 1 ? 'none' : '1px solid #F1F5F9'}}>
                   <div style={{display: 'flex', gap: '0.5rem'}}>

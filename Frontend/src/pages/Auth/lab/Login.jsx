@@ -6,19 +6,42 @@ import {
   ArrowLeft, 
   CheckCircle, 
   Activity,
-  ShieldCheck
+  ShieldCheck,
+  Loader
 } from 'lucide-react';
+import { login as apiLogin } from '../../../utils/api';
 import '../../../styles/patient.css';
 
 const LabLogin = () => {
   const navigate = useNavigate();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
 
-  const handleLogin = (e) => {
+  const handleLogin = async (e) => {
     e.preventDefault();
-    // Simulate authentication
-    navigate('/lab/dashboard');
+    setLoading(true);
+    setError(null);
+
+    try {
+      const res = await apiLogin({ email, password });
+      
+      if (res.data.success) {
+        localStorage.setItem('token', res.data.token);
+        localStorage.setItem('user', JSON.stringify(res.data.user));
+        
+        if (res.data.user.role === 'LAB_TECHNICIAN' || res.data.user.role === 'ADMIN' || res.data.user.role === 'DOCTOR') {
+          navigate('/lab/dashboard');
+        } else {
+          setError('Unauthorized: This portal is for Lab staff only.');
+        }
+      }
+    } catch (err) {
+      setError(err.response?.data?.error || 'Login failed. Please check your credentials.');
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -36,6 +59,12 @@ const LabLogin = () => {
           <p className="login-subtitle">
             Secure portal for laboratory technicians and pathologists to manage diagnostic reports.
           </p>
+
+          {error && (
+            <div className="card mb-4" style={{ background: 'rgba(239, 68, 68, 0.1)', border: '1px solid #ef4444', padding: '1rem' }}>
+              <p className="text-danger" style={{ margin: 0, fontSize: '0.85rem' }}>{error}</p>
+            </div>
+          )}
 
           <form onSubmit={handleLogin} className="mt-4">
             <div className="form-group mb-4">
@@ -66,8 +95,8 @@ const LabLogin = () => {
               </div>
             </div>
 
-            <button type="submit" className="btn btn-primary w-full" style={{ padding: '1rem' }}>
-              Authenticate & Access
+            <button type="submit" className="btn btn-primary w-full" style={{ padding: '1rem' }} disabled={loading}>
+              {loading ? <Loader className="animate-spin" size={18} /> : 'Authenticate & Access'}
             </button>
           </form>
 

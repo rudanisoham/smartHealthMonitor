@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { 
   Plus, 
   Search, 
@@ -11,18 +11,34 @@ import {
   Download
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
+import { getMedicalInventory } from '../../utils/api';
 
 const MedicalInventory = () => {
   const [searchTerm, setSearchTerm] = useState('');
+  const [medicines, setMedicines] = useState([]);
+  const [loading, setLoading] = useState(true);
 
-  const medicines = [
-    { id: 1, name: 'Paracetamol', brand: 'Panadol', category: 'Analgesic', stock: 450, unit: 'Tablets', price: '₹12.00', status: 'In Stock' },
-    { id: 2, name: 'Amoxicillin', brand: 'Amoxil', category: 'Antibiotic', stock: 12, unit: 'Bottles', price: '₹85.00', status: 'Low Stock' },
-    { id: 3, name: 'Cetirizine', brand: 'Zyrtec', category: 'Antihistamine', stock: 210, unit: 'Tablets', price: '₹18.00', status: 'In Stock' },
-    { id: 4, name: 'Insulin Glargine', brand: 'Lantus', category: 'Antidiabetic', stock: 8, unit: 'Vials', price: '₹450.00', status: 'Low Stock' },
-    { id: 5, name: 'Metformin', brand: 'Glucophage', category: 'Antidiabetic', stock: 0, unit: 'Tablets', price: '₹25.00', status: 'Out of Stock' },
-    { id: 6, name: 'Atorvastatin', brand: 'Lipitor', category: 'Cardiovascular', stock: 150, unit: 'Tablets', price: '₹45.00', status: 'In Stock' },
-  ];
+  useEffect(() => {
+    const fetchInventory = async () => {
+      try {
+        const res = await getMedicalInventory();
+        setMedicines(res.data.data);
+      } catch (err) {
+        console.error("Failed to load inventory", err);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchInventory();
+  }, []);
+
+  const filteredMedicines = medicines.filter(m => 
+    m.name?.toLowerCase().includes(searchTerm.toLowerCase()) || 
+    m.brand?.toLowerCase().includes(searchTerm.toLowerCase()) || 
+    m.category?.toLowerCase().includes(searchTerm.toLowerCase())
+  );
+
+  if (loading) return <div style={{ padding: '2rem', textAlign: 'center' }}>Loading inventory...</div>;
 
   const getStatusChip = (status) => {
     switch (status) {
@@ -88,8 +104,8 @@ const MedicalInventory = () => {
             </tr>
           </thead>
           <tbody>
-            {medicines.map((med) => (
-              <tr key={med.id}>
+            {filteredMedicines.map((med) => (
+              <tr key={med._id}>
                 <td>
                   <div className="flex items-center gap-3">
                     <div className="header-avatar" style={{ width: '36px', height: '36px', background: 'var(--primary-light)', color: 'var(--primary)' }}>
@@ -128,7 +144,7 @@ const MedicalInventory = () => {
       </div>
 
       <div className="flex justify-between items-center mt-6">
-        <p className="muted">Showing 6 of 1,248 medicines</p>
+        <p className="muted">Showing {filteredMedicines.length} of {medicines.length} medicines</p>
         <div className="flex gap-2">
           <button className="btn btn-outline btn-sm" disabled>Previous</button>
           <button className="btn btn-primary btn-sm">1</button>

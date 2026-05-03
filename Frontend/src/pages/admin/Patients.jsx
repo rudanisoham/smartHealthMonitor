@@ -1,22 +1,47 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import AdminLayout from '../../components/AdminLayout';
-
-const mockPatients = [
-  { id: 1, name: "Soham Rudani", email: "rudanisoham1@gmail.com", phone: "+919316202895", bg: "A+", sex: "—", date: "2026-04-01", initial: "S" },
-  { id: 2, name: "soham", email: "rudanisoham9@gmail.com", phone: "9316202895", bg: "A+", sex: "—", date: "2026-04-01", initial: "s" },
-  { id: 3, name: "neha", email: "neha@gmail.com", phone: "1234567890", bg: "—", sex: "—", date: "2026-04-01", initial: "n" },
-  { id: 4, name: "Soham Rudani", email: "soham@gmail.com", phone: "+919316202895", bg: "—", sex: "—", date: "2026-04-01", initial: "S" }
-];
+import { getAdminPatients, deleteAdminPatient } from '../../utils/api';
 
 export default function Patients() {
   const [search, setSearch] = useState('');
+  const [patients, setPatients] = useState([]);
+  const [loading, setLoading] = useState(true);
 
-  const filteredPatients = mockPatients.filter(p => 
-    p.name.toLowerCase().includes(search.toLowerCase()) || 
-    p.email.toLowerCase().includes(search.toLowerCase()) || 
-    p.phone.includes(search)
+  const fetchPatients = async () => {
+    try {
+      const res = await getAdminPatients();
+      setPatients(res.data.data);
+    } catch (err) {
+      console.error("Failed to load patients", err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchPatients();
+  }, []);
+
+  const handleDelete = async (id) => {
+    if (window.confirm('Are you sure you want to delete this patient?')) {
+      try {
+        await deleteAdminPatient(id);
+        fetchPatients();
+      } catch (err) {
+        console.error("Failed to delete patient", err);
+        alert('Failed to delete patient');
+      }
+    }
+  };
+
+  const filteredPatients = patients.filter(p => 
+    p.name?.toLowerCase().includes(search.toLowerCase()) || 
+    p.email?.toLowerCase().includes(search.toLowerCase()) || 
+    p.phone?.includes(search)
   );
+
+  if (loading) return <div style={{ padding: '2rem', textAlign: 'center' }}>Loading patients...</div>;
 
   return (
     <AdminLayout title="Manage Patients" subtitle="View and manage all registered patients">
@@ -59,10 +84,12 @@ export default function Patients() {
             </thead>
             <tbody>
               {filteredPatients.map((pat, i) => (
-              <tr key={i} style={{background: '#FFFFFF', transition: 'background 0.2s'}} onMouseOver={(e) => e.currentTarget.style.background = '#F8FAFC'} onMouseOut={(e) => e.currentTarget.style.background = '#FFFFFF'}>
+              <tr key={pat._id} style={{background: '#FFFFFF', transition: 'background 0.2s'}} onMouseOver={(e) => e.currentTarget.style.background = '#F8FAFC'} onMouseOut={(e) => e.currentTarget.style.background = '#FFFFFF'}>
                 <td style={{padding: '1.25rem 1.5rem', borderBottom: i === filteredPatients.length - 1 ? 'none' : '1px solid #F1F5F9'}}>
                   <div className="flex-author" style={{gap: '1rem', display: 'flex', alignItems: 'center'}}>
-                    <div style={{width: '36px', height: '36px', borderRadius: '50%', background: '#0EA5E9', color: '#FFFFFF', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.9rem', fontWeight: '600'}}>{pat.initial}</div>
+                    <div style={{width: '36px', height: '36px', borderRadius: '50%', background: '#0EA5E9', color: '#FFFFFF', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.9rem', fontWeight: '600'}}>
+                      {pat.name ? pat.name.charAt(0).toUpperCase() : 'P'}
+                    </div>
                     <span className="author-name" style={{fontSize: '0.85rem', fontWeight: '600', color: '#0F172A'}}>{pat.name}</span>
                   </div>
                 </td>
@@ -71,21 +98,21 @@ export default function Patients() {
                     <div style={{fontSize: '0.75rem', color: '#64748B', marginTop: '0.1rem'}}>{pat.phone}</div>
                 </td>
                 <td style={{padding: '1.25rem 1.5rem', textAlign: 'center', borderBottom: i === filteredPatients.length - 1 ? 'none' : '1px solid #F1F5F9'}}>
-                  {pat.bg !== '—' ? 
-                     <span style={{background: '#FEE2E2', color: '#EF4444', padding: '0.2rem 0.6rem', borderRadius: '4px', fontSize: '0.75rem', fontWeight: '700'}}>{pat.bg}</span>
+                  {pat.bloodGroup !== '—' ? 
+                     <span style={{background: '#FEE2E2', color: '#EF4444', padding: '0.2rem 0.6rem', borderRadius: '4px', fontSize: '0.75rem', fontWeight: '700'}}>{pat.bloodGroup}</span>
                      : <span style={{color: '#94A3B8'}}>—</span>
                   }
                 </td>
                 <td style={{padding: '1.25rem 1.5rem', textAlign: 'center', fontSize: '0.85rem', color: '#0F172A', fontWeight: '600', borderBottom: i === filteredPatients.length - 1 ? 'none' : '1px solid #F1F5F9'}}>
-                  {pat.sex}
+                  {pat.gender}
                 </td>
                 <td style={{padding: '1.25rem 1.5rem', textAlign: 'center', fontSize: '0.85rem', color: '#64748B', borderBottom: i === filteredPatients.length - 1 ? 'none' : '1px solid #F1F5F9'}}>
-                  {pat.date}
+                  {pat.createdAt ? new Date(pat.createdAt).toLocaleDateString() : '—'}
                 </td>
                 <td style={{padding: '1.25rem 1.5rem', borderBottom: i === filteredPatients.length - 1 ? 'none' : '1px solid #F1F5F9', textAlign: 'center'}}>
                   <div style={{display: 'flex', gap: '0.5rem', justifyContent: 'center'}}>
-                    <Link to={`/admin/patients/${pat.id}/view`} style={{padding: '0.4rem 1rem', background: '#FFFFFF', border: '1px solid #E2E8F0', borderRadius: '8px', fontSize: '0.85rem', fontWeight: '600', color: '#1E293B', cursor: 'pointer', transition: 'all 0.2s', textDecoration: 'none'}} onMouseOver={(e) => {e.currentTarget.style.background = '#F8FAFC';}} onMouseOut={(e) => {e.currentTarget.style.background = '#FFFFFF';}}>Details</Link>
-                    <button style={{padding: '0.4rem 1rem', background: '#FFFFFF', border: '1px solid #FECACA', borderRadius: '8px', fontSize: '0.85rem', fontWeight: '600', color: '#EF4444', cursor: 'pointer', transition: 'all 0.2s'}} onMouseOver={(e) => {e.currentTarget.style.background = '#FEF2F2';}} onMouseOut={(e) => {e.currentTarget.style.background = '#FFFFFF';}}>Delete</button>
+                    <Link to={`/admin/patients/${pat._id}/view`} style={{padding: '0.4rem 1rem', background: '#FFFFFF', border: '1px solid #E2E8F0', borderRadius: '8px', fontSize: '0.85rem', fontWeight: '600', color: '#1E293B', cursor: 'pointer', transition: 'all 0.2s', textDecoration: 'none'}} onMouseOver={(e) => {e.currentTarget.style.background = '#F8FAFC';}} onMouseOut={(e) => {e.currentTarget.style.background = '#FFFFFF';}}>Details</Link>
+                    <button onClick={() => handleDelete(pat._id)} style={{padding: '0.4rem 1rem', background: '#FFFFFF', border: '1px solid #FECACA', borderRadius: '8px', fontSize: '0.85rem', fontWeight: '600', color: '#EF4444', cursor: 'pointer', transition: 'all 0.2s'}} onMouseOver={(e) => {e.currentTarget.style.background = '#FEF2F2';}} onMouseOut={(e) => {e.currentTarget.style.background = '#FFFFFF';}}>Delete</button>
                   </div>
                 </td>
               </tr>

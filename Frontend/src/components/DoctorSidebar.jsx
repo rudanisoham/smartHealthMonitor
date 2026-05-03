@@ -101,10 +101,16 @@ const DoctorSidebar = () => {
 
       <div className="sidebar-section-label sidebar-text">Session</div>
       <div className="sidebar-nav">
-        <NavLink to="/doctor/login" className="sidebar-link">
+        <a href="#" onClick={(e) => {
+            e.preventDefault();
+            localStorage.removeItem('token');
+            localStorage.removeItem('user');
+            sessionStorage.clear();
+            window.location.href = '/';
+        }} className="sidebar-link">
           <span className="icon"><LogOut className="nav-icon" /></span>
           <span className="sidebar-text">Sign out</span>
-        </NavLink>
+        </a>
       </div>
 
       <div className="sidebar-footer sidebar-text">

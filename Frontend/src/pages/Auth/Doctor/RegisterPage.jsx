@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
-import { Check } from 'lucide-react';
+import { Check, Loader } from 'lucide-react';
+import { register as apiRegister, createDoctorProfile } from '../../../utils/api';
 
 const RegisterPage = () => {
   const [formData, setFormData] = useState({
@@ -15,6 +16,8 @@ const RegisterPage = () => {
     confirmPassword: '',
     certify: false
   });
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
   const navigate = useNavigate();
 
   const handleChange = (e) => {
@@ -22,9 +25,40 @@ const RegisterPage = () => {
     setFormData({...formData, [e.target.name]: value});
   };
 
-  const handleRegister = (e) => {
+  const handleRegister = async (e) => {
     e.preventDefault();
-    navigate('/auth/doctor/login');
+    setError(null);
+    
+    if (formData.password !== formData.confirmPassword) {
+      setError("Passwords don't match");
+      return;
+    }
+
+    setLoading(true);
+
+    try {
+      const res = await apiRegister({
+        fullName: formData.fullName,
+        email: formData.email,
+        password: formData.password,
+        role: 'DOCTOR',
+        phone: formData.phone,
+        specialty: formData.specialty,
+        department: formData.department,
+        licenseNumber: formData.licenseId,
+        experience: formData.experience
+      });
+
+      if (res.data.success) {
+        // We don't log them in yet, they must wait for approval
+        alert('Application submitted successfully! Please wait for administrative approval. You can login once your account is activated.');
+        navigate('/auth/doctor/login');
+      }
+    } catch (err) {
+      setError(err.response?.data?.error || 'Registration failed.');
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -38,6 +72,12 @@ const RegisterPage = () => {
           <p className="login-subtitle mb-4">
             Submit your medical credentials below. Our hospital administration will review your application.
           </p>
+
+          {error && (
+            <div style={{ padding: '0.75rem 1rem', background: 'rgba(239, 68, 68, 0.1)', border: '1px solid #ef4444', borderRadius: '8px', color: '#ef4444', marginBottom: '1rem', fontSize: '0.85rem' }}>
+              {error}
+            </div>
+          )}
 
           <form onSubmit={handleRegister} className="form-grid form-2">
             <div className="form-group">
@@ -103,8 +143,8 @@ const RegisterPage = () => {
             </div>
 
             <div style={{ gridColumn: 'span 2', marginTop: '0.5rem' }}>
-               <button type="submit" className="btn btn-primary w-full" style={{padding: '0.85rem'}}>
-                 Submit Application for Review
+               <button type="submit" className="btn btn-primary w-full" style={{padding: '0.85rem'}} disabled={loading}>
+                 {loading ? <Loader className="animate-spin" size={18} /> : 'Submit Application for Review'}
                </button>
             </div>
 

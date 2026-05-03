@@ -1,16 +1,63 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { ArrowLeft, Save, Lock } from 'lucide-react';
+import { ArrowLeft, Save, Lock, Loader } from 'lucide-react';
+import { resetPassword as apiResetPassword } from '../../../utils/api';
 
 const ResetPassword = () => {
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
   const navigate = useNavigate();
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    // Simulate reset
-    navigate('/auth/patient/login');
+    if (password !== confirmPassword) {
+      setError('Passwords do not match');
+      return;
+    }
+
+    const email = localStorage.getItem('resetEmail');
+    const otp = localStorage.getItem('resetOtp');
+
+    if (!email || !otp) {
+      setError('Session expired. Please restart the password reset process.');
+      return;
+    }
+
+    setLoading(true);
+    setError(null);
+    try {
+      const res = await apiResetPassword({ email, otp, password });
+      
+      localStorage.removeItem('resetEmail');
+      localStorage.removeItem('resetOtp');
+      
+      // Navigate depending on the role? Or just generic login?
+      // Since it's common reset password, navigate to the specific login if we know it.
+      // But we can just navigate to '/' and let them choose, or if user data is returned, we can auto-login!
+      if (res.data && res.data.user) {
+        localStorage.setItem('token', res.data.token);
+        localStorage.setItem('user', JSON.stringify(res.data.user));
+        
+        switch (res.data.user.role) {
+          case 'ADMIN': navigate('/admin/dashboard'); break;
+          case 'DOCTOR': navigate('/doctor/dashboard'); break;
+          case 'RECEPTIONIST': navigate('/reception/dashboard'); break;
+          case 'PATIENT': navigate('/patient/dashboard'); break;
+          case 'MEDICAL_STAFF': navigate('/medical/dashboard'); break;
+          case 'LAB_STAFF': navigate('/lab/dashboard'); break;
+          default: navigate('/');
+        }
+      } else {
+        alert('Password reset successful. Please log in.');
+        navigate('/');
+      }
+    } catch (err) {
+      setError(err.response?.data?.error || 'Failed to reset password');
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -27,6 +74,12 @@ const ResetPassword = () => {
           <p className="login-subtitle">
             Set a strong, secure password you haven't used before.
           </p>
+
+          {error && (
+            <div style={{ padding: '0.75rem 1rem', background: 'rgba(239, 68, 68, 0.1)', border: '1px solid #ef4444', borderRadius: '8px', color: '#ef4444', marginBottom: '1rem', fontSize: '0.85rem' }}>
+              {error}
+            </div>
+          )}
 
           <form onSubmit={handleSubmit} className="form-grid">
             <div className="form-group">
@@ -56,9 +109,13 @@ const ResetPassword = () => {
               />
             </div>
             <div className="form-group">
-              <button type="submit" className="btn btn-primary w-full">
-                <span>Save & Sign In</span>
-                <Save size={16} className="ml-2" />
+              <button type="submit" className="btn btn-primary w-full" disabled={loading}>
+                {loading ? <Loader className="animate-spin" size={16} /> : (
+                  <>
+                    <span>Save & Sign In</span>
+                    <Save size={16} className="ml-2" />
+                  </>
+                )}
               </button>
             </div>
           </form>

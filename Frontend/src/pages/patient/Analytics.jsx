@@ -1,21 +1,29 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
+import { getVitals } from '../../utils/api';
+import { Loader } from 'lucide-react';
 
 const Analytics = () => {
     const [metrics, setMetrics] = useState([]);
+    const [loading, setLoading] = useState(true);
 
     useEffect(() => {
-        const stored = localStorage.getItem('vitals_history');
-        if (stored) {
-            setMetrics(JSON.parse(stored));
-        } else {
-            // Provide empty by default or mock
-            const initialData = [
-                { id: 1, timestamp: '2026-04-01T04:10:00', heartRate: 75, bpSystolic: 120, bpDiastolic: 80, spo2: 98.0, temperature: 36.5, weight: 70.0, riskLevel: 'LOW' }
-            ];
-            setMetrics(initialData);
-        }
+        fetchVitals();
     }, []);
+
+    const fetchVitals = async () => {
+        try {
+            setLoading(true);
+            const res = await getVitals();
+            if (res.data.success) {
+                setMetrics(res.data.data);
+            }
+        } catch (err) {
+            console.error('Error fetching vitals:', err);
+        } finally {
+            setLoading(false);
+        }
+    };
 
     const latestMetric = metrics[0] || null;
 
@@ -24,6 +32,19 @@ const Analytics = () => {
     const bps = latestMetric ? parseInt(latestMetric.bpSystolic) : null;
     const spo2 = latestMetric ? parseFloat(latestMetric.spo2) : null;
     const tmp = latestMetric ? parseFloat(latestMetric.temperature) : null;
+
+    // Compute averages
+    const avgHR = metrics.length > 0 ? Math.round(metrics.filter(m => m.heartRate).reduce((sum, m) => sum + m.heartRate, 0) / metrics.filter(m => m.heartRate).length) : null;
+    const avgSpO2 = metrics.length > 0 ? (metrics.filter(m => m.spo2).reduce((sum, m) => sum + m.spo2, 0) / metrics.filter(m => m.spo2).length).toFixed(1) : null;
+    const highRiskCount = metrics.filter(m => m.riskLevel === 'HIGH').length;
+
+    if (loading) {
+        return (
+            <div className="admin-content flex justify-center items-center" style={{ minHeight: '400px' }}>
+                <Loader className="animate-spin text-primary" size={48} />
+            </div>
+        );
+    }
 
     return (
         <>
@@ -55,24 +76,24 @@ const Analytics = () => {
                         <div className="card">
                             <div className="card-title">Total Readings</div>
                             <div className="card-value">{metrics.length}</div>
-                            <div className="muted" style={{ fontSize: '0.8rem' }}>all time records</div>
+                            <div className="muted" style={{ fontSize: '0.8rem' }}>from MongoDB database</div>
                         </div>
                         <div className="card">
-                            <div className="card-title">Latest Heart Rate</div>
+                            <div className="card-title">Avg Heart Rate</div>
                             <div className="card-value">
-                                {latestMetric && hr ? <>{hr} <span style={{ fontSize: '1rem', color: 'var(--text-muted)' }}>bpm</span></> : '—'}
+                                {avgHR ? <>{avgHR} <span style={{ fontSize: '1rem', color: 'var(--text-muted)' }}>bpm</span></> : '—'}
                             </div>
                         </div>
                         <div className="card">
-                            <div className="card-title">Latest SpO2</div>
+                            <div className="card-title">Avg SpO2</div>
                             <div className="card-value">
-                                {latestMetric && spo2 ? <>{spo2}<span style={{ fontSize: '1rem', color: 'var(--text-muted)' }}>%</span></> : '—'}
+                                {avgSpO2 ? <>{avgSpO2}<span style={{ fontSize: '1rem', color: 'var(--text-muted)' }}>%</span></> : '—'}
                             </div>
                         </div>
                         <div className="card">
-                            <div className="card-title">Latest BP</div>
-                            <div className="card-value" style={{ fontSize: '1.4rem' }}>
-                                {latestMetric && bps ? `${bps}/${latestMetric.bpDiastolic}` : '—'}
+                            <div className="card-title">High Risk Readings</div>
+                            <div className="card-value" style={{ color: highRiskCount > 0 ? '#ef4444' : '#10b981' }}>
+                                {highRiskCount}
                             </div>
                         </div>
                     </div>
@@ -82,7 +103,7 @@ const Analytics = () => {
                             <div className="card-header">
                                 <div>
                                     <div className="section-title">Current Biometrics</div>
-                                    <div className="section-subtitle">Based on your latest reading</div>
+                                    <div className="section-subtitle">Based on your latest reading from DB</div>
                                 </div>
                             </div>
                             <div className="mt-3">
@@ -195,12 +216,15 @@ const Analytics = () => {
                                 {latestMetric ? (
                                     <>
                                         <div style={{ fontSize: '1.05rem', lineHeight: 1.7, color: '#334155', padding: '1.5rem', background: '#f8fafc', borderRadius: '16px', border: '1px solid #f1f5f9', fontWeight: 500 }}>
-                                            "Your vitals are mostly within normal ranges. Keep maintaining your healthy lifestyle!"
+                                            {highRiskCount > 0 
+                                                ? `"You have ${highRiskCount} high-risk reading(s) in your history. Please consult your doctor for a review."`
+                                                : '"Your vitals are mostly within normal ranges. Keep maintaining your healthy lifestyle!"'
+                                            }
                                         </div>
                                         <div className="mt-4" style={{ display: 'flex', gap: '0.75rem', flexDirection: 'column' }}>
                                             <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.85rem', color: '#64748b' }}>
                                                 <span style={{ fontSize: '1rem' }}>✅</span>
-                                                <span>Personalized based on your historical data.</span>
+                                                <span>Based on {metrics.length} readings from your MongoDB health database.</span>
                                             </div>
                                             <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.85rem', color: '#64748b' }}>
                                                 <span style={{ fontSize: '1rem' }}>⚡</span>
@@ -229,7 +253,7 @@ const Analytics = () => {
                         <div className="card-header">
                             <div>
                                 <div className="section-title">📈 All Readings Trend</div>
-                                <div className="section-subtitle">Your complete health log — newest first</div>
+                                <div className="section-subtitle">Your complete health log from database — newest first</div>
                             </div>
                             <Link to="/patient/health-data" className="btn btn-outline btn-sm">+ Add Reading</Link>
                         </div>
@@ -243,17 +267,23 @@ const Analytics = () => {
                                         <th>SpO2</th>
                                         <th>Temperature</th>
                                         <th>Weight</th>
+                                        <th>Risk</th>
                                     </tr>
                                 </thead>
                                 <tbody>
-                                    {metrics.map((m, i) => (
-                                        <tr key={i}>
-                                            <td>{m.timestamp.replace('T', ' ').substring(0, 16)}</td>
+                                    {metrics.map((m) => (
+                                        <tr key={m._id}>
+                                            <td>{new Date(m.createdAt).toLocaleString()}</td>
                                             <td>{m.heartRate ? `${m.heartRate} bpm` : '—'}</td>
                                             <td>{m.bpSystolic ? `${m.bpSystolic}/${m.bpDiastolic} mmHg` : '—'}</td>
                                             <td>{m.spo2 ? `${m.spo2}%` : '—'}</td>
                                             <td>{m.temperature ? `${m.temperature}°C` : '—'}</td>
                                             <td>{m.weight ? `${m.weight} kg` : '—'}</td>
+                                            <td>
+                                                {m.riskLevel === 'HIGH' && <span className="chip-danger">HIGH</span>}
+                                                {m.riskLevel === 'MEDIUM' && <span className="chip-warning">MEDIUM</span>}
+                                                {m.riskLevel === 'LOW' && <span className="chip">LOW</span>}
+                                            </td>
                                         </tr>
                                     ))}
                                 </tbody>

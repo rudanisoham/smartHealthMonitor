@@ -1,9 +1,33 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { ChevronLeft, Heart, Stethoscope, Droplets, Thermometer } from 'lucide-react';
+import { getPatientDetails } from '../../utils/api';
 
 const PatientDetailsPage = () => {
   const { id } = useParams();
+  const [loading, setLoading] = useState(true);
+  const [data, setData] = useState(null);
+  const [error, setError] = useState(null);
+
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const res = await getPatientDetails(id);
+        setData(res.data.data);
+      } catch (err) {
+        setError('Failed to load patient details');
+        console.error(err);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchData();
+  }, [id]);
+
+  if (loading) return <div style={{ padding: '2rem', textAlign: 'center' }}>Loading details...</div>;
+  if (error || !data) return <div style={{ padding: '2rem', textAlign: 'center', color: 'red' }}>{error || 'Not found'}</div>;
+
+  const { patient, latestVitals, prescriptions, labReports } = data;
 
   return (
     <>
@@ -27,8 +51,8 @@ const PatientDetailsPage = () => {
         <div className="card">
            <div className="card-header" style={{alignItems: 'center'}}>
               <div>
-                <div className="section-title" style={{fontSize: '1.3rem'}}>Soham Rudani</div>
-                <div className="section-subtitle">Age/DOB details typically here</div>
+                <div className="section-title" style={{fontSize: '1.3rem'}}>{patient.user?.fullName}</div>
+                <div className="section-subtitle">ID: {patient._id}</div>
               </div>
               <span className="muted" style={{fontWeight: 500}}>Patient</span>
            </div>
@@ -36,22 +60,22 @@ const PatientDetailsPage = () => {
            <div className="mt-4">
               <div style={{background: '#f8fafc', padding: '1rem 1.25rem', borderRadius: '8px', marginBottom: '0.75rem', border: '1px solid #f1f5f9'}}>
                 <div className="muted" style={{fontSize: '0.85rem', marginBottom: '0.25rem'}}>Email</div>
-                <div style={{fontWeight: 600, color: 'var(--text-main)'}}>rudanisoham1@gmail.com</div>
+                <div style={{fontWeight: 600, color: 'var(--text-main)'}}>{patient.user?.email}</div>
               </div>
 
               <div style={{background: '#f8fafc', padding: '1rem 1.25rem', borderRadius: '8px', marginBottom: '0.75rem', border: '1px solid #f1f5f9'}}>
                 <div className="muted" style={{fontSize: '0.85rem', marginBottom: '0.25rem'}}>Phone</div>
-                <div style={{fontWeight: 600, color: 'var(--text-main)'}}>+919316202895</div>
+                <div style={{fontWeight: 600, color: 'var(--text-main)'}}>{patient.phone || patient.user?.phone || '—'}</div>
               </div>
 
               <div style={{background: '#f8fafc', padding: '1rem 1.25rem', borderRadius: '8px', marginBottom: '0.75rem', border: '1px solid #f1f5f9'}}>
-                <div className="muted" style={{fontSize: '0.85rem', marginBottom: '0.25rem'}}>Biological Sex</div>
-                <div style={{fontWeight: 600, color: 'var(--text-main)'}}>—</div>
+                <div className="muted" style={{fontSize: '0.85rem', marginBottom: '0.25rem'}}>Gender</div>
+                <div style={{fontWeight: 600, color: 'var(--text-main)'}}>{patient.gender || '—'}</div>
               </div>
 
               <div style={{background: '#f8fafc', padding: '1rem 1.25rem', borderRadius: '8px', marginBottom: '0.75rem', border: '1px solid #f1f5f9'}}>
                 <div className="muted" style={{fontSize: '0.85rem', marginBottom: '0.25rem'}}>Blood Group</div>
-                <div style={{fontWeight: 600, color: '#ef4444', background: '#fee2e2', display: 'inline-block', padding: '0.1rem 0.5rem', borderRadius: '4px', fontSize: '0.85rem'}}>A+</div>
+                <div style={{fontWeight: 600, color: '#ef4444', background: '#fee2e2', display: 'inline-block', padding: '0.1rem 0.5rem', borderRadius: '4px', fontSize: '0.85rem'}}>{patient.bloodGroup || '—'}</div>
               </div>
            </div>
         </div>
@@ -63,11 +87,15 @@ const PatientDetailsPage = () => {
                  <div className="section-title" style={{fontSize: '1.2rem'}}>Latest Recorded Vitals</div>
                  <div className="section-subtitle">Real-time health telemetry</div>
               </div>
-              <span className="chip" style={{fontSize: '0.75rem'}}>✓ LOW RISK</span>
+              {latestVitals ? (
+                <span className="chip" style={{fontSize: '0.75rem'}}>✓ UPDATED</span>
+              ) : (
+                <span className="chip-neutral" style={{fontSize: '0.75rem'}}>NO DATA</span>
+              )}
            </div>
            
            <div className="muted mt-2" style={{fontSize: '0.85rem', marginBottom: '1.5rem'}}>
-             Recorded on: 2026-04-01 10:03
+             {latestVitals ? `Recorded on: ${new Date(latestVitals.createdAt).toLocaleString()}` : 'No vitals recorded yet.'}
            </div>
 
            <div>
@@ -75,28 +103,28 @@ const PatientDetailsPage = () => {
                 <div className="muted" style={{fontSize: '0.85rem', marginBottom: '0.25rem', display: 'flex', alignItems: 'center', gap: '0.4rem'}}>
                    <Heart size={14}/> Heart Rate
                 </div>
-                <div style={{fontWeight: 700, color: 'var(--text-main)', fontSize: '1.05rem'}}>72 bpm</div>
+                <div style={{fontWeight: 700, color: 'var(--text-main)', fontSize: '1.05rem'}}>{latestVitals?.heartRate || '—'} bpm</div>
               </div>
               
               <div style={{background: '#f8fafc', padding: '1rem 1.25rem', borderRadius: '8px', marginBottom: '0.75rem', border: '1px solid #f1f5f9'}}>
                 <div className="muted" style={{fontSize: '0.85rem', marginBottom: '0.25rem', display: 'flex', alignItems: 'center', gap: '0.4rem'}}>
                    <Stethoscope size={14}/> Blood Pressure
                 </div>
-                <div style={{fontWeight: 700, color: 'var(--text-main)', fontSize: '1.05rem'}}>120/80 mmHg</div>
+                <div style={{fontWeight: 700, color: 'var(--text-main)', fontSize: '1.05rem'}}>{latestVitals?.bloodPressure || '—'} mmHg</div>
               </div>
 
               <div style={{background: '#f8fafc', padding: '1rem 1.25rem', borderRadius: '8px', marginBottom: '0.75rem', border: '1px solid #f1f5f9'}}>
                 <div className="muted" style={{fontSize: '0.85rem', marginBottom: '0.25rem', display: 'flex', alignItems: 'center', gap: '0.4rem'}}>
                    <Droplets size={14}/> SpO2 (Oxygen)
                 </div>
-                <div style={{fontWeight: 700, color: 'var(--text-main)', fontSize: '1.05rem'}}>98.5%</div>
+                <div style={{fontWeight: 700, color: 'var(--text-main)', fontSize: '1.05rem'}}>{latestVitals?.spo2 || '—'}%</div>
               </div>
 
               <div style={{background: '#f8fafc', padding: '1rem 1.25rem', borderRadius: '8px', marginBottom: '0.75rem', border: '1px solid #f1f5f9'}}>
                 <div className="muted" style={{fontSize: '0.85rem', marginBottom: '0.25rem', display: 'flex', alignItems: 'center', gap: '0.4rem'}}>
                    <Thermometer size={14}/> Temperature
                 </div>
-                <div style={{fontWeight: 700, color: 'var(--text-main)', fontSize: '1.05rem'}}>37.0°C</div>
+                <div style={{fontWeight: 700, color: 'var(--text-main)', fontSize: '1.05rem'}}>{latestVitals?.temperature || '—'}°C</div>
               </div>
            </div>
         </div>
@@ -126,18 +154,18 @@ const PatientDetailsPage = () => {
                   </tr>
                </thead>
                <tbody>
-                  <tr>
-                     <td style={{padding: '1rem 0.5rem', fontWeight: 600}}>2026-04-01 02:55</td>
-                     <td style={{padding: '1rem 0.5rem'}}>efe</td>
-                     <td style={{padding: '1rem 0.5rem'}}>efSE</td>
-                     <td style={{padding: '1rem 0.5rem', color: 'var(--text-muted)'}}>efsEF</td>
-                  </tr>
-                  <tr>
-                     <td style={{padding: '1rem 0.5rem', fontWeight: 600}}>2026-04-01 01:28</td>
-                     <td style={{padding: '1rem 0.5rem'}}>For fiver</td>
-                     <td style={{padding: '1rem 0.5rem'}}>t1, t2, t3</td>
-                     <td style={{padding: '1rem 0.5rem', color: 'var(--text-muted)'}}>take with food</td>
-                  </tr>
+                  {prescriptions.length === 0 ? (
+                    <tr><td colSpan="4" style={{textAlign: 'center', padding: '2rem'}}>No prescriptions found.</td></tr>
+                  ) : (
+                    prescriptions.map(p => (
+                      <tr key={p._id}>
+                        <td style={{padding: '1rem 0.5rem', fontWeight: 600}}>{new Date(p.createdAt).toLocaleString()}</td>
+                        <td style={{padding: '1rem 0.5rem'}}>{p.diagnosis || 'General'}</td>
+                        <td style={{padding: '1rem 0.5rem'}}>{p.medicinesText}</td>
+                        <td style={{padding: '1rem 0.5rem', color: 'var(--text-muted)'}}>{p.notes || '—'}</td>
+                      </tr>
+                    ))
+                  )}
                </tbody>
             </table>
          </div>
@@ -163,14 +191,20 @@ const PatientDetailsPage = () => {
                   </tr>
                </thead>
                <tbody>
-                  <tr>
-                     <td style={{padding: '1rem 0.5rem', fontWeight: 600}}>2026-04-01</td>
-                     <td style={{padding: '1rem 0.5rem', fontWeight: 600}}>dsfd</td>
-                     <td style={{padding: '1rem 0.5rem', color: 'var(--text-muted)'}}>dSF</td>
-                     <td style={{padding: '1rem 0.5rem', textAlign: 'center'}}>
-                        <Link to="/doctor/report-view" className="btn btn-outline btn-sm" style={{padding: '0.4rem 1rem'}}>Review Findings</Link>
-                     </td>
-                  </tr>
+                  {labReports.length === 0 ? (
+                    <tr><td colSpan="4" style={{textAlign: 'center', padding: '2rem'}}>No reports found.</td></tr>
+                  ) : (
+                    labReports.map(r => (
+                      <tr key={r._id}>
+                        <td style={{padding: '1rem 0.5rem', fontWeight: 600}}>{new Date(r.createdAt).toLocaleDateString()}</td>
+                        <td style={{padding: '1rem 0.5rem', fontWeight: 600}}>{r.title}</td>
+                        <td style={{padding: '1rem 0.5rem', color: 'var(--text-muted)'}}>{r.description || '—'}</td>
+                        <td style={{padding: '1rem 0.5rem', textAlign: 'center'}}>
+                          <Link to={`/doctor/reports/${r._id}`} className="btn btn-outline btn-sm" style={{padding: '0.4rem 1rem'}}>Review Findings</Link>
+                        </td>
+                      </tr>
+                    ))
+                  )}
                </tbody>
             </table>
          </div>

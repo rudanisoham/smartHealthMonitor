@@ -1,15 +1,39 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
-import { Pill, User, Lock, ArrowRight, ArrowLeft, ClipboardList } from 'lucide-react';
+import { Pill, User, Lock, ArrowRight, ArrowLeft, ClipboardList, Loader } from 'lucide-react';
+import { login as apiLogin } from '../../../utils/api';
 import '../../../styles/patient.css';
 
 const Login = () => {
   const navigate = useNavigate();
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
 
-  const handleLogin = (e) => {
+  const handleLogin = async (e) => {
     e.preventDefault();
-    // Simulate login
-    navigate('/medical/dashboard');
+    setLoading(true);
+    setError(null);
+
+    try {
+      const res = await apiLogin({ email, password });
+      
+      if (res.data.success) {
+        localStorage.setItem('token', res.data.token);
+        localStorage.setItem('user', JSON.stringify(res.data.user));
+        
+        if (['PHARMACIST', 'ADMIN', 'DOCTOR', 'RECEPTIONIST'].includes(res.data.user.role)) {
+          navigate('/medical/dashboard');
+        } else {
+          setError('Unauthorized: This portal is for Medical staff only.');
+        }
+      }
+    } catch (err) {
+      setError(err.response?.data?.error || 'Login failed. Please check your credentials.');
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -27,6 +51,12 @@ const Login = () => {
             Secure access for pharmacy staff and laboratory assistants. Manage prescriptions and medical reports.
           </p>
 
+          {error && (
+            <div className="card mb-4" style={{ background: 'rgba(239, 68, 68, 0.1)', border: '1px solid #ef4444', padding: '1rem' }}>
+              <p className="text-danger" style={{ margin: 0, fontSize: '0.85rem' }}>{error}</p>
+            </div>
+          )}
+
           <form className="form-grid" onSubmit={handleLogin}>
             <div className="form-group">
               <label htmlFor="email">Staff Email</label>
@@ -38,6 +68,8 @@ const Login = () => {
                   type="email"
                   placeholder="pharmacy@smarthealth.com"
                   required
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
                 />
               </div>
             </div>
@@ -51,6 +83,8 @@ const Login = () => {
                   type="password"
                   placeholder="••••••••"
                   required
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
                 />
               </div>
             </div>
@@ -60,13 +94,17 @@ const Login = () => {
                 <input type="checkbox" id="remember" style={{ cursor: 'pointer' }} />
                 <label htmlFor="remember" className="muted" style={{ cursor: 'pointer', fontSize: '0.85rem' }}>Remember me</label>
               </div>
-              <Link to="/auth/medical/reset-password" style={{ fontSize: '0.85rem', color: 'var(--primary)', fontWeight: '600' }}>Forgot password?</Link>
+              <Link to="/auth/forgot" style={{ fontSize: '0.85rem', color: 'var(--primary)', fontWeight: '600' }}>Forgot password?</Link>
             </div>
 
             <div className="mt-6">
-              <button type="submit" className="btn btn-primary w-full">
-                <span>Sign In to Portal</span>
-                <ArrowRight size={18} className="ms-2" />
+              <button type="submit" className="btn btn-primary w-full" disabled={loading}>
+                {loading ? <Loader className="animate-spin" size={18} /> : (
+                  <>
+                    <span>Sign In to Portal</span>
+                    <ArrowRight size={18} className="ms-2" />
+                  </>
+                )}
               </button>
             </div>
           </form>

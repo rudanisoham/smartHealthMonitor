@@ -1,24 +1,39 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Calendar as CalendarIcon, Filter, CheckCircle, XCircle, Eye } from 'lucide-react';
 import { Link } from 'react-router-dom';
-
-const mockAppointments = [
-  { id: 101, patientId: 101, patientName: "Alice Cooper", date: "2026-04-02", time: "09:30 AM", status: "CONFIRMED", reason: "Routine checkup" },
-  { id: 102, patientId: 102, patientName: "Bob Singer", date: "2026-04-02", time: "11:00 AM", status: "PENDING", reason: "First visit" },
-  { id: 103, patientId: 103, patientName: "Charlie Day", date: "2026-04-01", time: "03:45 PM", status: "COMPLETED", reason: "Follow up" },
-  { id: 104, patientId: 104, patientName: "Diana Prince", date: "2026-04-03", time: "02:00 PM", status: "CANCELLED", reason: "Not specified" },
-];
+import { getDoctorAppointments } from '../../utils/api';
 
 const AppointmentsPage = () => {
   const [filter, setFilter] = useState('ALL');
+  const [appointments, setAppointments] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
-  const filteredAppointments = mockAppointments.filter(appt => 
+  useEffect(() => {
+    const fetchAppointments = async () => {
+      try {
+        const res = await getDoctorAppointments();
+        setAppointments(res.data.data);
+      } catch (err) {
+        setError('Failed to load appointments');
+        console.error(err);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchAppointments();
+  }, []);
+
+  const filteredAppointments = appointments.filter(appt => 
     filter === 'ALL' || appt.status === filter
   );
 
-  const total = mockAppointments.length;
-  const pending = mockAppointments.filter(a => a.status === 'PENDING').length;
-  const completed = mockAppointments.filter(a => a.status === 'COMPLETED').length;
+  const total = appointments.length;
+  const pending = appointments.filter(a => ['SCHEDULED', 'AWAITING_ASSIGNMENT'].includes(a.status)).length;
+  const completed = appointments.filter(a => a.status === 'COMPLETED').length;
+
+  if (loading) return <div style={{ padding: '2rem', textAlign: 'center' }}>Loading appointments...</div>;
+  if (error) return <div style={{ padding: '2rem', textAlign: 'center', color: 'red' }}>{error}</div>;
 
   return (
     <>
@@ -61,8 +76,8 @@ const AppointmentsPage = () => {
       <div className="card-header-flex">
         <div className="filter-group">
           <button className={`filter-chip ${filter === 'ALL' ? 'active' : ''}`} onClick={() => setFilter('ALL')}>All Appointments</button>
-          <button className={`filter-chip ${filter === 'PENDING' ? 'active' : ''}`} onClick={() => setFilter('PENDING')}>Pending</button>
-          <button className={`filter-chip ${filter === 'CONFIRMED' ? 'active' : ''}`} onClick={() => setFilter('CONFIRMED')}>Confirmed</button>
+          <button className={`filter-chip ${filter === 'SCHEDULED' ? 'active' : ''}`} onClick={() => setFilter('SCHEDULED')}>Scheduled</button>
+          <button className={`filter-chip ${filter === 'IN_PROGRESS' ? 'active' : ''}`} onClick={() => setFilter('IN_PROGRESS')}>In Progress</button>
           <button className={`filter-chip ${filter === 'COMPLETED' ? 'active' : ''}`} onClick={() => setFilter('COMPLETED')}>Completed</button>
         </div>
       </div>
@@ -72,6 +87,7 @@ const AppointmentsPage = () => {
             <table>
               <thead>
                 <tr>
+                  <th>Token #</th>
                   <th>Date & Time</th>
                   <th>Patient Name</th>
                   <th>Reason</th>
@@ -81,38 +97,35 @@ const AppointmentsPage = () => {
               </thead>
               <tbody>
                 {filteredAppointments.map(appt => (
-                  <tr key={appt.id}>
+                  <tr key={appt._id}>
+                    <td>
+                      <span className="chip" style={{ background: '#eff6ff', color: '#1d4ed8', fontWeight: 800 }}>
+                        {appt.tokenNumber ? `#${appt.tokenNumber}` : '—'}
+                      </span>
+                    </td>
                     <td>
                       <div style={{display:'flex', alignItems:'center', gap:'0.5rem'}}>
                         <CalendarIcon size={16} className="muted" />
-                        <span><strong>{appt.date}</strong> at {appt.time}</span>
+                        <span>
+                          <strong>{appt.scheduledAt ? new Date(appt.scheduledAt).toLocaleDateString() : new Date(appt.createdAt).toLocaleDateString()}</strong> at {appt.scheduledAt ? new Date(appt.scheduledAt).toLocaleTimeString() : new Date(appt.createdAt).toLocaleTimeString()}
+                        </span>
                       </div>
                     </td>
                     <td style={{fontWeight: 600, color: 'var(--primary)'}}>
-                      {appt.patientName}
+                      {appt.patient?.user?.fullName || 'Unknown'}
                     </td>
-                    <td>{appt.reason || '-'}</td>
+                    <td>{appt.notes || '-'}</td>
                     <td>
-                      {appt.status === 'PENDING' && <span className="chip-warning">⏳ Pending</span>}
-                      {appt.status === 'CONFIRMED' && <span className="chip">✓ Confirmed</span>}
+                      {['SCHEDULED', 'AWAITING_ASSIGNMENT'].includes(appt.status) && <span className="chip-warning">⏳ {appt.status}</span>}
+                      {appt.status === 'IN_PROGRESS' && <span className="chip">✓ In Progress</span>}
                       {appt.status === 'COMPLETED' && <span className="chip-neutral">✓ Completed</span>}
                       {appt.status === 'CANCELLED' && <span className="chip-danger">✕ Cancelled</span>}
                     </td>
                     <td>
                       <div style={{display:'flex', gap:'0.5rem'}}>
-                        <Link to={`/doctor/patients/${appt.patientId || 101}`} className="btn-icon" title="View Patient Details">
+                        <Link to={`/doctor/patients/${appt.patient?._id}`} className="btn-icon" title="View Patient Details">
                           <Eye size={18} />
                         </Link>
-                        {appt.status === 'PENDING' && (
-                          <>
-                            <button className="btn-icon" style={{color:'var(--success)', borderColor:'var(--success-light)'}} title="Confirm">
-                              <CheckCircle size={18} />
-                            </button>
-                            <button className="btn-icon" style={{color:'var(--danger)', borderColor:'var(--danger-light)'}} title="Cancel">
-                              <XCircle size={18} />
-                            </button>
-                          </>
-                        )}
                       </div>
                     </td>
                   </tr>

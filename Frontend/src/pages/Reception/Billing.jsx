@@ -1,14 +1,42 @@
-import React from 'react';
-import { CreditCard, DollarSign, FileText, Download, Filter, Search, CheckCircle, Clock } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { CreditCard, DollarSign, FileText, Download, Filter, Search, CheckCircle, Clock, Loader } from 'lucide-react';
+import { getReceptionBilling } from '../../utils/api';
 
 const Billing = () => {
-  const invoices = [
-    { id: 'INV-2026-001', patient: 'John Smith', amount: 1250.00, date: '2026-05-01', status: 'Paid', method: 'Credit Card' },
-    { id: 'INV-2026-002', patient: 'Sarah Wilson', amount: 450.00, date: '2026-05-02', status: 'Pending', method: 'Insurance' },
-    { id: 'INV-2026-003', patient: 'Michael Brown', amount: 3200.00, date: '2026-05-02', status: 'Paid', method: 'Cash' },
-    { id: 'INV-2026-004', patient: 'Emily Davis', amount: 125.00, date: '2026-05-03', status: 'Pending', method: 'UPI' },
-    { id: 'INV-2026-005', patient: 'Robert Johnson', amount: 890.00, date: '2026-05-03', status: 'Paid', method: 'Credit Card' },
-  ];
+  const [payments, setPayments] = useState([]);
+  const [stats, setStats] = useState({ dailyCollection: 0, pendingCount: 0 });
+  const [loading, setLoading] = useState(true);
+  const [searchTerm, setSearchTerm] = useState('');
+
+  useEffect(() => {
+    fetchBilling();
+  }, []);
+
+  const fetchBilling = async () => {
+    try {
+      setLoading(true);
+      const res = await getReceptionBilling();
+      if (res.data.success) {
+        setPayments(res.data.data.payments);
+        setStats(res.data.data.stats);
+      }
+    } catch (err) {
+      console.error("Failed to load billing", err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const filteredPayments = payments.filter(p => 
+    p.patient.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    p.id.toLowerCase().includes(searchTerm.toLowerCase())
+  );
+
+  if (loading) return (
+    <div className="admin-content flex justify-center items-center py-20">
+      <Loader className="animate-spin text-primary" size={48} />
+    </div>
+  );
 
   return (
     <div className="admin-content">
@@ -17,8 +45,8 @@ const Billing = () => {
           <h2 className="section-title">Billing & Collections</h2>
           <p className="section-subtitle">Manage patient invoices, payments, and financial records</p>
         </div>
-        <button className="btn btn-primary">
-          <FileText size={18} /> Generate Invoice
+        <button className="btn btn-primary" onClick={fetchBilling}>
+          <Filter size={18} /> Refresh Data
         </button>
       </div>
 
@@ -28,7 +56,7 @@ const Billing = () => {
             <span className="card-title">Daily Collection</span>
             <DollarSign className="text-success" size={20} />
           </div>
-          <div className="card-value">$5,915.00</div>
+          <div className="card-value">₹{stats.dailyCollection.toLocaleString()}</div>
           <span className="muted">Total collected today</span>
         </div>
         <div className="card">
@@ -36,7 +64,7 @@ const Billing = () => {
             <span className="card-title">Pending Invoices</span>
             <Clock className="text-warning" size={20} />
           </div>
-          <div className="card-value">14</div>
+          <div className="card-value">{stats.pendingCount}</div>
           <span className="muted">Awaiting payment verification</span>
         </div>
         <div className="card">
@@ -53,11 +81,13 @@ const Billing = () => {
         <div className="flex justify-between items-center">
           <div className="search-bar" style={{ minWidth: '400px' }}>
             <Search className="search-icon" size={18} />
-            <input type="text" placeholder="Search by Invoice ID or Patient Name..." />
+            <input 
+              type="text" 
+              placeholder="Search by Invoice ID or Patient Name..." 
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+            />
           </div>
-          <button className="btn btn-outline">
-            <Filter size={18} /> Filter Records
-          </button>
         </div>
       </div>
 
@@ -75,16 +105,16 @@ const Billing = () => {
             </tr>
           </thead>
           <tbody>
-            {invoices.map((inv) => (
-              <tr key={inv.id}>
-                <td><span className="author-name" style={{ fontSize: '0.85rem' }}>{inv.id}</span></td>
-                <td><span className="author-name">{inv.patient}</span></td>
-                <td><span className="author-name">${inv.amount.toFixed(2)}</span></td>
-                <td><span className="muted">{inv.date}</span></td>
-                <td><span className="chip-neutral">{inv.method}</span></td>
+            {filteredPayments.map((p) => (
+              <tr key={p._id}>
+                <td><span className="author-name" style={{ fontSize: '0.85rem' }}>{p.id}</span></td>
+                <td><span className="author-name">{p.patient}</span></td>
+                <td><span className="author-name">₹{p.amount.toLocaleString()}</span></td>
+                <td><span className="muted">{p.date}</span></td>
+                <td><span className="chip-neutral">{p.method}</span></td>
                 <td>
-                  <span className={`chip ${inv.status === 'Paid' ? 'chip' : 'chip-warning'}`}>
-                    {inv.status}
+                  <span className={`chip ${p.status === 'COMPLETED' ? 'chip' : 'chip-warning'}`}>
+                    {p.status}
                   </span>
                 </td>
                 <td>
@@ -95,6 +125,11 @@ const Billing = () => {
                 </td>
               </tr>
             ))}
+            {filteredPayments.length === 0 && (
+              <tr>
+                <td colSpan="7" className="text-center py-8 muted">No financial records found.</td>
+              </tr>
+            )}
           </tbody>
         </table>
       </div>

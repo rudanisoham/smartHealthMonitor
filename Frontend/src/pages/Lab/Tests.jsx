@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { 
   FlaskConical, 
   Search, 
@@ -10,25 +10,39 @@ import {
   Clock,
   Filter
 } from 'lucide-react';
+import { getLabTests } from '../../utils/api';
 
 const LabTests = () => {
   const [searchTerm, setSearchTerm] = useState('');
+  const [data, setData] = useState({ tests: [], categories: [] });
+  const [loading, setLoading] = useState(true);
 
-  const testCategories = [
-    { name: 'Hematology', count: 12, icon: <Activity /> },
-    { name: 'Biochemistry', count: 24, icon: <FlaskConical /> },
-    { name: 'Immunology', count: 8, icon: <Activity /> },
-    { name: 'Microbiology', count: 15, icon: <FlaskConical /> },
-  ];
+  useEffect(() => {
+    const fetchTests = async () => {
+      try {
+        const res = await getLabTests();
+        setData(res.data.data);
+      } catch (err) {
+        console.error("Failed to load tests", err);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchTests();
+  }, []);
 
-  const tests = [
-    { id: 'T-101', name: 'Complete Blood Count (CBC)', category: 'Hematology', price: 45.00, turnaround: '24h', stock: 'In Stock' },
-    { id: 'T-102', name: 'Lipid Profile', category: 'Biochemistry', price: 65.00, turnaround: '12h', stock: 'In Stock' },
-    { id: 'T-103', name: 'HbA1c (Glycated Hemoglobin)', category: 'Biochemistry', price: 55.00, turnaround: '48h', stock: 'Limited' },
-    { id: 'T-104', name: 'TSH (Thyroid Stimulating Hormone)', category: 'Immunology', price: 75.00, turnaround: '24h', stock: 'In Stock' },
-    { id: 'T-105', name: 'Liver Function Test (LFT)', category: 'Biochemistry', price: 80.00, turnaround: '24h', stock: 'In Stock' },
-    { id: 'T-106', name: 'Kidney Function Test (KFT)', category: 'Biochemistry', price: 80.00, turnaround: '24h', stock: 'In Stock' },
-  ];
+  const testCategories = data.categories.map(c => ({
+    name: c.name,
+    count: c.count,
+    icon: <FlaskConical />
+  }));
+
+  const filteredTests = data.tests.filter(t => 
+    t.name?.toLowerCase().includes(searchTerm.toLowerCase()) || 
+    t.category?.toLowerCase().includes(searchTerm.toLowerCase())
+  );
+
+  if (loading) return <div style={{ padding: '2rem', textAlign: 'center' }}>Loading tests...</div>;
 
   return (
     <div className="lab-tests">
@@ -91,14 +105,14 @@ const LabTests = () => {
             </tr>
           </thead>
           <tbody>
-            {tests.map((test) => (
-              <tr key={test.id}>
-                <td><strong>{test.id}</strong></td>
+            {filteredTests.map((test) => (
+              <tr key={test._id}>
+                <td><strong>{test._id.slice(-6).toUpperCase()}</strong></td>
                 <td>{test.name}</td>
                 <td><span className="badge-soft">{test.category}</span></td>
                 <td>
                   <div className="flex items-center gap-1 font-bold">
-                    <DollarSign size={14} /> {test.price.toFixed(2)}
+                    <DollarSign size={14} /> {(test.price || 0).toFixed(2)}
                   </div>
                 </td>
                 <td>

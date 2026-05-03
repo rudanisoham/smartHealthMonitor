@@ -1,10 +1,11 @@
-import React, { useState } from 'react';
-import { Outlet, useLocation } from 'react-router-dom';
+import React, { useState, useEffect } from 'react';
+import { Outlet, useLocation, Navigate, useNavigate } from 'react-router-dom';
 import DoctorSidebar from './DoctorSidebar';
 import DoctorHeader from './DoctorHeader';
+import { getDoctorProfile } from '../utils/api';
+import { RefreshCw } from 'lucide-react';
 
 const getPageInfo = (pathname) => {
-  // Return title and subtitle based on route
   if (pathname.includes('/dashboard')) return { title: 'Dashboard', subtitle: 'Your clinical overview and upcoming appointments' };
   if (pathname.includes('/patients')) return { title: 'Patients', subtitle: 'Manage your patient roster and medical records' };
   if (pathname.includes('/appointments')) return { title: 'Appointments', subtitle: 'View and manage your schedule' };
@@ -19,13 +20,48 @@ const getPageInfo = (pathname) => {
 
 const DoctorLayout = () => {
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [doctor, setDoctor] = useState(null);
   const location = useLocation();
+  const navigate = useNavigate();
   const pageInfo = getPageInfo(location.pathname);
+
+  useEffect(() => {
+    const fetchProfile = async () => {
+      try {
+        const res = await getDoctorProfile();
+        if (res.data && res.data.success) {
+            setDoctor(res.data.data);
+        }
+      } catch (err) {
+        console.error('Failed to fetch doctor profile', err);
+        // If 401/403, we might want to redirect to login, but let's keep it for now
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchProfile();
+  }, []);
 
   const toggleSidebar = () => setIsSidebarCollapsed(prev => !prev);
 
-  // In a real app, this would come from a Context/State manager
-  const mockDoctor = { name: "Dr. Smith", isApproved: true };
+  if (loading) {
+    return (
+      <div style={{ height: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#f8fafc' }}>
+        <RefreshCw className="animate-spin" size={32} color="var(--primary)" />
+      </div>
+    );
+  }
+
+  // If doctor is not approved and NOT on the pending-approval page, redirect them
+  if (doctor && !doctor.isApproved && !location.pathname.includes('pending-approval')) {
+    return <Navigate to="/doctor/pending-approval" replace />;
+  }
+
+  // If doctor IS approved and tries to go to pending-approval, redirect to dashboard
+  if (doctor && doctor.isApproved && location.pathname.includes('pending-approval')) {
+    return <Navigate to="/doctor/dashboard" replace />;
+  }
 
   return (
     <div className={`admin-app ${isSidebarCollapsed ? 'sidebar-collapsed' : ''}`}>
@@ -36,24 +72,11 @@ const DoctorLayout = () => {
           title={pageInfo.title} 
           subtitle={pageInfo.subtitle} 
           onToggleSidebar={toggleSidebar}
-          doctorName={mockDoctor.name} 
+          doctorName={doctor?.user?.fullName || "Doctor"} 
         />
 
         <div className="admin-content">
-          {/* Approval Warning Banner */}
-          {!mockDoctor.isApproved && (
-            <div style={{padding: '1rem 1.25rem', background: 'rgba(251,191,36,0.15)', border: '1px solid #fbbf24', borderRadius: '10px', color: '#fbbf24', marginBottom: '1.5rem', display: 'flex', alignItems: 'center', gap: '0.75rem'}}>
-              <span style={{fontSize: '1.25rem'}}>⏳</span>
-              <div>
-                <strong>Application Under Review</strong>
-                <div style={{fontSize: '0.875rem', marginTop: '0.2rem', opacity: 0.85}}>Your account is pending admin approval. Some features may be restricted until approved.</div>
-              </div>
-            </div>
-          )}
-
-          {/* Render nested routes */}
           <Outlet />
-
         </div>
 
         <footer className="admin-footer">

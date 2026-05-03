@@ -211,6 +211,7 @@ a { color: inherit; text-decoration: none; }
 .admin-content { padding: 2.5rem; min-height: 0; }
 .admin-footer { padding: 2rem 2.5rem; border-top: 1px solid var(--border); text-align: right; color: var(--text-muted); font-size: 0.85rem; background: transparent;}
 .grid { display: grid; gap: 1.5rem; }
+.grid-5 { grid-template-columns: repeat(5, minmax(0, 1fr)); }
 .grid-4 { grid-template-columns: repeat(4, minmax(0, 1fr)); }
 .grid-3 { grid-template-columns: repeat(3, minmax(0, 1fr)); }
 .grid-2 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
@@ -449,7 +450,9 @@ PREMIUM FULL-SCREEN SPLIT AUTH LAYOUT
   .login-card { grid-template-columns: 1fr; }
   .login-extra { display: none; }
   .admin-sidebar { position: fixed; transform: translateX(-100%); transition: 0.3s; z-index: 1000; }
-  .grid-4 { grid-template-columns: repeat(2, 1fr); }
+  .grid-4 { grid-template-columns: repeat(4, 1fr); }
+  .grid-5 { grid-template-columns: repeat(5, 1fr); }
+  .grid-2 { grid-template-columns: repeat(2, 1fr); }
   .grid-3 { grid-template-columns: repeat(2, 1fr); }
   .admin-header { padding: 1rem 1.5rem; }
   .admin-content { padding: 1.5rem; }

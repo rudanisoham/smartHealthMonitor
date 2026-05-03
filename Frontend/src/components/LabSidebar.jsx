@@ -73,7 +73,10 @@ const LabSidebar = ({ collapsed }) => {
           className="sidebar-link w-full text-danger" 
           style={{ cursor: 'pointer', textAlign: 'left', background: 'none', border: 'none' }}
           onClick={() => {
-            window.location.href = '/auth/lab/login';
+            localStorage.removeItem('token');
+            localStorage.removeItem('user');
+            sessionStorage.clear();
+            window.location.href = '/';
           }}
         >
           <span className="icon" style={{ background: 'var(--danger-light)', color: 'var(--danger)' }}>

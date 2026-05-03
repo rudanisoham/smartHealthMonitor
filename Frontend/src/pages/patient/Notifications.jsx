@@ -1,38 +1,94 @@
 import React, { useState, useEffect } from 'react';
+import { getAppointments, getReports } from '../../utils/api';
+import { Loader, Bell, Calendar, FileText, AlertTriangle, CheckCircle, Info } from 'lucide-react';
 
 const Notifications = () => {
     const [notifications, setNotifications] = useState([]);
+    const [loading, setLoading] = useState(true);
 
     useEffect(() => {
-        // Mock data
-        const initial = [
-            {
-                id: 1,
-                title: 'High Blood Pressure Alert',
-                message: 'Your recent blood pressure reading was significantly higher than normal. Please consult a doctor.',
-                type: 'ALERT',
-                read: false,
-                createdAt: '2026-05-02T10:30:00'
-            },
-            {
-                id: 2,
-                title: 'Appointment Reminder',
-                message: 'You have an upcoming appointment with Dr. Sarah Jenkins tomorrow at 10:00 AM.',
-                type: 'WARNING',
-                read: false,
-                createdAt: '2026-05-01T14:15:00'
-            },
-            {
-                id: 3,
-                title: 'Profile Updated',
-                message: 'Your personal information was successfully updated.',
-                type: 'INFO',
-                read: true,
-                createdAt: '2026-04-28T09:00:00'
-            }
-        ];
-        setNotifications(initial);
+        generateNotifications();
     }, []);
+
+    const generateNotifications = async () => {
+        try {
+            setLoading(true);
+            const [apptRes, reportRes] = await Promise.all([
+                getAppointments(),
+                getReports()
+            ]);
+
+            const notifs = [];
+
+            // Generate notifications from appointments
+            if (apptRes.data.success) {
+                apptRes.data.data.forEach(appt => {
+                    if (appt.status === 'SCHEDULED' || appt.status === 'CONFIRMED') {
+                        notifs.push({
+                            id: `appt-${appt._id}`,
+                            title: 'Upcoming Appointment',
+                            message: `You have a ${appt.status.toLowerCase()} appointment${appt.doctor?.user?.fullName ? ` with Dr. ${appt.doctor.user.fullName}` : ''} on ${appt.preferredDate ? new Date(appt.preferredDate).toLocaleDateString() : 'TBD'}.`,
+                            type: 'WARNING',
+                            read: false,
+                            createdAt: appt.createdAt || new Date().toISOString()
+                        });
+                    }
+                    if (appt.status === 'COMPLETED') {
+                        notifs.push({
+                            id: `appt-done-${appt._id}`,
+                            title: 'Appointment Completed',
+                            message: `Your appointment${appt.doctor?.user?.fullName ? ` with Dr. ${appt.doctor.user.fullName}` : ''} has been completed.`,
+                            type: 'INFO',
+                            read: true,
+                            createdAt: appt.createdAt || new Date().toISOString()
+                        });
+                    }
+                });
+            }
+
+            // Generate notifications from reports
+            if (reportRes.data.success) {
+                reportRes.data.data.forEach(report => {
+                    if (report.status === 'ABNORMAL') {
+                        notifs.push({
+                            id: `report-${report._id}`,
+                            title: `Report Alert: ${report.title}`,
+                            message: `Your ${report.title} results show abnormal values. Please consult your doctor.`,
+                            type: 'ALERT',
+                            read: false,
+                            createdAt: report.createdAt
+                        });
+                    } else if (report.status === 'NORMAL' || report.status === 'REVIEWED') {
+                        notifs.push({
+                            id: `report-ok-${report._id}`,
+                            title: `Report Ready: ${report.title}`,
+                            message: `Your ${report.title} results are available. Status: ${report.status}.`,
+                            type: 'INFO',
+                            read: true,
+                            createdAt: report.createdAt
+                        });
+                    } else if (report.status === 'PENDING') {
+                        notifs.push({
+                            id: `report-pending-${report._id}`,
+                            title: `Report In Progress: ${report.title}`,
+                            message: `Your ${report.title} is currently being processed in the lab.`,
+                            type: 'WARNING',
+                            read: false,
+                            createdAt: report.createdAt
+                        });
+                    }
+                });
+            }
+
+            // Sort by date, newest first
+            notifs.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+            setNotifications(notifs);
+        } catch (err) {
+            console.error('Error generating notifications:', err);
+        } finally {
+            setLoading(false);
+        }
+    };
 
     const unreadCount = notifications.filter(n => !n.read).length;
 
@@ -40,12 +96,20 @@ const Notifications = () => {
         setNotifications(notifications.map(n => ({ ...n, read: true })));
     };
 
+    if (loading) {
+        return (
+            <div className="admin-content flex justify-center items-center" style={{ minHeight: '400px' }}>
+                <Loader className="animate-spin text-primary" size={48} />
+            </div>
+        );
+    }
+
     return (
         <div className="card">
             <div className="card-header">
                 <div>
                     <div className="section-title">All Notifications</div>
-                    <div className="section-subtitle">{unreadCount} unread</div>
+                    <div className="section-subtitle">{unreadCount} unread — Generated from your live data</div>
                 </div>
                 {notifications.length > 0 && (
                     <button className="btn btn-outline btn-sm" onClick={markAllRead}>Mark all as read</button>
@@ -74,7 +138,7 @@ const Notifications = () => {
                                     </div>
                                     <div className="timeline-meta">{notif.message}</div>
                                     <div className="timeline-meta" style={{ fontSize: '0.75rem', marginTop: '0.25rem' }}>
-                                        {notif.createdAt.replace('T', ' ').substring(0, 16)}
+                                        {new Date(notif.createdAt).toLocaleString()}
                                     </div>
                                 </div>
                             </div>

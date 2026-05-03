@@ -9,8 +9,11 @@ import {
   CheckCircle, 
   AlertCircle, 
   ChevronDown,
-  Info
+  Info,
+  Loader
 } from 'lucide-react';
+import { getReceptionDoctors, assignAppointment as apiAssignAppointment } from '../../utils/api';
+import API from '../../utils/api';
 
 const AssignAppointment = () => {
   const { id } = useParams();
@@ -22,36 +25,64 @@ const AssignAppointment = () => {
   const [selectedSpec, setSelectedSpec] = useState('');
   const [selectedDept, setSelectedDept] = useState('');
   const [showReschedule, setShowReschedule] = useState(false);
+  const [doctors, setDoctors] = useState([]);
+  const [appointment, setAppointment] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [submitting, setSubmitting] = useState(false);
 
-  // Demo data
-  const appointment = {
-    id: id || 'APP002',
-    patient: { name: 'Emma Watson', email: 'emma.w@email.com', phone: '+1 555-0123', bloodGroup: 'A-' },
-    preferredDate: '2026-05-10',
-    reason: 'Frequent headaches and blurry vision',
-    createdAt: '2026-05-01 10:30'
-  };
-
-  const doctors = [
-    { id: '1', name: 'Dr. Sarah Connor', specialty: 'Cardiology', dept: 'Cardiology', availableDays: 'Monday, Wednesday, Friday' },
-    { id: '2', name: 'Dr. James Wilson', specialty: 'Neurology', dept: 'Neurology', availableDays: 'Tuesday, Thursday' },
-    { id: '3', name: 'Dr. Lisa Cuddy', specialty: 'Pediatrics', dept: 'Pediatrics', availableDays: 'Monday, Tuesday, Wednesday, Thursday, Friday' },
-    { id: '4', name: 'Dr. Eric Foreman', specialty: 'General Medicine', dept: 'General Medicine', availableDays: 'Saturday, Sunday' },
-  ];
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const [docRes, appRes] = await Promise.all([
+          getReceptionDoctors(),
+          API.get(`/appointments/${id}`)
+        ]);
+        setDoctors(docRes.data.data);
+        setAppointment(appRes.data.data);
+      } catch (err) {
+        console.error('Failed to load data', err);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchData();
+  }, [id]);
 
   const filteredDoctors = doctors.filter(doc => {
     const matchesSearch = doc.name.toLowerCase().includes(searchTerm.toLowerCase()) || 
                          doc.specialty.toLowerCase().includes(searchTerm.toLowerCase());
     const matchesSpec = !selectedSpec || doc.specialty === selectedSpec;
-    const matchesDept = !selectedDept || doc.dept === selectedDept;
-    return matchesSearch && matchesSpec && matchesDept;
+    
+    // Availability Match
+    let dayMatch = true;
+    if (scheduledAt) {
+      const date = new Date(scheduledAt);
+      const days = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+      const selectedDay = days[date.getDay()];
+      dayMatch = doc.availableDays?.includes(selectedDay);
+    }
+
+    return matchesSearch && matchesSpec && dayMatch;
   });
 
-  const handleAssign = (e) => {
+  const handleAssign = async (e) => {
     e.preventDefault();
-    alert(`Appointment ${appointment.id} assigned to ${selectedDoctor.name} at ${scheduledAt}`);
-    navigate('/reception/appointments');
+    setSubmitting(true);
+    try {
+      await apiAssignAppointment(id, {
+        doctorId: selectedDoctor._id,
+        scheduledAt
+      });
+      alert(`Appointment assigned to ${selectedDoctor.name} successfully!`);
+      navigate('/reception/appointments');
+    } catch (err) {
+      alert(err.response?.data?.error || 'Failed to assign appointment');
+    } finally {
+      setSubmitting(false);
+    }
   };
+
+  if (loading) return <div style={{ padding: '2rem', textAlign: 'center' }}><Loader className="animate-spin" size={32} /></div>;
 
   return (
     <div className="admin-content">
@@ -74,26 +105,19 @@ const AssignAppointment = () => {
             <div className="stat-item">
               <div className="stat-info">
                 <span className="stat-label">Full Name</span>
-                <span className="author-name" style={{ fontSize: '1rem' }}>{appointment.patient.name}</span>
+                <span className="author-name" style={{ fontSize: '1rem' }}>{appointment?.patient?.user?.fullName || 'Unknown'}</span>
               </div>
             </div>
             <div className="stat-item">
               <div className="stat-info">
-                <span className="stat-label">Email / Contact</span>
-                <span className="muted">{appointment.patient.email}</span>
-                <span className="muted">{appointment.patient.phone}</span>
+                <span className="stat-label">Created</span>
+                <span className="muted">{appointment?.createdAt ? new Date(appointment.createdAt).toLocaleString() : 'N/A'}</span>
               </div>
             </div>
             <div className="stat-item">
               <div className="stat-info">
-                <span className="stat-label">Preferred Date</span>
-                <span className="author-name text-primary" style={{ fontWeight: '700' }}>{appointment.preferredDate}</span>
-              </div>
-            </div>
-            <div className="stat-item">
-              <div className="stat-info">
-                <span className="stat-label">Reason / Symptoms</span>
-                <p className="muted" style={{ margin: '0.25rem 0' }}>{appointment.reason}</p>
+                <span className="stat-label">Notes</span>
+                <p className="muted" style={{ margin: '0.25rem 0' }}>{appointment?.notes || 'No notes provided'}</p>
               </div>
             </div>
           </div>
@@ -115,19 +139,9 @@ const AssignAppointment = () => {
                   onChange={(e) => setSelectedSpec(e.target.value)}
                 >
                   <option value="">All Specialties</option>
-                  <option value="Cardiology">Cardiology</option>
-                  <option value="Neurology">Neurology</option>
-                  <option value="Pediatrics">Pediatrics</option>
-                </select>
-                <select 
-                  className="form-select" 
-                  value={selectedDept} 
-                  onChange={(e) => setSelectedDept(e.target.value)}
-                >
-                  <option value="">All Departments</option>
-                  <option value="Cardiology">Cardiology</option>
-                  <option value="Neurology">Neurology</option>
-                  <option value="General Medicine">General Medicine</option>
+                  {[...new Set(doctors.map(d => d.specialty))].map(spec => (
+                    <option key={spec} value={spec}>{spec}</option>
+                  ))}
                 </select>
               </div>
             </div>
@@ -160,7 +174,7 @@ const AssignAppointment = () => {
                 }}>
                   {filteredDoctors.map(doc => (
                     <div 
-                      key={doc.id}
+                      key={doc._id}
                       className="p-3"
                       style={{ cursor: 'pointer', borderRadius: '8px' }}
                       onMouseEnter={(e) => e.currentTarget.style.background = '#f1f5f9'}
@@ -204,8 +218,8 @@ const AssignAppointment = () => {
               </div>
             )}
 
-            <button type="submit" className="btn btn-primary w-full" disabled={!selectedDoctor || !scheduledAt}>
-              Confirm & Assign Appointment
+            <button type="submit" className="btn btn-primary w-full" disabled={!selectedDoctor || !scheduledAt || submitting}>
+              {submitting ? <Loader className="animate-spin" size={18} /> : 'Confirm & Assign Appointment'}
             </button>
           </form>
 

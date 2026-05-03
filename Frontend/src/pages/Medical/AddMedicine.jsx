@@ -8,9 +8,11 @@ import {
   Box, 
   DollarSign, 
   Info,
-  Calendar
+  Calendar,
+  Loader
 } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
+import { addMedicine } from '../../utils/api';
 
 const AddMedicine = () => {
   const navigate = useNavigate();
@@ -25,11 +27,22 @@ const AddMedicine = () => {
     description: '',
     minThreshold: '50'
   });
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    alert('Medicine added successfully to inventory!');
-    navigate('/medical/inventory');
+    setLoading(true);
+    setError(null);
+    try {
+      await addMedicine(formData);
+      alert('Medicine added successfully to inventory!');
+      navigate('/medical/inventory');
+    } catch (err) {
+      setError(err.response?.data?.error || 'Failed to add medicine');
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -43,6 +56,11 @@ const AddMedicine = () => {
       </div>
 
       <div className="card">
+        {error && (
+          <div style={{ padding: '0.75rem 1rem', background: 'rgba(239, 68, 68, 0.1)', border: '1px solid #ef4444', borderRadius: '8px', color: '#ef4444', fontSize: '0.85rem', marginBottom: '1.5rem' }}>
+            {error}
+          </div>
+        )}
         <form onSubmit={handleSubmit}>
           <div className="grid grid-2 gap-6 mb-6">
             <div className="form-group">
@@ -179,8 +197,8 @@ const AddMedicine = () => {
             <Link to="/medical/inventory" className="btn btn-outline">
               <X size={18} /> Cancel
             </Link>
-            <button type="submit" className="btn btn-primary">
-              <Save size={18} /> Save Medicine
+            <button type="submit" className="btn btn-primary" disabled={loading}>
+              {loading ? <Loader className="animate-spin" size={18} /> : <><Save size={18} /> Save Medicine</>}
             </button>
           </div>
         </form>

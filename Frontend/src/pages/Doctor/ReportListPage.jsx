@@ -1,19 +1,29 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { FileText, Plus, Search, Calendar, User, Eye, Download, CheckCircle, AlertTriangle } from 'lucide-react';
+import { getLabReports } from '../../utils/api';
 
 const ReportListPage = () => {
+  const [reports, setReports] = useState([]);
+  const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
 
-  const reports = [
-    { id: 1, date: "2026-03-15", patient: "Soham Rudani", title: "Blood Test CBC", type: "BLOOD_TEST", status: "REVIEWED", uploadedBy: "Lab Tech #4" },
-    { id: 2, date: "2026-03-18", patient: "Neha Sharma", title: "Chest X-Ray", type: "X_RAY", status: "PENDING", uploadedBy: "Radiology Dept" },
-    { id: 3, date: "2026-03-20", patient: "Alice Baker", title: "MRI Brain Scan", type: "MRI", status: "ABNORMAL", uploadedBy: "Dr. Smith" },
-    { id: 4, date: "2026-03-22", patient: "Mike Wilson", title: "ECG Summary", type: "ECG", status: "NORMAL", uploadedBy: "Cardio Unit" },
-  ];
+  useEffect(() => {
+    const fetchReports = async () => {
+      try {
+        const res = await getLabReports();
+        setReports(res.data.data);
+      } catch (err) {
+        console.error('Failed to load reports', err);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchReports();
+  }, []);
 
   const filteredReports = reports.filter(r => 
-    r.patient.toLowerCase().includes(searchQuery.toLowerCase()) || 
+    (r.patient?.user?.fullName || '').toLowerCase().includes(searchQuery.toLowerCase()) || 
     r.title.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
@@ -26,6 +36,8 @@ const ReportListPage = () => {
       default: return <span className="chip-neutral" style={{ fontSize: '0.75rem' }}>{status}</span>;
     }
   };
+
+  if (loading) return <div style={{ padding: '2rem', textAlign: 'center' }}>Loading reports...</div>;
 
   return (
     <>
@@ -73,31 +85,33 @@ const ReportListPage = () => {
             </thead>
             <tbody>
               {filteredReports.map(r => (
-                <tr key={r.id}>
+                <tr key={r._id}>
                   <td className="muted" style={{ fontSize: '0.85rem' }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
-                      <Calendar size={14} /> {r.date}
+                      <Calendar size={14} /> {new Date(r.createdAt).toLocaleDateString()}
                     </div>
                   </td>
                   <td>
-                    <div style={{ fontWeight: 700, color: '#1e293b' }}>{r.patient}</div>
+                    <div style={{ fontWeight: 700, color: '#1e293b' }}>{r.patient?.user?.fullName}</div>
                   </td>
                   <td>{r.title}</td>
                   <td>
                     <span className="chip-neutral" style={{ fontSize: '0.75rem', textTransform: 'capitalize' }}>
-                      {r.type.toLowerCase().replace('_', ' ')}
+                      {(r.reportType || 'OTHER').toLowerCase().replace('_', ' ')}
                     </span>
                   </td>
                   <td>{getStatusChip(r.status)}</td>
-                  <td className="muted" style={{ fontSize: '0.85rem' }}>{r.uploadedBy}</td>
+                  <td className="muted" style={{ fontSize: '0.85rem' }}>{r.uploadedBy || 'N/A'}</td>
                   <td className="text-right">
                     <div style={{ display: 'flex', gap: '0.5rem', justifyContent: 'flex-end' }}>
-                      <Link to={`/doctor/report-view?id=${r.id}`} className="btn btn-outline btn-sm" style={{ padding: '0.4rem 0.75rem' }}>
+                      <Link to={`/doctor/report-view?id=${r._id}`} className="btn btn-outline btn-sm" style={{ padding: '0.4rem 0.75rem' }}>
                         <Eye size={14} />
                       </Link>
-                      <button className="btn btn-outline btn-sm" style={{ padding: '0.4rem 0.75rem' }}>
-                        <Download size={14} />
-                      </button>
+                      {r.filePath && (
+                        <a href={`http://localhost:5000/${r.filePath}`} target="_blank" rel="noopener noreferrer" className="btn btn-outline btn-sm" style={{ padding: '0.4rem 0.75rem' }}>
+                          <Download size={14} />
+                        </a>
+                      )}
                     </div>
                   </td>
                 </tr>

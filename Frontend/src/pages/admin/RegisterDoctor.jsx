@@ -1,8 +1,63 @@
-import React from 'react';
-import { Link } from 'react-router-dom';
+import React, { useState } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
+import { Loader } from 'lucide-react';
 import AdminLayout from '../../components/AdminLayout';
+import { addAdminStaff } from '../../utils/api';
 
 export default function RegisterDoctor() {
+  const navigate = useNavigate();
+  const [formData, setFormData] = useState({
+    fullName: '',
+    email: '',
+    phone: '',
+    password: '',
+    specialty: '',
+    licenseNumber: '',
+    experience: '5',
+    department: '',
+    role: 'DOCTOR'
+  });
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
+
+  const [departments, setDepartments] = useState([]);
+  const [deptsLoading, setDeptsLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchDepts = async () => {
+      try {
+        const { getAdminDepartments } = await import('../../utils/api');
+        const res = await getAdminDepartments();
+        setDepartments(res.data.data);
+      } catch (err) {
+        console.error("Failed to fetch departments", err);
+      } finally {
+        setDeptsLoading(false);
+      }
+    };
+    fetchDepts();
+  }, []);
+
+  const handleChange = (e) => {
+    setFormData({ ...formData, [e.target.name]: e.target.value });
+  };
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setLoading(true);
+    setError(null);
+
+    try {
+      await addAdminStaff(formData);
+      alert('Doctor registered successfully!');
+      navigate('/admin/doctors');
+    } catch (err) {
+      setError(err.response?.data?.error || 'Registration failed');
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return (
     <AdminLayout title="Register Doctor" subtitle="Onboard a new medical professional">
       
@@ -14,12 +69,18 @@ export default function RegisterDoctor() {
       </div>
 
       <div style={{display: 'flex', justifyContent: 'center'}}>
-        <div className="card" style={{width: '100%', maxWidth: '800px', padding: '2.5rem', display: 'flex', flexDirection: 'column', gap: '2rem'}}>
+        <form className="card" style={{width: '100%', maxWidth: '800px', padding: '2.5rem', display: 'flex', flexDirection: 'column', gap: '2rem'}} onSubmit={handleSubmit}>
           
           <div>
             <div style={{fontSize: '1.25rem', fontWeight: '800', color: '#0F172A'}}>Doctor Credentials</div>
             <div style={{fontSize: '0.9rem', color: '#64748B', marginTop: '0.2rem', fontWeight: '500'}}>Account and professional qualifications</div>
           </div>
+
+          {error && (
+            <div style={{ padding: '0.75rem 1rem', background: 'rgba(239, 68, 68, 0.1)', border: '1px solid #ef4444', borderRadius: '8px', color: '#ef4444', fontSize: '0.85rem' }}>
+              {error}
+            </div>
+          )}
 
           {/* Section 1: Authentication */}
           <div style={{display: 'flex', flexDirection: 'column', gap: '1.25rem'}}>
@@ -29,22 +90,22 @@ export default function RegisterDoctor() {
               
               <div style={{display: 'flex', flexDirection: 'column', gap: '0.4rem'}}>
                 <label style={{fontSize: '0.85rem', fontWeight: '700', color: '#1E293B'}}>Full Name</label>
-                <input type="text" placeholder="Dr. John Doe" style={{padding: '0.75rem 1rem', border: '1px solid #E2E8F0', borderRadius: '8px', outline: 'none', fontSize: '0.9rem', color: '#1E293B', background: '#F8FAFC'}} onFocus={(e) => e.target.style.borderColor = '#94A3B8'} onBlur={(e) => e.target.style.borderColor = '#E2E8F0'} />
+                <input type="text" name="fullName" required value={formData.fullName} onChange={handleChange} placeholder="Dr. John Doe" style={{padding: '0.75rem 1rem', border: '1px solid #E2E8F0', borderRadius: '8px', outline: 'none', fontSize: '0.9rem', color: '#1E293B', background: '#F8FAFC'}} onFocus={(e) => e.target.style.borderColor = '#94A3B8'} onBlur={(e) => e.target.style.borderColor = '#E2E8F0'} />
               </div>
               
               <div style={{display: 'flex', flexDirection: 'column', gap: '0.4rem'}}>
                 <label style={{fontSize: '0.85rem', fontWeight: '700', color: '#1E293B'}}>Professional Email</label>
-                <input type="email" placeholder="doctor@hospital.com" style={{padding: '0.75rem 1rem', border: '1px solid #E2E8F0', borderRadius: '8px', outline: 'none', fontSize: '0.9rem', color: '#1E293B', background: '#F8FAFC'}} onFocus={(e) => e.target.style.borderColor = '#94A3B8'} onBlur={(e) => e.target.style.borderColor = '#E2E8F0'} />
+                <input type="email" name="email" required value={formData.email} onChange={handleChange} placeholder="doctor@hospital.com" style={{padding: '0.75rem 1rem', border: '1px solid #E2E8F0', borderRadius: '8px', outline: 'none', fontSize: '0.9rem', color: '#1E293B', background: '#F8FAFC'}} onFocus={(e) => e.target.style.borderColor = '#94A3B8'} onBlur={(e) => e.target.style.borderColor = '#E2E8F0'} />
               </div>
               
               <div style={{display: 'flex', flexDirection: 'column', gap: '0.4rem'}}>
                 <label style={{fontSize: '0.85rem', fontWeight: '700', color: '#1E293B'}}>Phone Number</label>
-                <input type="text" placeholder="+1 (555) 000-0000" style={{padding: '0.75rem 1rem', border: '1px solid #E2E8F0', borderRadius: '8px', outline: 'none', fontSize: '0.9rem', color: '#1E293B', background: '#F8FAFC'}} onFocus={(e) => e.target.style.borderColor = '#94A3B8'} onBlur={(e) => e.target.style.borderColor = '#E2E8F0'} />
+                <input type="text" name="phone" value={formData.phone} onChange={handleChange} placeholder="+1 (555) 000-0000" style={{padding: '0.75rem 1rem', border: '1px solid #E2E8F0', borderRadius: '8px', outline: 'none', fontSize: '0.9rem', color: '#1E293B', background: '#F8FAFC'}} onFocus={(e) => e.target.style.borderColor = '#94A3B8'} onBlur={(e) => e.target.style.borderColor = '#E2E8F0'} />
               </div>
               
               <div style={{display: 'flex', flexDirection: 'column', gap: '0.4rem'}}>
                 <label style={{fontSize: '0.85rem', fontWeight: '700', color: '#1E293B'}}>Initial Password</label>
-                <input type="password" placeholder="••••••••" style={{padding: '0.75rem 1rem', border: '1px solid #E2E8F0', borderRadius: '8px', outline: 'none', fontSize: '0.9rem', color: '#1E293B', background: '#F8FAFC'}} onFocus={(e) => e.target.style.borderColor = '#94A3B8'} onBlur={(e) => e.target.style.borderColor = '#E2E8F0'} />
+                <input type="password" name="password" required value={formData.password} onChange={handleChange} placeholder="••••••••" style={{padding: '0.75rem 1rem', border: '1px solid #E2E8F0', borderRadius: '8px', outline: 'none', fontSize: '0.9rem', color: '#1E293B', background: '#F8FAFC'}} onFocus={(e) => e.target.style.borderColor = '#94A3B8'} onBlur={(e) => e.target.style.borderColor = '#E2E8F0'} />
               </div>
               
             </div>
@@ -58,27 +119,30 @@ export default function RegisterDoctor() {
               
               <div style={{display: 'flex', flexDirection: 'column', gap: '0.4rem'}}>
                 <label style={{fontSize: '0.85rem', fontWeight: '700', color: '#1E293B'}}>Medical Specialty</label>
-                <input type="text" placeholder="e.g. Cardiology" style={{padding: '0.75rem 1rem', border: '1px solid #E2E8F0', borderRadius: '8px', outline: 'none', fontSize: '0.9rem', color: '#1E293B', background: '#F8FAFC'}} onFocus={(e) => e.target.style.borderColor = '#94A3B8'} onBlur={(e) => e.target.style.borderColor = '#E2E8F0'} />
+                <input type="text" name="specialty" value={formData.specialty} onChange={handleChange} required placeholder="e.g. Cardiology" style={{padding: '0.75rem 1rem', border: '1px solid #E2E8F0', borderRadius: '8px', outline: 'none', fontSize: '0.9rem', color: '#1E293B', background: '#F8FAFC'}} onFocus={(e) => e.target.style.borderColor = '#94A3B8'} onBlur={(e) => e.target.style.borderColor = '#E2E8F0'} />
               </div>
               
               <div style={{display: 'flex', flexDirection: 'column', gap: '0.4rem'}}>
                 <label style={{fontSize: '0.85rem', fontWeight: '700', color: '#1E293B'}}>License Number</label>
-                <input type="text" placeholder="MD-12345678" style={{padding: '0.75rem 1rem', border: '1px solid #E2E8F0', borderRadius: '8px', outline: 'none', fontSize: '0.9rem', color: '#1E293B', background: '#F8FAFC'}} onFocus={(e) => e.target.style.borderColor = '#94A3B8'} onBlur={(e) => e.target.style.borderColor = '#E2E8F0'} />
+                <input type="text" name="licenseNumber" value={formData.licenseNumber} onChange={handleChange} required placeholder="MD-12345678" style={{padding: '0.75rem 1rem', border: '1px solid #E2E8F0', borderRadius: '8px', outline: 'none', fontSize: '0.9rem', color: '#1E293B', background: '#F8FAFC'}} onFocus={(e) => e.target.style.borderColor = '#94A3B8'} onBlur={(e) => e.target.style.borderColor = '#E2E8F0'} />
               </div>
               
               <div style={{display: 'flex', flexDirection: 'column', gap: '0.4rem'}}>
                 <label style={{fontSize: '0.85rem', fontWeight: '700', color: '#1E293B'}}>Years of Experience</label>
-                <input type="text" defaultValue="5" style={{padding: '0.75rem 1rem', border: '1px solid #E2E8F0', borderRadius: '8px', outline: 'none', fontSize: '0.9rem', color: '#1E293B', background: '#F8FAFC'}} onFocus={(e) => e.target.style.borderColor = '#94A3B8'} onBlur={(e) => e.target.style.borderColor = '#E2E8F0'} />
+                <input type="number" name="experience" value={formData.experience} onChange={handleChange} required style={{padding: '0.75rem 1rem', border: '1px solid #E2E8F0', borderRadius: '8px', outline: 'none', fontSize: '0.9rem', color: '#1E293B', background: '#F8FAFC'}} onFocus={(e) => e.target.style.borderColor = '#94A3B8'} onBlur={(e) => e.target.style.borderColor = '#E2E8F0'} />
               </div>
               
               <div style={{display: 'flex', flexDirection: 'column', gap: '0.4rem'}}>
                 <label style={{fontSize: '0.85rem', fontWeight: '700', color: '#1E293B'}}>Assign Department</label>
                 <div style={{position: 'relative'}}>
-                  <select defaultValue="" style={{width: '100%', padding: '0.75rem 1rem', border: '1px solid #E2E8F0', borderRadius: '8px', outline: 'none', fontSize: '0.9rem', color: '#1E293B', background: '#F8FAFC', appearance: 'none', cursor: 'pointer'}} onFocus={(e) => e.target.style.borderColor = '#94A3B8'} onBlur={(e) => e.target.style.borderColor = '#E2E8F0'}>
-                    <option value="" disabled hidden>No Department Assigned</option>
-                    <option value="cardiology">Cardiology</option>
-                    <option value="neurology">Neurology</option>
-                    <option value="pediatrics">Pediatrics</option>
+                  <select name="department" value={formData.department} onChange={handleChange} required style={{width: '100%', padding: '0.75rem 1rem', border: '1px solid #E2E8F0', borderRadius: '8px', outline: 'none', fontSize: '0.9rem', color: '#1E293B', background: '#F8FAFC', appearance: 'none', cursor: 'pointer'}} onFocus={(e) => e.target.style.borderColor = '#94A3B8'} onBlur={(e) => e.target.style.borderColor = '#E2E8F0'}>
+                    <option value="" disabled hidden>-- Select Department --</option>
+                    {deptsLoading ? <option disabled>Loading departments...</option> : 
+                      departments.map(dept => (
+                        <option key={dept._id} value={dept.title}>{dept.title}</option>
+                      ))
+                    }
+                    {departments.length === 0 && !deptsLoading && <option disabled>No departments found</option>}
                   </select>
                   <svg style={{position: 'absolute', right: '1rem', top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none'}} width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#64748B" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
                     <polyline points="6 9 12 15 18 9"></polyline>
@@ -98,12 +162,12 @@ export default function RegisterDoctor() {
           </div>
 
           <div style={{display: 'flex', justifyContent: 'flex-end'}}>
-            <button style={{padding: '0.75rem 1.5rem', background: '#2563EB', color: '#FFFFFF', border: 'none', borderRadius: '8px', fontSize: '0.95rem', fontWeight: '600', cursor: 'pointer', transition: 'all 0.2s', boxShadow: '0 2px 4px rgba(37, 99, 235, 0.2)'}} onMouseOver={(e) => {e.currentTarget.style.background = '#1D4ED8';}} onMouseOut={(e) => {e.currentTarget.style.background = '#2563EB';}}>
-              Register Doctor
+            <button type="submit" disabled={loading} style={{display: 'flex', alignItems: 'center', gap: '0.5rem', padding: '0.75rem 1.5rem', background: '#2563EB', color: '#FFFFFF', border: 'none', borderRadius: '8px', fontSize: '0.95rem', fontWeight: '600', cursor: 'pointer', transition: 'all 0.2s', boxShadow: '0 2px 4px rgba(37, 99, 235, 0.2)'}} onMouseOver={(e) => {e.currentTarget.style.background = '#1D4ED8';}} onMouseOut={(e) => {e.currentTarget.style.background = '#2563EB';}}>
+              {loading ? <Loader className="animate-spin" size={18} /> : 'Register Doctor'}
             </button>
           </div>
 
-        </div>
+        </form>
       </div>
       
     </AdminLayout>

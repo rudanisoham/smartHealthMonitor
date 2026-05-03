@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { 
   FileText, 
   Search, 
@@ -13,17 +13,34 @@ import {
   AlertTriangle
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
+import { getLabHistory } from '../../utils/api';
 
 const LabHistory = () => {
   const [searchTerm, setSearchTerm] = useState('');
+  const [history, setHistory] = useState([]);
+  const [loading, setLoading] = useState(true);
 
-  const history = [
-    { id: 'LAB-501', patient: 'Sarah Miller', test: 'Complete Blood Count', date: '2026-05-02', status: 'Finalized', technician: 'S. Jenkins' },
-    { id: 'LAB-500', patient: 'John Doe', test: 'Thyroid Panel', date: '2026-05-01', status: 'Finalized', technician: 'S. Jenkins' },
-    { id: 'LAB-498', patient: 'Emma Watson', test: 'Blood Glucose', date: '2026-04-30', status: 'Finalized', technician: 'R. Smith' },
-    { id: 'LAB-495', patient: 'Michael Johnson', test: 'Chest X-Ray (Diag)', date: '2026-04-28', status: 'Finalized', technician: 'S. Jenkins' },
-    { id: 'LAB-492', patient: 'Chris Evans', test: 'Lipid Profile', date: '2026-04-25', status: 'Needs Review', technician: 'R. Smith' },
-  ];
+  useEffect(() => {
+    const fetchHistory = async () => {
+      try {
+        const res = await getLabHistory();
+        setHistory(res.data.data);
+      } catch (err) {
+        console.error("Failed to load lab history", err);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchHistory();
+  }, []);
+
+  const filteredHistory = history.filter(h => 
+    h.patient?.toLowerCase().includes(searchTerm.toLowerCase()) || 
+    h.type?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    h._id?.toLowerCase().includes(searchTerm.toLowerCase())
+  );
+
+  if (loading) return <div style={{ padding: '2rem', textAlign: 'center' }}>Loading history...</div>;
 
   return (
     <div className="lab-history">
@@ -80,25 +97,25 @@ const LabHistory = () => {
             </tr>
           </thead>
           <tbody>
-            {history.map((item) => (
-              <tr key={item.id}>
-                <td><strong>{item.id}</strong></td>
+            {filteredHistory.map((item) => (
+              <tr key={item._id}>
+                <td><strong>{item._id.slice(-6).toUpperCase()}</strong></td>
                 <td>
                   <div className="flex items-center gap-2">
                     <User size={14} className="text-muted" />
                     <span>{item.patient}</span>
                   </div>
                 </td>
-                <td><span className="badge-soft">{item.test}</span></td>
+                <td><span className="badge-soft">{item.type}</span></td>
                 <td>
                   <div className="flex items-center gap-2 muted" style={{ fontSize: '0.85rem' }}>
                     <Calendar size={14} />
                     {item.date}
                   </div>
                 </td>
-                <td>{item.technician}</td>
+                <td>System Admin</td>
                 <td>
-                  <span className={item.status === 'Finalized' ? 'chip' : 'chip-warning'}>
+                  <span className={item.status === 'REVIEWED' ? 'chip' : (item.status === 'NORMAL' ? 'chip-success' : (item.status === 'ABNORMAL' ? 'chip-danger' : 'chip-warning'))}>
                     {item.status}
                   </span>
                 </td>
@@ -122,7 +139,7 @@ const LabHistory = () => {
       </div>
 
       <div className="flex justify-between items-center mt-6">
-        <p className="muted">Showing 5 of 2,450 records</p>
+        <p className="muted">Showing {filteredHistory.length} of {history.length} records</p>
         <div className="flex gap-2">
           <button className="btn btn-outline btn-sm" disabled>Previous</button>
           <button className="btn btn-primary btn-sm">1</button>

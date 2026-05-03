@@ -1,7 +1,11 @@
 import React, { useState, useEffect } from 'react';
+import { getVitals, createVital } from '../../utils/api';
+import { Loader } from 'lucide-react';
 
 const HealthData = () => {
     const [readings, setReadings] = useState([]);
+    const [loading, setLoading] = useState(true);
+    const [saving, setSaving] = useState(false);
     const [newReading, setNewReading] = useState({
         heartRate: '',
         bpSystolic: '',
@@ -12,43 +16,64 @@ const HealthData = () => {
     });
 
     useEffect(() => {
-        const stored = localStorage.getItem('vitals_history');
-        if (stored) {
-            setReadings(JSON.parse(stored));
-        } else {
-            const initialData = [
-                { id: 1, timestamp: '2026-04-01T04:10:00', heartRate: 35, bpSystolic: 92, bpDiastolic: 42, spo2: 86.0, temperature: 38.0, weight: 52.0, riskLevel: 'HIGH' },
-                { id: 2, timestamp: '2026-04-01T03:56:00', heartRate: 35, bpSystolic: 92, bpDiastolic: 40, spo2: 81.0, temperature: 42.0, weight: 52.0, riskLevel: 'HIGH' }
-            ];
-            setReadings(initialData);
-            localStorage.setItem('vitals_history', JSON.stringify(initialData));
-        }
+        fetchVitals();
     }, []);
+
+    const fetchVitals = async () => {
+        try {
+            setLoading(true);
+            const res = await getVitals();
+            if (res.data.success) {
+                setReadings(res.data.data);
+            }
+        } catch (err) {
+            console.error('Error fetching vitals:', err);
+        } finally {
+            setLoading(false);
+        }
+    };
 
     const handleInputChange = (e, field) => {
         setNewReading({ ...newReading, [field]: e.target.value });
     };
 
-    const handleSave = (e) => {
+    const handleSave = async (e) => {
         e.preventDefault();
         if (!newReading.heartRate && !newReading.bpSystolic && !newReading.spo2) return;
 
-        const timestamp = new Date().toISOString();
+        setSaving(true);
+        try {
+            const vitalData = {};
+            if (newReading.heartRate) vitalData.heartRate = Number(newReading.heartRate);
+            if (newReading.bpSystolic) vitalData.bpSystolic = Number(newReading.bpSystolic);
+            if (newReading.bpDiastolic) vitalData.bpDiastolic = Number(newReading.bpDiastolic);
+            if (newReading.spo2) vitalData.spo2 = Number(newReading.spo2);
+            if (newReading.temperature) vitalData.temperature = Number(newReading.temperature);
+            if (newReading.weight) vitalData.weight = Number(newReading.weight);
 
-        const readingToAdd = {
-            id: readings.length + 1,
-            timestamp,
-            ...newReading,
-            riskLevel: parseInt(newReading.heartRate) < 50 || parseInt(newReading.spo2) < 90 ? 'HIGH' : 'LOW'
-        };
-
-        const updatedReadings = [readingToAdd, ...readings];
-        setReadings(updatedReadings);
-        localStorage.setItem('vitals_history', JSON.stringify(updatedReadings));
-        setNewReading({ heartRate: '', bpSystolic: '', bpDiastolic: '', spo2: '', temperature: '', weight: '' });
+            const res = await createVital(vitalData);
+            if (res.data.success) {
+                await fetchVitals();
+                setNewReading({ heartRate: '', bpSystolic: '', bpDiastolic: '', spo2: '', temperature: '', weight: '' });
+            }
+        } catch (err) {
+            console.error('Error saving vital:', err);
+            const errorMsg = err.response?.data?.error || err.message || 'Failed to save reading.';
+            alert(`Error: ${errorMsg}`);
+        } finally {
+            setSaving(false);
+        }
     };
 
     const latest = readings[0] || {};
+
+    if (loading) {
+        return (
+            <div className="admin-content flex justify-center items-center" style={{ minHeight: '400px' }}>
+                <Loader className="animate-spin text-primary" size={48} />
+            </div>
+        );
+    }
 
     return (
         <>
@@ -114,41 +139,43 @@ const HealthData = () => {
                 <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '1rem' }}>
                     <div>
                         <div className="section-title">➕ Add Health Reading</div>
-                        <div className="section-subtitle mt-1">Record your latest vitals — saved permanently to your health history</div>
+                        <div className="section-subtitle mt-1">Record your latest vitals — saved to your MongoDB health database</div>
                     </div>
-                    <span className="history-badge">📊 {readings.length} readings saved</span>
+                    <span className="history-badge">📊 {readings.length} readings in DB</span>
                 </div>
 
                 <form onSubmit={handleSave}>
                     <div className="form-3col">
                         <div className="form-group">
                             <label htmlFor="heartRate">Heart Rate <span className="muted">(bpm)</span></label>
-                            <input id="heartRate" className="form-control" type="number" min="30" max="250" placeholder="e.g. 72" value={newReading.heartRate} onChange={(e) => handleInputChange(e, 'heartRate')} />
+                            <input id="heartRate" className="form-control" type="number" min="30" max="250" placeholder="e.g. 72" value={newReading.heartRate} onChange={(e) => handleInputChange(e, 'heartRate')} disabled={saving} />
                         </div>
                         <div className="form-group">
                             <label htmlFor="bloodPressureSys">BP Systolic <span className="muted">(mmHg)</span></label>
-                            <input id="bloodPressureSys" className="form-control" type="number" min="60" max="250" placeholder="e.g. 120" value={newReading.bpSystolic} onChange={(e) => handleInputChange(e, 'bpSystolic')} />
+                            <input id="bloodPressureSys" className="form-control" type="number" min="60" max="250" placeholder="e.g. 120" value={newReading.bpSystolic} onChange={(e) => handleInputChange(e, 'bpSystolic')} disabled={saving} />
                         </div>
                         <div className="form-group">
                             <label htmlFor="bloodPressureDia">BP Diastolic <span className="muted">(mmHg)</span></label>
-                            <input id="bloodPressureDia" className="form-control" type="number" min="40" max="150" placeholder="e.g. 80" value={newReading.bpDiastolic} onChange={(e) => handleInputChange(e, 'bpDiastolic')} />
+                            <input id="bloodPressureDia" className="form-control" type="number" min="40" max="150" placeholder="e.g. 80" value={newReading.bpDiastolic} onChange={(e) => handleInputChange(e, 'bpDiastolic')} disabled={saving} />
                         </div>
                         <div className="form-group">
                             <label htmlFor="spo2">SpO2 <span className="muted">(%)</span></label>
-                            <input id="spo2" className="form-control" type="number" step="0.1" min="80" max="100" placeholder="e.g. 98.5" value={newReading.spo2} onChange={(e) => handleInputChange(e, 'spo2')} />
+                            <input id="spo2" className="form-control" type="number" step="0.1" min="80" max="100" placeholder="e.g. 98.5" value={newReading.spo2} onChange={(e) => handleInputChange(e, 'spo2')} disabled={saving} />
                         </div>
                         <div className="form-group">
                             <label htmlFor="temperature">Temperature <span className="muted">(°C)</span></label>
-                            <input id="temperature" className="form-control" type="number" step="0.1" min="35" max="42" placeholder="e.g. 37.0" value={newReading.temperature} onChange={(e) => handleInputChange(e, 'temperature')} />
+                            <input id="temperature" className="form-control" type="number" step="0.1" min="35" max="42" placeholder="e.g. 37.0" value={newReading.temperature} onChange={(e) => handleInputChange(e, 'temperature')} disabled={saving} />
                         </div>
                         <div className="form-group">
                             <label htmlFor="weight">Weight <span className="muted">(kg)</span></label>
-                            <input id="weight" className="form-control" type="number" step="0.1" min="1" max="300" placeholder="e.g. 70.5" value={newReading.weight} onChange={(e) => handleInputChange(e, 'weight')} />
+                            <input id="weight" className="form-control" type="number" step="0.1" min="1" max="300" placeholder="e.g. 70.5" value={newReading.weight} onChange={(e) => handleInputChange(e, 'weight')} disabled={saving} />
                         </div>
                     </div>
                     <div style={{ display: 'flex', justifyContent: 'flex-end', alignItems: 'center', gap: '0.75rem', marginTop: '0.75rem' }}>
-                        <span className="text-xs text-muted">Fill at least one field · Data is saved permanently</span>
-                        <button className="btn btn-primary" type="submit">💾 Save Reading</button>
+                        <span className="text-xs text-muted">Fill at least one field · Data is saved to MongoDB</span>
+                        <button className="btn btn-primary" type="submit" disabled={saving}>
+                            {saving ? '💾 Saving...' : '💾 Save Reading'}
+                        </button>
                     </div>
                 </form>
             </div>
@@ -157,7 +184,7 @@ const HealthData = () => {
                 <div className="card-header">
                     <div>
                         <div className="section-title">📋 Readings History</div>
-                        <div className="section-subtitle">All your saved vitals — newest first</div>
+                        <div className="section-subtitle">All your saved vitals from the database — newest first</div>
                     </div>
                     <span className="chip-neutral">{readings.length} records</span>
                 </div>
@@ -195,9 +222,9 @@ const HealthData = () => {
                                 if (m.temperature > 38.5) tmpClass = 'status-bad';
 
                                 return (
-                                    <tr key={m.id}>
+                                    <tr key={m._id}>
                                         <td className="muted">{rowNum}</td>
-                                        <td style={{ whiteSpace: 'nowrap' }}>{m.timestamp.replace('T', ' ').substring(0, 16)}</td>
+                                        <td style={{ whiteSpace: 'nowrap' }}>{new Date(m.createdAt).toLocaleString()}</td>
                                         <td>{m.heartRate ? <span className={hrClass}>{m.heartRate} bpm</span> : <span className="muted">—</span>}</td>
                                         <td>{m.bpSystolic && m.bpDiastolic ? <span className={bpClass}>{m.bpSystolic}/{m.bpDiastolic} mmHg</span> : <span className="muted">—</span>}</td>
                                         <td>{m.spo2 ? <span className={spo2Class}>{m.spo2}%</span> : <span className="muted">—</span>}</td>

@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { 
   Pill, 
   ClipboardList, 
@@ -13,26 +13,36 @@ import {
   Settings
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
+import { getMedicalDashboard } from '../../utils/api';
 
 const MedicalDashboard = () => {
+  const [data, setData] = useState(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchDashboard = async () => {
+      try {
+        const res = await getMedicalDashboard();
+        setData(res.data.data);
+      } catch (err) {
+        console.error("Failed to fetch medical dashboard", err);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchDashboard();
+  }, []);
   const stats = [
-    { label: 'Total Medicines', value: '1,248', icon: <Pill />, color: 'blue', trend: '+12 this week' },
-    { label: 'Pending Prescriptions', value: '28', icon: <ClipboardList />, color: 'yellow', trend: '8 urgent' },
-    { label: 'Low Stock Alerts', value: '14', icon: <AlertTriangle />, color: 'red', trend: 'Immediate action' },
-    { label: 'Dispensed Today', value: '36', icon: <CheckCircle />, color: 'blue', trend: 'Steady flow' },
+    { label: 'Total Medicines', value: data?.stats?.totalMedicines || 0, icon: <Pill />, color: 'blue', trend: '+12 this week' },
+    { label: 'Pending Prescriptions', value: data?.stats?.pendingPrescriptions || 0, icon: <ClipboardList />, color: 'yellow', trend: 'Urgent' },
+    { label: 'Low Stock Alerts', value: data?.stats?.lowStock || 0, icon: <AlertTriangle />, color: 'red', trend: 'Immediate action' },
+    { label: 'Dispensed Today', value: data?.stats?.dispensedToday || 0, icon: <CheckCircle />, color: 'blue', trend: 'Steady flow' },
   ];
 
-  const pendingPrescriptions = [
-    { id: 'PRX-901', patient: 'Michael J.', doctor: 'Dr. Sarah Connor', time: '10 mins ago', status: 'Pending' },
-    { id: 'PRX-902', patient: 'Emma Watson', doctor: 'Dr. James Wilson', time: '25 mins ago', status: 'In Progress' },
-    { id: 'PRX-903', patient: 'Chris Evans', doctor: 'Dr. Lisa Cuddy', time: '1 hour ago', status: 'Pending' },
-  ];
+  const pendingPrescriptions = data?.pendingPrescriptions || [];
+  const lowStock = data?.lowStockItems || [];
 
-  const lowStock = [
-    { name: 'Paracetamol 500mg', stock: 45, unit: 'Tablets', min: 100 },
-    { name: 'Amoxicillin 250mg', stock: 12, unit: 'Bottles', min: 20 },
-    { name: 'Insulin Glargine', stock: 8, unit: 'Vials', min: 15 },
-  ];
+  if (loading) return <div style={{ padding: '2rem', textAlign: 'center' }}>Loading dashboard...</div>;
 
   return (
     <div className="medical-dashboard">
@@ -76,8 +86,8 @@ const MedicalDashboard = () => {
               </thead>
               <tbody>
                 {pendingPrescriptions.map((prx) => (
-                  <tr key={prx.id}>
-                    <td><strong>{prx.id}</strong></td>
+                  <tr key={prx._id}>
+                    <td><strong>{prx._id.slice(-6).toUpperCase()}</strong></td>
                     <td>{prx.patient}</td>
                     <td>{prx.doctor}</td>
                     <td>
@@ -86,7 +96,7 @@ const MedicalDashboard = () => {
                       </span>
                     </td>
                     <td>
-                      <Link to={`/medical/prescriptions/${prx.id}`} className="btn-icon">
+                      <Link to={`/medical/prescriptions/${prx._id}`} className="btn-icon">
                         <CheckCircle size={16} />
                       </Link>
                     </td>
