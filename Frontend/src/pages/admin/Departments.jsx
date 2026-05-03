@@ -76,7 +76,10 @@ export default function Departments() {
                       <span style={{background: dept.status === 'Active' ? '#DCFCE7' : '#F1F5F9', color: dept.status === 'Active' ? '#16A34A' : '#64748B', padding: '0.2rem 0.8rem', borderRadius: '999px', fontSize: '0.75rem', fontWeight: '700'}}>{dept.status}</span>
                     </td>
                     <td style={{padding: '1.5rem 2.5rem', borderBottom: index === filteredDepts.length - 1 ? 'none' : '1px solid #F1F5F9', textAlign: 'right'}}>
-                        <button style={{padding: '0.45rem 1.25rem', background: '#FFFFFF', border: '1px solid #FECACA', borderRadius: '8px', fontSize: '0.85rem', fontWeight: '600', color: '#EF4444', cursor: 'pointer', transition: 'all 0.2s'}} onMouseOver={(e) => {e.currentTarget.style.background = '#FEF2F2';}} onMouseOut={(e) => {e.currentTarget.style.background = '#FFFFFF';}}>Delete unit</button>
+                        <div style={{ display: 'flex', gap: '0.5rem', justifyContent: 'flex-end' }}>
+                          <Link to={`/admin/departments/${index + 1}`} style={{padding: '0.45rem 1rem', background: '#F1F5F9', border: '1px solid #E2E8F0', borderRadius: '8px', fontSize: '0.85rem', fontWeight: '600', color: '#1E293B', cursor: 'pointer', transition: 'all 0.2s', textDecoration: 'none'}}>View</Link>
+                          <button style={{padding: '0.45rem 1.25rem', background: '#FFFFFF', border: '1px solid #FECACA', borderRadius: '8px', fontSize: '0.85rem', fontWeight: '600', color: '#EF4444', cursor: 'pointer', transition: 'all 0.2s'}} onMouseOver={(e) => {e.currentTarget.style.background = '#FEF2F2';}} onMouseOut={(e) => {e.currentTarget.style.background = '#FFFFFF';}}>Delete</button>
+                        </div>
                     </td>
                   </tr>
                 ))}

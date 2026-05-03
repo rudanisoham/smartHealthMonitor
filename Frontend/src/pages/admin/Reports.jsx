@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { Link } from 'react-router-dom';
 import AdminLayout from '../../components/AdminLayout';
 
 const mockAppointments = [
@@ -92,6 +93,7 @@ export default function Reports() {
                 <th style={{padding: '1.25rem 1.5rem', fontSize: '0.75rem', fontWeight: '800', color: '#64748B', letterSpacing: '0.05em', borderBottom: '1px solid #E2E8F0', background: '#FFFFFF', textAlign: 'left', width: '30%'}}>DOCTOR</th>
                 <th style={{padding: '1.25rem 1.5rem', fontSize: '0.75rem', fontWeight: '800', color: '#64748B', letterSpacing: '0.05em', borderBottom: '1px solid #E2E8F0', background: '#FFFFFF', textAlign: 'left', width: '25%'}}>PATIENT</th>
                 <th style={{padding: '1.25rem 2.5rem', fontSize: '0.75rem', fontWeight: '800', color: '#64748B', letterSpacing: '0.05em', borderBottom: '1px solid #E2E8F0', background: '#FFFFFF', textAlign: 'left', width: '20%'}}>STATUS RESULT</th>
+                <th style={{padding: '1.25rem 2.5rem', fontSize: '0.75rem', fontWeight: '800', color: '#64748B', letterSpacing: '0.05em', borderBottom: '1px solid #E2E8F0', background: '#FFFFFF', textAlign: 'right', width: '10%'}}>ACTION</th>
               </tr>
             </thead>
             <tbody>
@@ -102,6 +104,9 @@ export default function Reports() {
                   <td style={{padding: '1.5rem 1.5rem', fontSize: '0.85rem', color: '#0F172A', fontWeight: '500', borderBottom: index === filteredAppointments.length - 1 ? 'none' : '1px solid #F1F5F9'}}>{app.pat}</td>
                   <td style={{padding: '1.5rem 2.5rem', borderBottom: index === filteredAppointments.length - 1 ? 'none' : '1px solid #F1F5F9'}}>
                     <span style={{background: app.statusBg, color: app.statusColor, padding: '0.25rem 0.6rem', borderRadius: '999px', fontSize: '0.7rem', fontWeight: '800', textTransform: app.status === 'CANCELLED' ? 'uppercase' : 'none'}}>{app.status}</span>
+                  </td>
+                  <td style={{padding: '1.5rem 2.5rem', borderBottom: index === filteredAppointments.length - 1 ? 'none' : '1px solid #F1F5F9', textAlign: 'right'}}>
+                    <Link to={`/admin/reports/${app.id}`} style={{ color: 'var(--primary)', fontWeight: 700, fontSize: '0.85rem', textDecoration: 'none' }}>View Audit</Link>
                   </td>
                 </tr>
               ))}
