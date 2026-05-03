@@ -20,6 +20,14 @@ const MedicalSidebar = ({ collapsed }) => {
         { path: '/medical/dashboard', icon: <LayoutDashboard className="nav-icon" />, label: 'Dashboard' },
         { path: '/medical/inventory', icon: <Pill className="nav-icon" />, label: 'Medicine Inventory' },
         { path: '/medical/prescriptions', icon: <ClipboardList className="nav-icon" />, label: 'Prescriptions' },
+        { path: '/medical/patient-search', icon: <Search className="nav-icon" />, label: 'Patient Search' },
+      ]
+    },
+    {
+      section: 'Diagnostics',
+      items: [
+        { path: '/medical/upload-report', icon: <Upload className="nav-icon" />, label: 'Upload Report' },
+        { path: '/medical/reports', icon: <FileText className="nav-icon" />, label: 'Medical Reports' },
       ]
     },
     {

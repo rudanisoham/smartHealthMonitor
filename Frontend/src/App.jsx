@@ -25,6 +25,15 @@ import AdminPatientProfile from './pages/admin/PatientProfile';
 import AdminRegisterPatient from './pages/admin/RegisterPatient';
 import AdminAddDepartment from './pages/admin/AddDepartment';
 import AdminReports from './pages/admin/Reports';
+import AdminReportView from './pages/admin/AdminReportView';
+import FeedbackList from './pages/admin/FeedbackList';
+import FeedbackReply from './pages/admin/FeedbackReply';
+import Messaging from './pages/admin/Messaging';
+import Reviews from './pages/admin/Reviews';
+import SiteContent from './pages/admin/SiteContent';
+import StaffManagement from './pages/admin/StaffManagement';
+import ViewDepartment from './pages/admin/ViewDepartment';
+import AddStaff from './pages/admin/AddStaff';
 
 // Doctor Pages
 import DoctorLoginPage from './pages/Auth/Doctor/LoginPage';
@@ -39,6 +48,11 @@ import DoctorProfilePage from './pages/Doctor/ProfilePage';
 import DoctorSettingsPage from './pages/Doctor/SettingsPage';
 import DoctorAddDiagnosisPage from './pages/Doctor/AddDiagnosisPage';
 import DoctorReportViewPage from './pages/Doctor/ReportViewPage';
+import LabRequestsPage from './pages/Doctor/LabRequestsPage';
+import PendingApprovalPage from './pages/Doctor/PendingApprovalPage';
+import ReportListPage from './pages/Doctor/ReportListPage';
+import UploadReportPage from './pages/Doctor/UploadReportPage';
+import PrescriptionDetailPage from './pages/Doctor/PrescriptionDetailPage';
 
 // Patient Pages
 import PatientDashboard from './pages/patient/Dashboard';
@@ -114,8 +128,20 @@ function App() {
         <Route path="/admin/departments/add" element={<AdminAddDepartment />} />
         <Route path="/admin/logs" element={<AdminSystemLogs />} />
         <Route path="/admin/reports" element={<AdminReports />} />
+        <Route path="/admin/reports/:id" element={<AdminReportView />} />
         <Route path="/admin/analytics" element={<AdminAnalytics />} />
         <Route path="/admin/departments/configure" element={<AdminConfigureDepartment />} />
+        <Route path="/admin/departments/:id" element={<ViewDepartment />} />
+        <Route path="/admin/staff" element={<StaffManagement />} />
+        <Route path="/admin/staff/add" element={<AddStaff />} />
+        <Route path="/admin/receptionists" element={<StaffManagement role="RECEPTIONIST" />} />
+        <Route path="/admin/medical-staff" element={<StaffManagement role="MEDICAL_STAFF" />} />
+        <Route path="/admin/lab-staff" element={<StaffManagement role="LAB_STAFF" />} />
+        <Route path="/admin/feedback" element={<FeedbackList />} />
+        <Route path="/admin/feedback/:id/reply" element={<FeedbackReply />} />
+        <Route path="/admin/messaging" element={<Messaging />} />
+        <Route path="/admin/reviews" element={<Reviews />} />
+        <Route path="/admin/site-content" element={<SiteContent />} />
         <Route path="/admin/settings" element={<AdminSettings />} />
 
         {/* Doctor Routes */}
@@ -133,6 +159,11 @@ function App() {
           <Route path="profile" element={<DoctorProfilePage />} />
           <Route path="settings" element={<DoctorSettingsPage />} />
           <Route path="report-view" element={<DoctorReportViewPage />} />
+          <Route path="reports" element={<ReportListPage />} />
+          <Route path="reports/upload" element={<UploadReportPage />} />
+          <Route path="lab-requests" element={<LabRequestsPage />} />
+          <Route path="pending-approval" element={<PendingApprovalPage />} />
+          <Route path="prescriptions/:id" element={<PrescriptionDetailPage />} />
         </Route>
 
         {/* Patient Routes */}
@@ -183,6 +214,9 @@ function App() {
           <Route path="inventory" element={<MedicalInventory />} />
           <Route path="inventory/add" element={<MedicalAddMedicine />} />
           <Route path="prescriptions" element={<MedicalPrescriptions />} />
+          <Route path="patient-search" element={<MedicalPatientSearch />} />
+          <Route path="upload-report" element={<MedicalUploadReport />} />
+          <Route path="reports" element={<MedicalReports />} />
         </Route>
 
         {/* Lab Panel Routes */}

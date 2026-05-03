@@ -110,7 +110,7 @@ export default function AdminLayout({ children, title, subtitle }) {
 
         <div className="sidebar-section-label sidebar-text">Staff Management</div>
         <nav className="sidebar-nav">
-          <Link to="/admin/receptionists" className={`sidebar-link ${currentPath.startsWith('/admin/receptionists') ? 'active' : ''}`} title={isCollapsed && !isMobile ? "Receptionists" : ""}>
+          <Link to="/admin/staff?role=RECEPTIONIST" className={`sidebar-link ${currentPath.includes('receptionist') || (currentPath === '/admin/staff' && location.search.includes('RECEPTIONIST')) ? 'active' : ''}`} title={isCollapsed && !isMobile ? "Receptionists" : ""}>
             <span className="icon">
               <svg className="nav-icon" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" strokeWidth="2">
                   <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
@@ -121,7 +121,7 @@ export default function AdminLayout({ children, title, subtitle }) {
             </span>
             <span className="sidebar-text">Receptionists</span>
           </Link>
-          <Link to="/admin/medical-staff" className={`sidebar-link ${currentPath.startsWith('/admin/medical-staff') ? 'active' : ''}`} title={isCollapsed && !isMobile ? "Medical Staff" : ""}>
+          <Link to="/admin/staff?role=MEDICAL_STAFF" className={`sidebar-link ${currentPath.includes('medical-staff') || (currentPath === '/admin/staff' && location.search.includes('MEDICAL_STAFF')) ? 'active' : ''}`} title={isCollapsed && !isMobile ? "Medical Staff" : ""}>
             <span className="icon">
               <svg className="nav-icon" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" strokeWidth="2">
                   <path d="M22 12h-4l-3 9L9 3l-3 9H2"></path>
@@ -129,7 +129,7 @@ export default function AdminLayout({ children, title, subtitle }) {
             </span>
             <span className="sidebar-text">Medical Staff</span>
           </Link>
-          <Link to="/admin/lab-staff" className={`sidebar-link ${currentPath.startsWith('/admin/lab-staff') ? 'active' : ''}`} title={isCollapsed && !isMobile ? "Lab Staff" : ""}>
+          <Link to="/admin/staff?role=LAB_STAFF" className={`sidebar-link ${currentPath.includes('lab-staff') || (currentPath === '/admin/staff' && location.search.includes('LAB_STAFF')) ? 'active' : ''}`} title={isCollapsed && !isMobile ? "Lab Staff" : ""}>
             <span className="icon">
               <svg className="nav-icon" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" strokeWidth="2">
                   <path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path>
