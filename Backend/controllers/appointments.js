@@ -76,29 +76,67 @@ exports.getAppointment = async (req, res, next) => {
 
 // @desc    Create new appointment
 // @route   POST /api/appointments
-// @access  Private (Patient)
+// @access  Private
 exports.createAppointment = async (req, res, next) => {
   try {
-    let patient = await Patient.findOne({ user: req.user._id });
-    if (!patient) {
-      patient = await Patient.create({ user: req.user._id });
+    console.log('createAppointment - user:', req.user?.email, '| body:', JSON.stringify(req.body));
+
+    let patientId;
+
+    // If Receptionist or Admin is creating this for a patient
+    if (['RECEPTIONIST', 'ADMIN'].includes(req.user.role)) {
+      if (!req.body.patient) {
+        return res.status(400).json({ success: false, error: 'Patient ID is required when booking as staff' });
+      }
+      
+      // req.body.patient could be a Patient document ID or a User document ID.
+      // We need the Patient document ID.
+      let patientDoc = await Patient.findById(req.body.patient);
+      if (!patientDoc) {
+        // Fallback: If they sent a User ID, find the Patient profile for it
+        patientDoc = await Patient.findOne({ user: req.body.patient });
+      }
+      if (!patientDoc) {
+        return res.status(404).json({ success: false, error: 'Patient profile not found for the selected user' });
+      }
+      patientId = patientDoc._id;
+    } 
+    // If a Patient is booking for themselves
+    else {
+      let patient = await Patient.findOne({ user: req.user._id });
+      if (!patient) {
+        console.log('No patient profile found - auto-creating for:', req.user.email);
+        patient = await Patient.create({ user: req.user._id });
+      }
+      patientId = patient._id;
     }
 
-    if (!patient) {
-      return res.status(404).json({ success: false, error: 'Patient profile not found' });
+    const { doctor, preferredDate, preferredDateNote, notes, status, department } = req.body;
+
+    // Build appointment document explicitly
+    const appointmentDoc = {
+      patient: patientId,
+      status: status || 'AWAITING_ASSIGNMENT',
+      notes: notes || '',
+      preferredDateNote: preferredDateNote || '',
+    };
+
+    if (doctor) appointmentDoc.doctor = doctor;
+    if (preferredDate) appointmentDoc.preferredDate = new Date(preferredDate);
+    if (department) appointmentDoc.department = department;
+
+    // If created by reception, mark it
+    if (['RECEPTIONIST', 'ADMIN'].includes(req.user.role)) {
+      appointmentDoc.assignedByReception = true;
     }
 
-    req.body.patient = patient._id;
-    const appointment = await Appointment.create(req.body);
+    const appointment = await Appointment.create(appointmentDoc);
+    console.log('Appointment created:', appointment._id);
 
-    res.status(201).json({
-      success: true,
-      data: appointment,
-    });
+    res.status(201).json({ success: true, data: appointment });
   } catch (err) {
-    res.status(400).json({
-      success: false,
-      error: err.message,
-    });
+    console.error('createAppointment ERROR:', err.message);
+    res.status(400).json({ success: false, error: err.message });
   }
 };
+

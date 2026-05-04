@@ -3,12 +3,12 @@ import {
   Plus, 
   Search, 
   Filter, 
-  MoreVertical, 
   Edit2, 
   Trash2, 
   Pill,
   ChevronRight,
-  Download
+  Download,
+  AlertCircle
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { getMedicalInventory } from '../../utils/api';
@@ -38,121 +38,117 @@ const MedicalInventory = () => {
     m.category?.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
-  if (loading) return <div style={{ padding: '2rem', textAlign: 'center' }}>Loading inventory...</div>;
-
-  const getStatusChip = (status) => {
-    switch (status) {
-      case 'In Stock': return <span className="chip">In Stock</span>;
-      case 'Low Stock': return <span className="chip-warning">Low Stock</span>;
-      case 'Out of Stock': return <span className="chip-danger">Out of Stock</span>;
-      default: return <span className="chip-neutral">{status}</span>;
-    }
-  };
+  if (loading) return (
+    <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '400px' }}>
+      <div className="loader"></div>
+    </div>
+  );
 
   return (
     <div className="medical-inventory">
-      <div className="flex justify-between items-end mb-8">
+      <div className="flex justify-between items-end mb-6">
         <div>
           <h2 className="section-title">Medicine Inventory</h2>
-          <p className="section-subtitle">Manage pharmacy stock, pricing, and availability</p>
+          <p className="section-subtitle">Manage all medicines and stock levels</p>
         </div>
-        <div className="flex gap-3">
-          <button className="btn btn-outline">
-            <Download size={18} /> Export List
-          </button>
-          <Link to="/medical/inventory/add" className="btn btn-primary">
-            <Plus size={18} /> Add New Medicine
+        <div className="flex gap-2">
+          <Link to="/medical/inventory/add" className="btn btn-primary" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+            <Plus size={18} /> Add Medicine
           </Link>
         </div>
       </div>
 
-      <div className="card mb-6">
-        <div className="flex justify-between items-center gap-4">
-          <div className="search-bar flex-1" style={{ minWidth: '400px' }}>
-            <Search className="search-icon" size={18} />
+      <div className="card shadow-sm mb-6">
+        <div style={{ display: 'flex', gap: '1rem', alignItems: 'center' }}>
+          <div className="search-bar" style={{ flex: 1, position: 'relative' }}>
+            <Search style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: '#94a3b8' }} size={18} />
             <input 
               type="text" 
+              className="form-control"
+              style={{ paddingLeft: '40px' }}
               placeholder="Search by name, brand, or category..." 
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
             />
           </div>
-          <div className="flex gap-2">
-            <button className="btn btn-outline btn-sm">
-              <Filter size={16} /> Filter
-            </button>
-            <select className="form-select" style={{ width: 'auto', padding: '0.4rem 2rem 0.4rem 1rem', fontSize: '0.85rem' }}>
-              <option>All Categories</option>
-              <option>Analgesic</option>
-              <option>Antibiotic</option>
-              <option>Antidiabetic</option>
-            </select>
-          </div>
+          <button className="btn btn-outline" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+            <Filter size={16} /> Filter
+          </button>
         </div>
       </div>
 
-      <div className="table-container">
-        <table>
-          <thead>
-            <tr>
-              <th>Medicine Name</th>
-              <th>Category</th>
-              <th>Stock Level</th>
-              <th>Unit Price</th>
-              <th>Status</th>
-              <th className="text-right">Actions</th>
-            </tr>
-          </thead>
-          <tbody>
-            {filteredMedicines.map((med) => (
-              <tr key={med._id}>
-                <td>
-                  <div className="flex items-center gap-3">
-                    <div className="header-avatar" style={{ width: '36px', height: '36px', background: 'var(--primary-light)', color: 'var(--primary)' }}>
-                      <Pill size={16} />
-                    </div>
-                    <div>
-                      <div className="author-name">{med.name}</div>
-                      <div className="muted" style={{ fontSize: '0.75rem' }}>{med.brand}</div>
-                    </div>
-                  </div>
-                </td>
-                <td><span className="badge-soft">{med.category}</span></td>
-                <td>
-                  <div className="font-bold">{med.stock}</div>
-                  <div className="muted" style={{ fontSize: '0.75rem' }}>{med.unit}</div>
-                </td>
-                <td>{med.price}</td>
-                <td>{getStatusChip(med.status)}</td>
-                <td>
-                  <div className="flex justify-end gap-2">
-                    <button className="btn-icon" title="Edit">
-                      <Edit2 size={14} />
-                    </button>
-                    <button className="btn-icon text-danger" title="Delete">
-                      <Trash2 size={14} />
-                    </button>
-                    <button className="btn-icon" title="View Details">
-                      <ChevronRight size={14} />
-                    </button>
-                  </div>
-                </td>
+      <div className="card shadow-sm" style={{ padding: 0, overflow: 'hidden' }}>
+        <div className="table-container" style={{ margin: 0, border: 'none' }}>
+          <table className="w-100">
+            <thead>
+              <tr style={{ background: '#f8fafc' }}>
+                <th style={{ padding: '1rem' }}>Medicine</th>
+                <th>Category</th>
+                <th>Form</th>
+                <th>Stock</th>
+                <th>Price</th>
+                <th className="text-right" style={{ paddingRight: '1.5rem' }}>Actions</th>
               </tr>
-            ))}
-          </tbody>
-        </table>
+            </thead>
+            <tbody>
+              {filteredMedicines.length > 0 ? filteredMedicines.map((med) => (
+                <tr key={med._id} className="hover-row" style={{ borderTop: '1px solid #f1f5f9' }}>
+                  <td style={{ padding: '1rem' }}>
+                    <div style={{ fontWeight: 700, color: '#1e293b' }}>{med.name}</div>
+                    <div className="muted" style={{ fontSize: '0.75rem' }}>{med.brand || 'Generic'}</div>
+                  </td>
+                  <td>
+                    <span style={{ fontSize: '0.8rem', padding: '0.2rem 0.6rem', borderRadius: '4px', background: '#f1f5f9', color: '#64748b', fontWeight: 600 }}>
+                      {med.category}
+                    </span>
+                  </td>
+                  <td className="muted" style={{ fontSize: '0.85rem' }}>{med.unit || 'Tablet'}</td>
+                  <td>
+                    {med.stock <= 10 ? (
+                      <span style={{ color: '#ef4444', fontWeight: 700, display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
+                        {med.stock} <AlertCircle size={14} />
+                      </span>
+                    ) : med.stock <= 50 ? (
+                      <span style={{ color: '#f59e0b', fontWeight: 700 }}>{med.stock}</span>
+                    ) : (
+                      <span style={{ color: '#10b981', fontWeight: 700 }}>{med.stock}</span>
+                    )}
+                  </td>
+                  <td style={{ fontWeight: 600 }}>{med.price}</td>
+                  <td className="text-right" style={{ paddingRight: '1.5rem' }}>
+                    <div style={{ display: 'flex', gap: '0.5rem', justifyContent: 'flex-end' }}>
+                      <button className="btn btn-outline btn-sm" style={{ color: '#3b82f6', borderColor: '#3b82f6' }}>Edit</button>
+                      <button className="btn btn-outline btn-sm" style={{ color: '#ef4444', borderColor: '#ef4444' }}>Remove</button>
+                    </div>
+                  </td>
+                </tr>
+              )) : (
+                <tr>
+                  <td colSpan="6" className="text-center py-5 muted">
+                    <div style={{ fontSize: '2rem', marginBottom: '0.5rem' }}>💊</div>
+                    No medicines found in inventory.
+                  </td>
+                </tr>
+              )}
+            </tbody>
+          </table>
+        </div>
       </div>
 
-      <div className="flex justify-between items-center mt-6">
-        <p className="muted">Showing {filteredMedicines.length} of {medicines.length} medicines</p>
-        <div className="flex gap-2">
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '1.5rem' }}>
+        <p className="muted" style={{ fontSize: '0.85rem' }}>Showing {filteredMedicines.length} items</p>
+        <div style={{ display: 'flex', gap: '0.5rem' }}>
           <button className="btn btn-outline btn-sm" disabled>Previous</button>
           <button className="btn btn-primary btn-sm">1</button>
-          <button className="btn btn-outline btn-sm">2</button>
-          <button className="btn btn-outline btn-sm">3</button>
           <button className="btn btn-outline btn-sm">Next</button>
         </div>
       </div>
+
+      <style>{`
+        .hover-row:hover { background-color: #f8fafc; }
+        .loader { border: 3px solid #f3f3f3; border-radius: 50%; border-top: 3px solid var(--primary); width: 24px; height: 24px; animation: spin 1s linear infinite; }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+      `}</style>
     </div>
   );
 };

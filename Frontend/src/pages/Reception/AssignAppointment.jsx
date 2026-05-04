@@ -12,8 +12,7 @@ import {
   Info,
   Loader
 } from 'lucide-react';
-import { getReceptionDoctors, assignAppointment as apiAssignAppointment } from '../../utils/api';
-import API from '../../utils/api';
+import { getReceptionDoctors, assignAppointment as apiAssignAppointment, getReceptionAppointments } from '../../utils/api';
 
 const AssignAppointment = () => {
   const { id } = useParams();
@@ -33,12 +32,26 @@ const AssignAppointment = () => {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const [docRes, appRes] = await Promise.all([
-          getReceptionDoctors(),
-          API.get(`/appointments/${id}`)
-        ]);
-        setDoctors(docRes.data.data);
-        setAppointment(appRes.data.data);
+        // Fetch doctors from reception endpoint
+        const docRes = await getReceptionDoctors();
+        setDoctors(docRes.data.data || []);
+
+        // Fetch the specific appointment — try reception appointments list and find by ID
+        const allRes = await getReceptionAppointments();
+        if (allRes.data.success) {
+          const found = [...(allRes.data.data.all || [])].find(a => a._id === id);
+          if (found) {
+            // Build a compatible object for the template
+            setAppointment({
+              _id: found._id,
+              patient: { user: { fullName: found.patient } },
+              notes: found.notes,
+              preferredDateNote: found.preferredDateNote,
+              createdAt: found.createdAt,
+              status: found.status,
+            });
+          }
+        }
       } catch (err) {
         console.error('Failed to load data', err);
       } finally {
@@ -47,6 +60,7 @@ const AssignAppointment = () => {
     };
     fetchData();
   }, [id]);
+
 
   const filteredDoctors = doctors.filter(doc => {
     const matchesSearch = doc.name.toLowerCase().includes(searchTerm.toLowerCase()) || 

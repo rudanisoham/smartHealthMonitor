@@ -17,8 +17,7 @@ const LabSidebar = ({ collapsed }) => {
     { 
       section: 'Main',
       items: [
-        { path: '/lab/dashboard', icon: <LayoutDashboard className="nav-icon" />, label: 'Dashboard' },
-        { path: '/lab/patient-search', icon: <Search className="nav-icon" />, label: 'Patient Lookup' },
+        { path: '/lab/dashboard', icon: <LayoutDashboard className="nav-icon" />, label: 'Dashboard' }
       ]
     },
     {

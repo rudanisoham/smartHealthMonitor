@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { 
   ArrowLeft, 
   Upload, 
@@ -9,30 +9,58 @@ import {
   CheckCircle,
   X,
   Activity,
-  AlertTriangle
+  AlertTriangle,
+  Loader
 } from 'lucide-react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useLocation } from 'react-router-dom';
+import { createReport, updateReport } from '../../utils/api';
 
 const LabUploadReport = () => {
   const navigate = useNavigate();
+  const location = useLocation();
   const [selectedFile, setSelectedFile] = useState(null);
+  const [submitting, setSubmitting] = useState(false);
   const [formData, setFormData] = useState({
-    patientId: '',
-    testType: '',
+    patientId: location.state?.patientName || location.state?.patientId || '',
+    testType: location.state?.testType || '',
     reportDate: new Date().toISOString().split('T')[0],
     technician: 'Sarah Jenkins',
     priority: 'Normal',
     notes: ''
   });
+  
+  const requestId = location.state?.requestId;
 
   const handleFileChange = (e) => {
     setSelectedFile(e.target.files[0]);
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    alert('Laboratory report uploaded and verified successfully!');
-    navigate('/lab/history');
+    setSubmitting(true);
+    try {
+      if (requestId) {
+        await updateReport(requestId, {
+          results: formData.notes,
+          status: 'COMPLETED'
+        });
+      } else {
+        await createReport({
+          patientId: formData.patientId,
+          reportType: formData.testType,
+          reportDate: formData.reportDate,
+          notes: formData.notes,
+          title: formData.testType ? `${formData.testType} Result` : 'Lab Result',
+          status: 'COMPLETED'
+        });
+      }
+      alert('Laboratory report uploaded and verified successfully!');
+      navigate('/lab/history');
+    } catch (err) {
+      alert(err.response?.data?.error || 'Failed to upload report');
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   return (

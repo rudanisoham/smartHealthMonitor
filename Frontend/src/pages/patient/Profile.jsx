@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
+import { Link } from 'react-router-dom';
 import { getPatientMe, updatePatientMe, getMe } from '../../utils/api';
-import { Loader, CheckCircle } from 'lucide-react';
+import { Loader, CheckCircle, Hotel, MapPin, Phone, Mail } from 'lucide-react';
 
 const Profile = () => {
     const [profileData, setProfileData] = useState({
@@ -11,7 +12,8 @@ const Profile = () => {
         bloodGroup: '',
         emergencyEmail: '',
         address: '',
-        allergies: ''
+        allergies: '',
+        recentReports: []
     });
 
     const [loading, setLoading] = useState(true);
@@ -31,8 +33,12 @@ const Profile = () => {
                 getMe()
             ]);
 
-            const patient = patientRes.data.data;
-            const user = userRes.data.data;
+            const patient = patientRes.data?.data;
+            const user = userRes.data?.data;
+
+            if (!user) {
+                throw new Error("User data missing");
+            }
 
             setProfileData({
                 fullName: user.fullName || '',
@@ -42,7 +48,9 @@ const Profile = () => {
                 bloodGroup: patient?.bloodGroup || '',
                 emergencyEmail: patient?.emergencyEmail || '',
                 address: patient?.address || '',
-                allergies: patient?.allergies || ''
+                allergies: patient?.allergies || '',
+                recentReports: patient?.recentReports || [],
+                currentBed: patient?.currentBed || null
             });
         } catch (err) {
             console.error('Error fetching profile:', err);
@@ -225,6 +233,64 @@ const Profile = () => {
                                 <span className="stat-label">Address</span>
                                 <span className="stat-value" style={{ fontSize: '1rem' }}>{profileData.address || '—'}</span>
                             </div>
+                        </div>
+                    </div>
+
+                    {/* Active Admission Section */}
+                    {profileData.currentBed && (
+                        <div className="mt-4 p-4 rounded-2xl" style={{ background: 'linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%)', border: '1px solid #bfdbfe' }}>
+                            <div className="flex items-center gap-3 mb-3">
+                                <div className="p-2 bg-white rounded-lg text-primary shadow-sm">
+                                    <Hotel size={20} />
+                                </div>
+                                <h3 style={{ margin: 0, fontSize: '1.1rem', fontWeight: 800, color: '#1e40af' }}>Active Hospital Admission</h3>
+                            </div>
+                            <div className="grid grid-2 gap-4">
+                                <div>
+                                    <div className="muted uppercase tracking-widest" style={{ fontSize: '0.65rem', fontWeight: 800 }}>Current Bed</div>
+                                    <div style={{ fontSize: '1.25rem', fontWeight: 900, color: '#1e3a8a' }}>#{profileData.currentBed.bedNumber}</div>
+                                </div>
+                                <div>
+                                    <div className="muted uppercase tracking-widest" style={{ fontSize: '0.65rem', fontWeight: 800 }}>Department</div>
+                                    <div style={{ fontSize: '1.1rem', fontWeight: 700, color: '#1e3a8a' }}>{profileData.currentBed.department?.name || 'General'}</div>
+                                </div>
+                                <div style={{ gridColumn: '1 / -1' }}>
+                                    <div className="muted uppercase tracking-widest" style={{ fontSize: '0.65rem', fontWeight: 800 }}>Admitted On</div>
+                                    <div style={{ fontSize: '0.95rem', fontWeight: 600, color: '#1e3a8a' }}>
+                                        {new Date(profileData.currentBed.assignedAt).toLocaleDateString(undefined, { dateStyle: 'full' })}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    )}
+
+                    {/* Recent Lab Reports Section */}
+                    <div className="section-title mt-4" style={{ fontSize: '1.2rem', color: 'var(--primary)' }}>Latest Lab Results</div>
+                    <div className="mt-2">
+                        {profileData.recentReports && profileData.recentReports.length > 0 ? (
+                            profileData.recentReports.map(report => (
+                                <div key={report._id} className="stat-item" style={{ borderLeft: '3px solid #3b82f6', marginBottom: '0.5rem', background: '#f8fafc' }}>
+                                    <div className="stat-info">
+                                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                                            <span style={{ fontWeight: 700, fontSize: '0.9rem' }}>{report.title}</span>
+                                            <span className="badge-soft" style={{ fontSize: '0.7rem' }}>{new Date(report.createdAt).toLocaleDateString()}</span>
+                                        </div>
+                                        <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: '0.25rem' }}>
+                                            <span className="muted" style={{ fontSize: '0.75rem' }}>Status: {report.status}</span>
+                                            {report.filePath && (
+                                                <a href={report.filePath} download style={{ fontSize: '0.75rem', color: '#3b82f6', fontWeight: 600 }}>Download</a>
+                                            )}
+                                        </div>
+                                    </div>
+                                </div>
+                            ))
+                        ) : (
+                            <div className="muted" style={{ fontSize: '0.85rem', padding: '1rem', textAlign: 'center', background: '#f1f5f9', borderRadius: '8px' }}>
+                                No recent lab reports found.
+                            </div>
+                        )}
+                        <div className="mt-2 text-center">
+                            <Link to="/patient/reports" style={{ fontSize: '0.8rem', fontWeight: 600, color: 'var(--primary)' }}>View All Reports →</Link>
                         </div>
                     </div>
                 </div>

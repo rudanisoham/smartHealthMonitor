@@ -23,13 +23,17 @@ const LabReportSchema = new mongoose.Schema({
   },
   status: {
     type: String,
-    enum: ['NORMAL', 'ABNORMAL', 'PENDING', 'REVIEWED'],
+    enum: ['NORMAL', 'ABNORMAL', 'PENDING', 'REVIEWED', 'COMPLETED'],
     default: 'PENDING',
   },
   doctorComments: String,
   prescription: {
     type: mongoose.Schema.ObjectId,
     ref: 'Prescription',
+  },
+  requestedBy: {
+    type: mongoose.Schema.ObjectId,
+    ref: 'User',
   },
   createdAt: {
     type: Date,

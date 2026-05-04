@@ -18,7 +18,7 @@ const { protect, authorize } = require('../middleware/auth');
 router.use(protect);
 
 router.route('/')
-  .get(authorize('ADMIN', 'DOCTOR', 'RECEPTIONIST'), getPatients)
+  .get(authorize('ADMIN', 'DOCTOR', 'RECEPTIONIST', 'MEDICAL_STAFF', 'LAB_STAFF'), getPatients)
   .post(authorize('ADMIN', 'RECEPTIONIST'), createPatient);
 
 router.get('/me', getPatientMe);

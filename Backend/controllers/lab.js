@@ -10,20 +10,25 @@ exports.getDashboard = async (req, res, next) => {
     today.setHours(0, 0, 0, 0);
 
     const totalTestsCollected = await LabReport.countDocuments();
-    const pendingTests = await LabReport.countDocuments({ status: 'PENDING' });
+    const pendingTests = await LabReport.countDocuments({ status: { $in: ['PENDING', 'IN_PROGRESS'] } });
     const reportsReady = await LabReport.countDocuments({ status: 'REVIEWED' });
 
-    const recentRequestsRaw = await LabReport.find({ status: { $in: ['PENDING', 'ABNORMAL', 'NORMAL'] } })
+    const recentRequestsRaw = await LabReport.find({ status: { $in: ['PENDING', 'IN_PROGRESS'] } })
       .populate({ path: 'patient', populate: { path: 'user', select: 'fullName' } })
+      .populate({ path: 'requestedBy', select: 'fullName' })
       .sort({ createdAt: -1 })
-      .limit(5);
+      .limit(20);
 
     const recentRequests = recentRequestsRaw.map(r => ({
       _id: r._id,
       patient: r.patient?.user?.fullName || 'Unknown',
+      doctorName: r.requestedBy?.fullName || 'Unknown',
       test: r.reportType || 'OTHER',
-      priority: r.status === 'ABNORMAL' ? 'Urgent' : 'Normal',
-      status: r.status === 'PENDING' ? 'Pending' : 'In Progress'
+      testTitle: r.title,
+      priority: 'Normal',
+      status: r.status,
+      createdAt: r.createdAt,
+      results: r.results || ''
     }));
 
     res.status(200).json({
@@ -82,12 +87,24 @@ exports.getTests = async (req, res, next) => {
   }
 };
 
+// @desc    Create a new lab test
+// @route   POST /api/lab/tests
+// @access  Private/Lab
+exports.createTest = async (req, res, next) => {
+  try {
+    const test = await LabTest.create(req.body);
+    res.status(201).json({ success: true, data: test });
+  } catch (err) {
+    res.status(400).json({ success: false, error: err.message });
+  }
+};
+
 // @desc    Get lab history reports
 // @route   GET /api/lab/history
 // @access  Private/Lab
 exports.getHistory = async (req, res, next) => {
   try {
-    const reports = await LabReport.find()
+    const reports = await LabReport.find({ status: { $in: ['COMPLETED', 'REVIEWED', 'NORMAL', 'ABNORMAL'] } })
       .populate({ path: 'patient', populate: { path: 'user', select: 'fullName' } })
       .sort({ createdAt: -1 });
 
@@ -95,9 +112,11 @@ exports.getHistory = async (req, res, next) => {
       _id: r._id,
       patient: r.patient?.user?.fullName || 'Unknown',
       date: r.createdAt ? new Date(r.createdAt).toLocaleDateString() : 'N/A',
-      type: r.reportType || 'OTHER',
+      type: r.title || r.reportType || 'OTHER',
       status: r.status,
-      result: r.results || 'N/A'
+      technician: r.uploadedBy || 'System Admin',
+      result: r.results || 'N/A',
+      filePath: r.filePath || null
     }));
 
     res.status(200).json({ success: true, data: formattedReports });

@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { Search, Plus, Trash2, CheckCircle, Clock, X, Beaker } from 'lucide-react';
-import { getDoctorPatients, getLabReports } from '../../utils/api';
+import { getDoctorPatients, getLabReports, getLabTests } from '../../utils/api';
 
 const LabRequestsPage = () => {
   const [showModal, setShowModal] = useState(false);
@@ -11,22 +11,19 @@ const LabRequestsPage = () => {
   const [selectedTests, setSelectedTests] = useState([]);
   const [totalCost, setTotalCost] = useState(0);
 
-  const labTests = [
-    { id: 1, name: "Complete Blood Count (CBC)", price: 300 },
-    { id: 2, name: "MRI Brain Scan", price: 5000 },
-    { id: 3, name: "Thyroid Profile", price: 450 },
-    { id: 4, name: "Liver Function Test", price: 600 }
-  ];
+  const [availableTests, setAvailableTests] = useState([]);
 
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const [patientRes, reportRes] = await Promise.all([
+        const [patientRes, reportRes, testRes] = await Promise.all([
           getDoctorPatients(),
-          getLabReports()
+          getLabReports(),
+          getLabTests()
         ]);
         setPatients(patientRes.data.data);
         setReports(reportRes.data.data);
+        setAvailableTests(testRes.data.data.tests);
       } catch (err) {
         console.error('Failed to load data', err);
       } finally {
@@ -37,18 +34,18 @@ const LabRequestsPage = () => {
   }, []);
 
   const addTest = (testId) => {
-    const test = labTests.find(t => t.id === parseInt(testId));
-    if (test && !selectedTests.find(t => t.id === test.id)) {
+    const test = availableTests.find(t => t._id === testId);
+    if (test && !selectedTests.find(t => t._id === test._id)) {
       setSelectedTests([...selectedTests, test]);
-      setTotalCost(totalCost + test.price);
+      setTotalCost(totalCost + (test.price || 0));
     }
   };
 
   const removeTest = (testId) => {
-    const test = selectedTests.find(t => t.id === testId);
+    const test = selectedTests.find(t => t._id === testId);
     if (test) {
-      setSelectedTests(selectedTests.filter(t => t.id !== testId));
-      setTotalCost(totalCost - test.price);
+      setSelectedTests(selectedTests.filter(t => t._id !== testId));
+      setTotalCost(totalCost - (test.price || 0));
     }
   };
 
@@ -92,7 +89,12 @@ const LabRequestsPage = () => {
                     )}
                   </td>
                   <td className="text-right">
-                    <Link to={`/doctor/report-view?id=${req._id}`} className="btn btn-outline btn-sm">Details</Link>
+                    <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '0.5rem' }}>
+                      <Link to={`/doctor/report-view?id=${req._id}`} className="btn btn-outline btn-sm">Details</Link>
+                      {req.filePath && (
+                        <a href={req.filePath} download className="btn btn-primary btn-sm">Download</a>
+                      )}
+                    </div>
                   </td>
                 </tr>
               ))}
@@ -128,8 +130,8 @@ const LabRequestsPage = () => {
                 <div style={{ display: 'flex', gap: '0.5rem' }}>
                   <select className="form-control" onChange={(e) => addTest(e.target.value)} defaultValue="">
                     <option value="" disabled>-- Choose Test --</option>
-                    {labTests.map(t => (
-                      <option key={t.id} value={t.id}>{t.name} (₹{t.price})</option>
+                    {availableTests.map(t => (
+                      <option key={t._id} value={t._id}>{t.name} (${t.price || 0})</option>
                     ))}
                   </select>
                 </div>
@@ -140,19 +142,19 @@ const LabRequestsPage = () => {
                   <label style={{ fontWeight: 700, fontSize: '0.75rem', textTransform: 'uppercase', color: '#64748b' }}>Selected Investigations</label>
                   <div className="mt-2">
                     {selectedTests.map(t => (
-                      <div key={t.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '0.5rem 0', borderBottom: '1px solid #e2e8f0' }}>
+                      <div key={t._id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '0.5rem 0', borderBottom: '1px solid #e2e8f0' }}>
                         <div>
                           <div style={{ fontWeight: 600, fontSize: '0.9rem' }}>{t.name}</div>
-                          <div className="muted" style={{ fontSize: '0.75rem' }}>₹{t.price}</div>
+                          <div className="muted" style={{ fontSize: '0.75rem' }}>${t.price || 0}</div>
                         </div>
-                        <button type="button" className="btn-icon" style={{ color: '#ef4444' }} onClick={() => removeTest(t.id)}>
+                        <button type="button" className="btn-icon" style={{ color: '#ef4444' }} onClick={() => removeTest(t._id)}>
                           <Trash2 size={16} />
                         </button>
                       </div>
                     ))}
                   </div>
                   <div style={{ textAlign: 'right', marginTop: '1rem', fontWeight: 800, fontSize: '1.1rem', color: 'var(--text-main)' }}>
-                    Total Cost: ₹{totalCost}
+                    Total Cost: ${totalCost}
                   </div>
                 </div>
               )}
@@ -163,7 +165,40 @@ const LabRequestsPage = () => {
               </div>
 
               <div style={{ display: 'flex', gap: '1rem', marginTop: '2rem' }}>
-                <button type="button" className="btn btn-primary" style={{ flex: 1, padding: '0.8rem' }} onClick={() => { alert('Order submitted successfully!'); setShowModal(false); }}>
+                <button type="button" className="btn btn-primary" style={{ flex: 1, padding: '0.8rem' }} onClick={async () => {
+                  try {
+                    const patientId = document.querySelector('.form-select').value;
+                    if (!patientId) {
+                      alert('Please select a patient');
+                      return;
+                    }
+                    if (selectedTests.length === 0) {
+                      alert('Please select at least one test');
+                      return;
+                    }
+                    const { createReport } = await import('../../utils/api');
+                    
+                    // Create a report/request for each test
+                    for (const test of selectedTests) {
+                      await createReport({
+                        patientId,
+                        title: test.name,
+                        reportType: test.category || 'OTHER',
+                        status: 'PENDING',
+                        notes: document.querySelector('textarea').value || ''
+                      });
+                    }
+                    alert('Lab Orders submitted successfully!');
+                    setShowModal(false);
+                    setSelectedTests([]);
+                    setTotalCost(0);
+                    // Refresh data
+                    const reportRes = await getLabReports();
+                    setReports(reportRes.data.data);
+                  } catch (err) {
+                    alert(err.response?.data?.error || 'Failed to submit orders');
+                  }
+                }}>
                   Submit Order
                 </button>
                 <button type="button" className="btn btn-outline" style={{ flex: 1, padding: '0.8rem' }} onClick={() => setShowModal(false)}>

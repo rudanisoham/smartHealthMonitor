@@ -12,8 +12,8 @@ import {
   PlusCircle,
   ChevronRight
 } from 'lucide-react';
-import { Link } from 'react-router-dom';
-import { getMedicalPrescriptions } from '../../utils/api';
+import { useParams, Link } from 'react-router-dom';
+import { getMedicalPrescriptions, fulfillPrescription } from '../../utils/api';
 
 const MedicalPrescriptions = () => {
   const [filter, setFilter] = useState('All');
@@ -34,9 +34,13 @@ const MedicalPrescriptions = () => {
     };
     fetchPrescriptions();
   }, []);
+
   const filteredPrx = prescriptions.filter(p => {
     if (filter !== 'All' && p.status !== filter) return false;
-    if (search && !p._id.toLowerCase().includes(search.toLowerCase()) && !p.patient.toLowerCase().includes(search.toLowerCase())) return false;
+    if (search && 
+       !p._id.toLowerCase().includes(search.toLowerCase()) && 
+       !(p.patient || '').toLowerCase().includes(search.toLowerCase())
+    ) return false;
     return true;
   });
 
@@ -89,11 +93,23 @@ const MedicalPrescriptions = () => {
                 </td>
                 <td>
                   <div className="flex justify-end gap-2">
-                    <button className="btn-icon" title="View Details">
+                    <Link to={`/medical/prescriptions/${prx._id}`} className="btn-icon" title="View Details">
                       <ChevronRight size={16} />
-                    </button>
+                    </Link>
                     {prx.status !== 'Dispensed' && (
-                      <button className="btn btn-primary btn-sm" style={{ padding: '0.4rem 0.8rem' }}>
+                      <button 
+                        className="btn btn-primary btn-sm" 
+                        style={{ padding: '0.4rem 0.8rem' }}
+                        onClick={async () => {
+                          try {
+                            await fulfillPrescription(prx._id);
+                            alert('Prescription fulfilled!');
+                            window.location.reload();
+                          } catch (err) {
+                            alert(err.response?.data?.error || 'Failed to fulfill');
+                          }
+                        }}
+                      >
                         Fulfill
                       </button>
                     )}

@@ -3,14 +3,14 @@ import {
   Pill, 
   ClipboardList, 
   AlertTriangle, 
-  TrendingUp, 
-  Clock, 
   CheckCircle,
   FileText,
-  UserPlus,
-  Upload,
   PlusCircle,
-  Settings
+  Search,
+  Settings,
+  ArrowRight,
+  Clock,
+  User
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { getMedicalDashboard } from '../../utils/api';
@@ -32,164 +32,167 @@ const MedicalDashboard = () => {
     };
     fetchDashboard();
   }, []);
+
   const stats = [
-    { label: 'Total Medicines', value: data?.stats?.totalMedicines || 0, icon: <Pill />, color: 'blue', trend: '+12 this week' },
-    { label: 'Pending Prescriptions', value: data?.stats?.pendingPrescriptions || 0, icon: <ClipboardList />, color: 'yellow', trend: 'Urgent' },
-    { label: 'Low Stock Alerts', value: data?.stats?.lowStock || 0, icon: <AlertTriangle />, color: 'red', trend: 'Immediate action' },
-    { label: 'Dispensed Today', value: data?.stats?.dispensedToday || 0, icon: <CheckCircle />, color: 'blue', trend: 'Steady flow' },
+    { label: 'Medicines', value: data?.stats?.totalMedicines || 0, icon: <Pill size={24} />, color: '#3b82f6' },
+    { label: 'Pending', value: data?.stats?.pendingPrescriptions || 0, icon: <ClipboardList size={24} />, color: '#f59e0b' },
+    { label: 'Low Stock', value: data?.stats?.lowStock || 0, icon: <AlertTriangle size={24} />, color: '#ef4444' },
+    { label: 'Fulfilled', value: data?.stats?.dispensedToday || 0, icon: <CheckCircle size={24} />, color: '#10b981' },
   ];
 
-  const pendingPrescriptions = data?.pendingPrescriptions || [];
-  const lowStock = data?.lowStockItems || [];
-
-  if (loading) return <div style={{ padding: '2rem', textAlign: 'center' }}>Loading dashboard...</div>;
+  if (loading) return (
+    <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '400px' }}>
+      <div className="loader"></div>
+    </div>
+  );
 
   return (
     <div className="medical-dashboard">
       <div className="mb-6">
         <h2 className="section-title">Medical Dashboard</h2>
-        <p className="section-subtitle">Real-time overview of pharmacy inventory and lab requests</p>
+        <p className="section-subtitle">Pharmacy overview and stock management</p>
       </div>
 
       <div className="grid grid-4 mb-8">
         {stats.map((stat, idx) => (
-          <div key={idx} className="card">
-            <div className="card-header">
-              <div className={`stat-icon ${stat.color}`}>
+          <div key={idx} className="card shadow-sm" style={{ borderLeft: `4px solid ${stat.color}` }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+              <div>
+                <div className="muted" style={{ fontSize: '0.8rem', fontWeight: 600, textTransform: 'uppercase' }}>{stat.label}</div>
+                <div className="card-value" style={{ fontSize: '1.75rem', margin: '0.5rem 0' }}>{stat.value}</div>
+              </div>
+              <div style={{ color: stat.color, background: `${stat.color}15`, padding: '0.75rem', borderRadius: '12px' }}>
                 {stat.icon}
               </div>
-              <span className="badge-soft">{stat.trend}</span>
             </div>
-            <div className="card-value">{stat.value}</div>
-            <div className="stat-label">{stat.label}</div>
           </div>
         ))}
       </div>
 
-      <div className="grid grid-2">
-        {/* Prescription Queue */}
-        <div className="card">
-          <div className="flex justify-between items-center mb-6">
-            <h3 className="card-title">Recent Prescription Requests</h3>
-            <Link to="/medical/prescriptions" className="text-primary text-sm font-semibold">View All</Link>
+      <div className="grid grid-3" style={{ gap: '1.5rem' }}>
+        {/* Quick Actions - Simplified */}
+        <div className="card shadow-sm">
+          <div className="card-header" style={{ marginBottom: '1.25rem' }}>
+            <h3 className="card-title">Quick Actions</h3>
+          </div>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+            <Link to="/medical/inventory/add" className="btn btn-outline" style={{ justifyContent: 'flex-start', padding: '0.75rem 1rem' }}>
+              <PlusCircle size={18} style={{ marginRight: '0.75rem' }} /> Add New Medicine
+            </Link>
+            <Link to="/medical/inventory" className="btn btn-outline" style={{ justifyContent: 'flex-start', padding: '0.75rem 1rem' }}>
+              <Pill size={18} style={{ marginRight: '0.75rem' }} /> View Inventory
+            </Link>
+            <Link to="/medical/prescriptions" className="btn btn-outline" style={{ justifyContent: 'flex-start', padding: '0.75rem 1rem' }}>
+              <ClipboardList size={18} style={{ marginRight: '0.75rem' }} /> Prescription Queue
+            </Link>
+          </div>
+        </div>
+
+        {/* Prescription Queue - Simplified */}
+        <div className="card shadow-sm col-span-2">
+          <div className="card-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.25rem' }}>
+            <h3 className="card-title">Pending Prescriptions</h3>
+            <Link to="/medical/prescriptions" className="btn btn-outline btn-sm">View All</Link>
           </div>
           <div className="table-container" style={{ margin: 0, border: 'none' }}>
-            <table>
+            <table className="w-100">
               <thead>
                 <tr>
-                  <th>ID</th>
-                  <th>Patient</th>
-                  <th>Doctor</th>
-                  <th>Status</th>
-                  <th>Action</th>
+                  <th style={{ background: 'transparent' }}>Patient</th>
+                  <th style={{ background: 'transparent' }}>Doctor</th>
+                  <th style={{ background: 'transparent' }}>Time</th>
+                  <th style={{ background: 'transparent', textAlign: 'center' }}>Action</th>
                 </tr>
               </thead>
               <tbody>
-                {pendingPrescriptions.map((prx) => (
-                  <tr key={prx._id}>
-                    <td><strong>{prx._id.slice(-6).toUpperCase()}</strong></td>
-                    <td>{prx.patient}</td>
-                    <td>{prx.doctor}</td>
-                    <td>
-                      <span className={`chip-${prx.status === 'In Progress' ? 'warning' : 'neutral'}`}>
-                        {prx.status}
-                      </span>
-                    </td>
-                    <td>
-                      <Link to={`/medical/prescriptions/${prx._id}`} className="btn-icon">
-                        <CheckCircle size={16} />
-                      </Link>
-                    </td>
+                {data?.pendingPrescriptions?.length > 0 ? (
+                  data.pendingPrescriptions.map((prx) => (
+                    <tr key={prx._id} className="hover-row">
+                      <td style={{ fontWeight: 600 }}>{prx.patient}</td>
+                      <td>Dr. {prx.doctor}</td>
+                      <td className="muted" style={{ fontSize: '0.85rem' }}>{prx.time}</td>
+                      <td className="text-center">
+                        <Link to={`/medical/prescriptions/${prx._id}`} className="btn btn-primary btn-sm">
+                          Dispense
+                        </Link>
+                      </td>
+                    </tr>
+                  ))
+                ) : (
+                  <tr>
+                    <td colSpan="4" className="text-center py-4 muted">No pending prescriptions</td>
                   </tr>
-                ))}
+                )}
               </tbody>
             </table>
           </div>
         </div>
-
-        {/* Inventory Alerts */}
-        <div className="card">
-          <div className="flex justify-between items-center mb-6">
-            <h3 className="card-title">Low Stock Inventory</h3>
-            <Link to="/medical/inventory" className="text-primary text-sm font-semibold">Manage Inventory</Link>
-          </div>
-          <div className="flex-col gap-4">
-            {lowStock.map((item, idx) => (
-              <div key={idx} className="stat-item" style={{ padding: '1.25rem' }}>
-                <div className="flex items-center gap-4">
-                  <div className="stat-icon red" style={{ width: '40px', height: '40px' }}>
-                    <Pill size={18} />
-                  </div>
-                  <div>
-                    <div className="author-name">{item.name}</div>
-                    <div className="muted">{item.stock} {item.unit} remaining</div>
-                  </div>
-                </div>
-                <div className="text-right">
-                  <div className="text-danger font-bold">-{item.min - item.stock}</div>
-                  <div className="muted" style={{ fontSize: '0.75rem' }}>Below Threshold</div>
-                </div>
-              </div>
-            ))}
-            <Link to="/medical/inventory/add" className="btn btn-outline w-full mt-2">
-              <PlusCircle size={18} /> Restock Inventory
-            </Link>
-          </div>
-        </div>
       </div>
 
-      <div className="grid grid-3 mt-8">
-        {/* Quick Actions */}
-        <div className="card">
-          <h3 className="card-title mb-4">Quick Actions</h3>
-          <div className="grid grid-2 gap-3">
-            <Link to="/medical/inventory/add" className="btn btn-primary" style={{ padding: '1rem', flexDirection: 'column', gap: '0.5rem' }}>
-              <PlusCircle size={24} />
-              <span style={{ fontSize: '0.85rem' }}>Add Medicine</span>
-            </Link>
-            <Link to="/medical/inventory" className="btn btn-outline" style={{ padding: '1rem', flexDirection: 'column', gap: '0.5rem' }}>
-              <Pill size={24} />
-              <span style={{ fontSize: '0.85rem' }}>Inventory</span>
-            </Link>
-            <Link to="/medical/prescriptions" className="btn btn-outline" style={{ padding: '1rem', flexDirection: 'column', gap: '0.5rem' }}>
-              <ClipboardList size={24} />
-              <span style={{ fontSize: '0.85rem' }}>Prescriptions</span>
-            </Link>
-            <Link to="/medical/settings" className="btn btn-outline" style={{ padding: '1rem', flexDirection: 'column', gap: '0.5rem' }}>
-              <Settings size={24} />
-              <span style={{ fontSize: '0.85rem' }}>Settings</span>
-            </Link>
+      <div className="grid grid-2 mt-8" style={{ gap: '1.5rem' }}>
+        {/* Low Stock - Simplified */}
+        <div className="card shadow-sm">
+          <div className="card-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.25rem' }}>
+            <h3 className="card-title" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+              <AlertTriangle size={20} color="#ef4444" /> Low Stock Alerts
+            </h3>
+            <Link to="/medical/inventory" className="btn btn-outline btn-sm">Manage</Link>
+          </div>
+          <div className="flex-col gap-3">
+            {data?.lowStockItems?.length > 0 ? data.lowStockItems.map((item, idx) => (
+              <div key={idx} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '0.75rem', background: '#fff1f2', borderRadius: '8px', border: '1px solid #fecaca' }}>
+                <div>
+                  <div style={{ fontWeight: 700, color: '#991b1b' }}>{item.name}</div>
+                  <div className="muted" style={{ fontSize: '0.8rem' }}>{item.category}</div>
+                </div>
+                <div style={{ textAlign: 'right' }}>
+                  <div style={{ color: '#ef4444', fontWeight: 800 }}>{item.stock} {item.unit}</div>
+                  <div className="muted" style={{ fontSize: '0.7rem' }}>Threshold: {item.min}</div>
+                </div>
+              </div>
+            )) : (
+              <div className="text-center py-4 muted">Inventory is healthy</div>
+            )}
           </div>
         </div>
 
-        {/* Activity Timeline */}
-        <div className="card col-span-2">
-          <h3 className="card-title mb-6">Recent Activity</h3>
-          <div className="timeline">
+        {/* Activity - Simplified */}
+        <div className="card shadow-sm">
+          <div className="card-header" style={{ marginBottom: '1.25rem' }}>
+            <h3 className="card-title">Recent System Activity</h3>
+          </div>
+          <div className="timeline" style={{ padding: '0 0.5rem' }}>
             <div className="timeline-item">
-              <div className="timeline-bullet"></div>
+              <div className="timeline-bullet" style={{ background: '#10b981' }}></div>
               <div className="timeline-content">
-                <div>Lab Report Uploaded for <strong>Patient #1024</strong></div>
-                <div className="timeline-meta">By Lab Assistant Sarah • 15 mins ago</div>
+                <div style={{ fontWeight: 600 }}>Medicine Inventory Updated</div>
+                <div className="muted" style={{ fontSize: '0.8rem' }}>System Sync · Just now</div>
               </div>
             </div>
             <div className="timeline-item">
-              <div className="timeline-bullet" style={{ background: 'var(--success)' }}></div>
+              <div className="timeline-bullet" style={{ background: '#3b82f6' }}></div>
               <div className="timeline-content">
-                <div>Prescription <strong>PRX-899</strong> Dispensed Successfully</div>
-                <div className="timeline-meta">To Patient Michael J. • 45 mins ago</div>
+                <div style={{ fontWeight: 600 }}>Prescription DISP-829 Fulfilled</div>
+                <div className="muted" style={{ fontSize: '0.8rem' }}>By Pharmacist · 10 mins ago</div>
               </div>
             </div>
             <div className="timeline-item">
-              <div className="timeline-bullet" style={{ background: 'var(--warning)' }}></div>
+              <div className="timeline-bullet" style={{ background: '#f59e0b' }}></div>
               <div className="timeline-content">
-                <div>Inventory Alert: <strong>Amoxicillin</strong> stock is critical</div>
-                <div className="timeline-meta">Automatic System Alert • 2 hours ago</div>
+                <div style={{ fontWeight: 600 }}>Low Stock Warning: Amoxicillin</div>
+                <div className="muted" style={{ fontSize: '0.8rem' }}>System Alert · 2 hours ago</div>
               </div>
             </div>
           </div>
         </div>
       </div>
+      
+      <style>{`
+        .hover-row:hover { background-color: #f8fafc; }
+        .timeline { border-left: 2px solid #e2e8f0; margin-left: 0.5rem; position: relative; }
+        .timeline-item { margin-bottom: 1.5rem; padding-left: 1.5rem; position: relative; }
+        .timeline-bullet { position: absolute; left: -7px; top: 4px; width: 12px; height: 12px; border-radius: 50%; border: 2px solid white; box-shadow: 0 0 0 2px #e2e8f0; }
+      `}</style>
     </div>
   );
 };

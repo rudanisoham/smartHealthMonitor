@@ -14,15 +14,17 @@ const AppointmentSchema = new mongoose.Schema({
   status: {
     type: String,
     enum: [
-      'AWAITING_ASSIGNMENT', 
-      'SCHEDULED', 
-      'COMPLETED', 
-      'CANCELLED', 
+      'AWAITING_ASSIGNMENT',
+      'PENDING',
+      'SCHEDULED',
+      'COMPLETED',
+      'CANCELLED',
       'RESCHEDULED',
       'IN_PROGRESS'
     ],
     default: 'AWAITING_ASSIGNMENT',
   },
+  department: String,
   notes: String,
   assignedByReception: {
     type: Boolean,

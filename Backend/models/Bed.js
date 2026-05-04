@@ -3,27 +3,41 @@ const mongoose = require('mongoose');
 const BedSchema = new mongoose.Schema({
   bedNumber: {
     type: String,
-    required: true,
-    unique: true,
+    required: [true, 'Please add a bed number'],
+    unique: true
   },
   type: {
     type: String,
-    enum: ['General', 'Semi-Private', 'Private', 'ICU'],
-    default: 'General',
+    enum: ['NORMAL', 'ICU'],
+    default: 'NORMAL'
+  },
+  status: {
+    type: String,
+    enum: ['AVAILABLE', 'OCCUPIED', 'MAINTENANCE'],
+    default: 'AVAILABLE'
   },
   department: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'Department',
-    required: true,
+    required: true
   },
-  isAvailable: {
-    type: Boolean,
-    default: true,
+  patient: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'Patient',
+    default: null
   },
-  dailyRate: {
+  assignedAt: {
+    type: Date,
+    default: null
+  },
+  dailyCharge: {
     type: Number,
-    required: true,
+    default: 500.0
   },
+  createdAt: {
+    type: Date,
+    default: Date.now
+  }
 });
 
 module.exports = mongoose.model('Bed', BedSchema);

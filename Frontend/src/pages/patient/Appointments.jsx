@@ -13,11 +13,16 @@ const Appointments = () => {
     const [showDropdown, setShowDropdown] = useState(false);
     const [loading, setLoading] = useState(true);
     const [submitting, setSubmitting] = useState(false);
+    const [formError, setFormError] = useState('');
     
+    // Form fields (controlled)
+    const [selectedDate, setSelectedDate] = useState('');
+    const [preferredTime, setPreferredTime] = useState('');
+    const [notes, setNotes] = useState('');
+
     // Quick filters
     const [selectedSpecialty, setSelectedSpecialty] = useState('');
     const [selectedDept, setSelectedDept] = useState('');
-    const [selectedDate, setSelectedDate] = useState('');
 
     useEffect(() => {
         fetchInitialData();
@@ -61,32 +66,32 @@ const Appointments = () => {
 
     const handleBook = async (e) => {
         e.preventDefault();
+        setFormError('');
         setSubmitting(true);
 
         try {
-            const preferredDate = document.getElementById('preferredDate').value;
-            const notes = document.getElementById('notes').value;
-            const preferredDateNote = document.getElementById('preferredDateNote').value;
-
             const appointmentData = {
-                doctor: selectedDoctor?._id || undefined,
-                preferredDate: preferredDate,
-                preferredDateNote: preferredDateNote,
+                preferredDate: selectedDate,
+                preferredDateNote: preferredTime,
                 notes: notes,
                 status: 'AWAITING_ASSIGNMENT',
             };
+            if (selectedDoctor?._id) appointmentData.doctor = selectedDoctor._id;
 
             const res = await createAppointment(appointmentData);
             if (res.data.success) {
                 await fetchAppointments();
                 setSelectedDoctor(null);
                 setSearchQuery('');
-                e.target.reset();
-                alert('Appointment requested successfully!');
+                setSelectedDate('');
+                setPreferredTime('');
+                setNotes('');
+                alert('Appointment requested successfully! Reception will assign a doctor shortly.');
             }
         } catch (err) {
             console.error('Error creating appointment:', err);
-            alert('Failed to create appointment. Please try again.');
+            const msg = err.response?.data?.error || 'Failed to create appointment.';
+            setFormError(msg);
         } finally {
             setSubmitting(false);
         }
@@ -190,31 +195,50 @@ const Appointments = () => {
                         </div>
 
                         <div className="form-group">
-                            <label htmlFor="preferredDate">Preferred Date <span style={{ color: '#ef4444' }}>*</span></label>
-                            <input 
-                                id="preferredDate" 
-                                className="form-control" 
-                                type="date" 
-                                required 
-                                min={new Date().toISOString().split('T')[0]} 
+                            <label>Preferred Date <span style={{ color: '#ef4444' }}>*</span></label>
+                            <input
+                                id="preferredDate"
+                                className="form-control"
+                                type="date"
+                                required
+                                min={new Date().toISOString().split('T')[0]}
                                 value={selectedDate}
                                 onChange={(e) => setSelectedDate(e.target.value)}
                             />
                         </div>
 
                         <div className="form-group">
-                            <label htmlFor="preferredDateNote">Preferred Time (optional)</label>
-                            <input id="preferredDateNote" className="form-control" type="text" placeholder="e.g. 10:00 AM" />
+                            <label>Preferred Time (optional)</label>
+                            <input
+                                className="form-control"
+                                type="text"
+                                placeholder="e.g. 10:00 AM"
+                                value={preferredTime}
+                                onChange={(e) => setPreferredTime(e.target.value)}
+                            />
                         </div>
 
                         <div className="form-group" style={{ gridColumn: '1/-1' }}>
-                            <label htmlFor="notes">Reason / Symptoms <span style={{ color: '#ef4444' }}>*</span></label>
-                            <textarea id="notes" className="form-control" rows="3" required placeholder="Describe your concern here..."></textarea>
+                            <label>Reason / Symptoms <span style={{ color: '#ef4444' }}>*</span></label>
+                            <textarea
+                                className="form-control"
+                                rows="3"
+                                required
+                                placeholder="Describe your concern here..."
+                                value={notes}
+                                onChange={(e) => setNotes(e.target.value)}
+                            />
                         </div>
+
+                        {formError && (
+                            <div style={{ gridColumn: '1/-1', background: '#fee2e2', border: '1px solid #fca5a5', color: '#b91c1c', padding: '0.75rem 1rem', borderRadius: '10px', fontSize: '0.9rem' }}>
+                                ⚠️ {formError}
+                            </div>
+                        )}
 
                         <div className="form-group" style={{ gridColumn: '1/-1' }}>
                             <button className="btn btn-primary w-full" type="submit" disabled={submitting}>
-                                {submitting ? 'Submitting...' : 'Confirm & Request Appointment'}
+                                {submitting ? <><Loader size={16} className="animate-spin" style={{ display: 'inline', marginRight: '0.5rem' }} />Submitting...</> : 'Confirm & Request Appointment'}
                             </button>
                         </div>
                     </form>

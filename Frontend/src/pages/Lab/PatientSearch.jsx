@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { 
   Search, 
   User, 
@@ -11,22 +11,45 @@ import {
   Activity
 } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
+import { getPatients } from '../../utils/api';
 
 const LabPatientSearch = () => {
   const navigate = useNavigate();
   const [searchTerm, setSearchTerm] = useState('');
-  
-  const patients = [
-    { id: 'PAT-001', name: 'Michael Johnson', age: 42, gender: 'Male', phone: '+1 555-0101', email: 'michael.j@email.com', lastVisit: '2026-04-20', pendingTests: 1 },
-    { id: 'PAT-002', name: 'Emma Watson', age: 29, gender: 'Female', phone: '+1 555-0102', email: 'emma.w@email.com', lastVisit: '2026-05-01', pendingTests: 0 },
-    { id: 'PAT-003', name: 'Chris Evans', age: 35, gender: 'Male', phone: '+1 555-0103', email: 'chris.e@email.com', lastVisit: '2026-03-15', pendingTests: 2 },
-    { id: 'PAT-004', name: 'Scarlett Johansson', age: 31, gender: 'Female', phone: '+1 555-0104', email: 'scarlett.j@email.com', lastVisit: '2026-04-12', pendingTests: 0 },
-  ];
+  const [patients, setPatients] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchPatients = async () => {
+      try {
+        const res = await getPatients();
+        const mappedPatients = res.data.data.map(p => ({
+          id: p._id.slice(-6).toUpperCase(),
+          _id: p._id,
+          name: p.user?.fullName || 'Unknown',
+          age: p.age || 'N/A',
+          gender: p.gender || 'N/A',
+          phone: p.user?.phone || 'N/A',
+          email: p.user?.email || 'N/A',
+          lastVisit: p.createdAt ? new Date(p.createdAt).toLocaleDateString() : 'N/A',
+          pendingTests: 0 // Mock for now, could be added via aggregation
+        }));
+        setPatients(mappedPatients);
+      } catch (err) {
+        console.error('Failed to load patients', err);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchPatients();
+  }, []);
 
   const filteredPatients = patients.filter(p => 
     p.name.toLowerCase().includes(searchTerm.toLowerCase()) || 
     p.id.toLowerCase().includes(searchTerm.toLowerCase())
   );
+
+  if (loading) return <div style={{ padding: '2rem', textAlign: 'center' }}>Loading patients...</div>;
 
   return (
     <div className="lab-patient-search">
@@ -40,7 +63,7 @@ const LabPatientSearch = () => {
           <Search className="search-icon" size={20} />
           <input 
             type="text" 
-            placeholder="Search by Patient Name or ID (e.g. PAT-001)..." 
+            placeholder="Search by Patient Name or ID..." 
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
           />
@@ -49,11 +72,11 @@ const LabPatientSearch = () => {
 
       <div className="grid grid-2">
         {filteredPatients.map((patient) => (
-          <div key={patient.id} className="card">
+          <div key={patient._id} className="card">
             <div className="flex justify-between items-start">
               <div className="flex gap-4">
                 <div className="header-avatar" style={{ width: '56px', height: '56px', fontSize: '1.25rem' }}>
-                  {patient.name.split(' ').map(n => n[0]).join('')}
+                  {patient.name.split(' ').map(n => n[0]).join('').slice(0, 2)}
                 </div>
                 <div>
                   <h3 className="author-name" style={{ fontSize: '1.1rem' }}>{patient.name}</h3>
@@ -83,7 +106,7 @@ const LabPatientSearch = () => {
               </button>
               <button 
                 className="btn btn-primary flex-1 btn-sm" 
-                onClick={() => navigate('/lab/upload-report')}
+                onClick={() => navigate('/lab/upload-report', { state: { patientId: patient._id } })}
               >
                 <FlaskConical size={16} /> Add Report
               </button>

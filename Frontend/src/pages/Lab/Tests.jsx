@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { Link } from 'react-router-dom';
 import { 
   FlaskConical, 
   Search, 
@@ -51,9 +52,9 @@ const LabTests = () => {
           <h2 className="section-title">Diagnostic Test Directory</h2>
           <p className="section-subtitle">Catalog of available laboratory tests, pricing, and reference ranges</p>
         </div>
-        <button className="btn btn-primary">
+        <Link to="/lab/tests/add" className="btn btn-primary">
           <Plus size={18} /> Add New Test
-        </button>
+        </Link>
       </div>
 
       <div className="grid grid-4 mb-8">

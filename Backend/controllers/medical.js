@@ -120,6 +120,40 @@ exports.getPrescriptions = async (req, res, next) => {
   }
 };
 
+// @desc    Fulfill prescription (dispense medicines)
+// @route   PUT /api/medical/prescriptions/:id/fulfill
+// @access  Private/Medical
+exports.fulfillPrescription = async (req, res, next) => {
+  try {
+    const prescription = await Prescription.findById(req.params.id);
+    if (!prescription) {
+      return res.status(404).json({ success: false, error: 'Prescription not found' });
+    }
+
+    if (prescription.status === 'DISPENSED') {
+      return res.status(400).json({ success: false, error: 'Already dispensed' });
+    }
+
+    // Attempt to reduce stock for each medicine
+    for (const item of prescription.items) {
+      const medicine = await Medicine.findById(item.medicine);
+      if (medicine) {
+        // Parse dosage to find quantity, simplified for now: assume 1 pack/unit per prescription item
+        medicine.stockQuantity = Math.max(0, medicine.stockQuantity - 1);
+        await medicine.save();
+      }
+    }
+
+    prescription.status = 'DISPENSED';
+    await prescription.save();
+
+    res.status(200).json({ success: true, data: prescription });
+  } catch (err) {
+    console.error('fulfillPrescription error:', err);
+    res.status(500).json({ success: false, error: 'Server Error' });
+  }
+};
+
 // @desc    Add new medicine to inventory
 // @route   POST /api/medical/inventory
 // @access  Private/Medical

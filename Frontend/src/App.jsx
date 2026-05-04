@@ -9,6 +9,9 @@ import MedicalLayout from './components/MedicalLayout';
 // Public Pages
 import Landing from './pages/Landing';
 
+import ReceptionBedManagement from './pages/Reception/BedManagement';
+import ReceptionDepartmentBeds from './pages/Reception/DepartmentBeds';
+
 // Admin Pages
 import AdminDashboard from './pages/admin/Dashboard';
 import AdminDoctors from './pages/admin/Doctors';
@@ -94,15 +97,17 @@ import MedicalPatientSearch from './pages/Medical/PatientSearch';
 import MedicalUploadReport from './pages/Medical/UploadReport';
 import MedicalReports from './pages/Medical/Reports';
 import MedicalPrescriptions from './pages/Medical/Prescriptions';
+import MedicalPrescriptionDetail from './pages/Medical/PrescriptionDetail';
 import MedicalLogin from './pages/Auth/medical/Login';
 
 // Lab Panel Components
 import LabLayout from './components/LabLayout';
 import LabDashboard from './pages/Lab/Dashboard';
-import LabPatientSearch from './pages/Lab/PatientSearch';
 import LabUploadReport from './pages/Lab/UploadReport';
 import LabHistory from './pages/Lab/History';
 import LabTests from './pages/Lab/Tests';
+import AddTest from './pages/Lab/AddTest';
+import LabSettings from './pages/Lab/Settings';
 import LabLogin from './pages/Auth/lab/Login';
 
 // Styles
@@ -204,7 +209,8 @@ function App() {
           <Route path="patient-entry" element={<ReceptionPatientEntry />} />
           <Route path="appointments" element={<ReceptionAppointments />} />
           <Route path="appointments/:id/assign" element={<AssignAppointment />} />
-          <Route path="beds" element={<ReceptionBeds />} />
+          <Route path="beds" element={<ReceptionBedManagement />} />
+          <Route path="beds/department/:id" element={<ReceptionDepartmentBeds />} />
           <Route path="billing" element={<ReceptionBilling />} />
           <Route path="settings" element={<ReceptionSettings />} />
         </Route>
@@ -217,9 +223,7 @@ function App() {
           <Route path="inventory" element={<MedicalInventory />} />
           <Route path="inventory/add" element={<MedicalAddMedicine />} />
           <Route path="prescriptions" element={<MedicalPrescriptions />} />
-          <Route path="patient-search" element={<MedicalPatientSearch />} />
-          <Route path="upload-report" element={<MedicalUploadReport />} />
-          <Route path="reports" element={<MedicalReports />} />
+          <Route path="prescriptions/:id" element={<MedicalPrescriptionDetail />} />
         </Route>
 
         {/* Lab Panel Routes */}
@@ -227,10 +231,11 @@ function App() {
         <Route path="/lab" element={<LabLayout />}>
           <Route index element={<Navigate to="dashboard" replace />} />
           <Route path="dashboard" element={<LabDashboard />} />
-          <Route path="patient-search" element={<LabPatientSearch />} />
           <Route path="upload-report" element={<LabUploadReport />} />
           <Route path="history" element={<LabHistory />} />
           <Route path="tests" element={<LabTests />} />
+          <Route path="tests/add" element={<AddTest />} />
+          <Route path="settings" element={<LabSettings />} />
         </Route>
 
         {/* Catch-all route */}

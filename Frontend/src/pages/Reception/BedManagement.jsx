@@ -1,126 +1,145 @@
 import React, { useState, useEffect } from 'react';
-import { Bed, Users, AlertTriangle, ArrowRight, Activity, Loader } from 'lucide-react';
-import { getReceptionBeds } from '../../utils/api';
+import { Link } from 'react-router-dom';
+import { 
+  Hotel, 
+  ChevronRight, 
+  Settings2, 
+  TrendingUp, 
+  CheckCircle2, 
+  AlertCircle 
+} from 'lucide-react';
+import API from '../../utils/api';
 
 const BedManagement = () => {
-  const [departments, setDepartments] = useState([]);
+  const [depts, setDepts] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
+  const [rates, setRates] = useState({ normal: 800, icu: 2500 });
+  const [updating, setUpdating] = useState(false);
 
   useEffect(() => {
-    fetchBeds();
+    fetchStats();
   }, []);
 
-  const fetchBeds = async () => {
+  const fetchStats = async () => {
     try {
-      setLoading(true);
-      const res = await getReceptionBeds();
-      if (res.data.success) {
-        setDepartments(res.data.data);
-      }
+      const res = await API.get('/reception/beds');
+      setDepts(res.data.data);
     } catch (err) {
-      setError("Failed to load bed statistics");
+      console.error(err);
     } finally {
       setLoading(false);
     }
   };
 
-  const totalCapacity = departments.reduce((acc, d) => acc + (d.total || 0), 0);
-  const totalOccupied = departments.reduce((acc, d) => acc + (d.occupied || 0), 0);
-  const totalCritical = departments.reduce((acc, d) => acc + (d.critical || 0), 0);
-  const occupancyRate = totalCapacity > 0 ? ((totalOccupied / totalCapacity) * 100).toFixed(1) : 0;
+  const handleUpdateRates = async (e) => {
+    e.preventDefault();
+    setUpdating(true);
+    try {
+      await API.put('/reception/beds/charges', {
+        normalCharge: rates.normal,
+        icuCharge: rates.icu
+      });
+      alert('Rates updated successfully!');
+    } catch (err) {
+      alert('Failed to update rates');
+    } finally {
+      setUpdating(false);
+    }
+  };
 
-  if (loading) return (
-    <div className="admin-content flex justify-center items-center py-20">
-      <Loader className="animate-spin text-primary" size={48} />
-    </div>
-  );
+  if (loading) return <div className="p-8 text-center"><div className="loader"></div></div>;
 
   return (
-    <div className="admin-content">
-      <div className="flex justify-between items-center mb-6">
-        <div>
-          <h2 className="section-title">Hospital Bed Management</h2>
-          <p className="section-subtitle">Real-time occupancy tracking and capacity planning</p>
-        </div>
-        <div className="flex gap-3">
-          <button className="header-pill" onClick={fetchBeds}>
-            <Activity size={14} className="me-2" /> Refresh Data
-          </button>
-        </div>
+    <div className="bed-management">
+      <div className="mb-8">
+        <h2 className="section-title">Bed Management</h2>
+        <p className="section-subtitle">Select a department to manage bed assignments and occupancy</p>
       </div>
 
-      {error && <div className="alert alert-danger mb-6">{error}</div>}
-
-      <div className="grid grid-3 mb-6">
-        <div className="card" style={{ borderLeft: '4px solid var(--primary)' }}>
-          <div className="card-header">
-            <span className="card-title">Total Capacity</span>
-            <Bed className="text-primary" size={20} />
+      {/* Pricing Config Card */}
+      <div className="card mb-8" style={{ borderLeft: '4px solid var(--primary)' }}>
+        <div className="card-header border-none pb-2">
+          <div>
+            <div className="flex items-center gap-2 mb-1">
+              <Settings2 size={18} className="text-primary" />
+              <h3 style={{ margin: 0, fontSize: '1.1rem', fontWeight: 800 }}>Bed Pricing Configuration</h3>
+            </div>
+            <p className="muted text-sm">Update global daily charges for normal and ICU beds</p>
           </div>
-          <div className="card-value">{totalCapacity}</div>
-          <span className="muted">Across all departments</span>
         </div>
-        <div className="card" style={{ borderLeft: '4px solid var(--warning)' }}>
-          <div className="card-header">
-            <span className="card-title">Occupied Beds</span>
-            <Users className="text-warning" size={20} />
+        <form onSubmit={handleUpdateRates} className="p-6 pt-0">
+          <div className="grid grid-3 gap-6 items-end">
+            <div className="form-group mb-0">
+              <label className="text-xs font-bold uppercase muted mb-2 block">Normal Bed (₹/Day)</label>
+              <input 
+                type="number" 
+                className="form-control" 
+                value={rates.normal}
+                onChange={(e) => setRates({...rates, normal: e.target.value})}
+                required 
+              />
+            </div>
+            <div className="form-group mb-0">
+              <label className="text-xs font-bold uppercase muted mb-2 block">ICU Bed (₹/Day)</label>
+              <input 
+                type="number" 
+                className="form-control" 
+                value={rates.icu}
+                onChange={(e) => setRates({...rates, icu: e.target.value})}
+                required 
+              />
+            </div>
+            <button 
+              type="submit" 
+              className="btn btn-primary h-11" 
+              disabled={updating}
+            >
+              {updating ? 'Updating...' : 'Update Global Rates'}
+            </button>
           </div>
-          <div className="card-value">{totalOccupied}</div>
-          <span className="muted">{occupancyRate}% Occupancy rate</span>
-        </div>
-        <div className="card" style={{ borderLeft: '4px solid var(--danger)' }}>
-          <div className="card-header">
-            <span className="card-title">Critical Patients</span>
-            <AlertTriangle className="text-danger" size={20} />
-          </div>
-          <div className="card-value">{totalCritical}</div>
-          <span className="muted">Estimated high monitoring</span>
-        </div>
+        </form>
       </div>
 
-      <div className="grid grid-2">
-        {departments.map((dept) => {
-          const percent = dept.total > 0 ? Math.round((dept.occupied / dept.total) * 100) : 0;
-          return (
-            <div key={dept._id} className="card">
-              <div className="flex justify-between items-start mb-4">
-                <div>
-                  <h3 className="author-name" style={{ fontSize: '1.1rem' }}>{dept.name} Department</h3>
-                  <span className="muted">{dept.occupied} beds occupied of {dept.total}</span>
-                </div>
-                <span className={`chip ${percent >= 100 ? 'chip-danger' : percent > 85 ? 'chip-warning' : 'chip'}`}>
-                  {percent}% Full
+      <div className="grid grid-3 gap-6">
+        {depts.map((dept) => (
+          <Link 
+            to={`/reception/beds/department/${dept._id}`} 
+            key={dept._id}
+            className="card p-6 dept-card-hover no-underline text-inherit"
+            style={{ transition: 'all 0.3s' }}
+          >
+            <div className="flex justify-between items-start mb-4">
+              <div className="w-12 h-12 rounded-xl bg-blue-50 flex items-center justify-center text-primary">
+                <Hotel size={24} />
+              </div>
+              <ChevronRight size={20} className="muted" />
+            </div>
+
+            <h3 style={{ fontSize: '1.25rem', fontWeight: 800, marginBottom: '0.5rem' }}>{dept.name}</h3>
+            
+            <div className="flex gap-2 mb-6">
+              <span className="chip text-xs">{dept.available} Available</span>
+              <span className="chip-danger text-xs">{dept.occupied} Occupied</span>
+            </div>
+
+            <div className="mt-auto">
+              <div className="flex justify-between items-center text-xs font-bold mb-2">
+                <span className="muted uppercase tracking-wider">{dept.occupied} / {dept.total} Beds Filled</span>
+                <span className={dept.pct > 90 ? 'text-danger' : (dept.pct > 70 ? 'text-warning' : 'text-success')}>
+                  {dept.pct}%
                 </span>
               </div>
-              
-              <div className="progress-bar-bg mb-4" style={{ height: '10px' }}>
+              <div className="h-2 bg-slate-100 rounded-full overflow-hidden">
                 <div 
-                  className={`progress-bar-fill ${percent >= 100 ? 'danger' : percent > 85 ? 'warning' : 'success'}`}
-                  style={{ width: `${percent}%` }}
+                  className={`h-full rounded-full transition-all duration-500 ${
+                    dept.pct > 90 ? 'bg-danger' : (dept.pct > 70 ? 'bg-warning' : 'bg-success')
+                  }`}
+                  style={{ width: `${dept.pct}%` }}
                 ></div>
               </div>
-
-              <div className="flex justify-between items-center">
-                <div className="flex gap-4">
-                  <div className="flex items-center gap-1">
-                    <div className="status-pill status-active" style={{ width: '8px', height: '8px', padding: 0 }}></div>
-                    <span className="muted" style={{ fontSize: '0.8rem' }}>{dept.total - dept.occupied} Available</span>
-                  </div>
-                  {dept.critical > 0 && (
-                    <div className="flex items-center gap-1">
-                      <div className="status-pill status-risk-high" style={{ width: '8px', height: '8px', padding: 0 }}></div>
-                      <span className="muted" style={{ fontSize: '0.8rem' }}>{dept.critical} Critical</span>
-                    </div>
-                  )}
-                </div>
-                <button className="btn btn-outline" style={{ padding: '0.4rem 1rem', fontSize: '0.85rem' }}>
-                  Manage <ArrowRight size={14} className="ms-1" />
-                </button>
-              </div>
             </div>
-          );
-        })}
+          </Link>
+        ))}
       </div>
     </div>
   );

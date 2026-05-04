@@ -9,6 +9,7 @@ const {
   getPatientDetails,
   createPrescription,
   getDoctorPrescriptions,
+  getPrescriptionById,
   getLabReports,
   updateLabReport
 } = require('../controllers/doctors');
@@ -19,7 +20,7 @@ const { protect, authorize } = require('../middleware/auth');
 
 // Protect all doctor routes, and require DOCTOR role
 router.use(protect);
-router.use(authorize('DOCTOR', 'ADMIN'));
+router.use(authorize('DOCTOR', 'ADMIN', 'MEDICAL_STAFF', 'RECEPTIONIST'));
 
 router.route('/dashboard').get(getDashboard);
 
@@ -42,6 +43,9 @@ router.route('/patients/:id')
 router.route('/prescriptions')
   .get(getDoctorPrescriptions)
   .post(createPrescription);
+
+router.route('/prescriptions/:id')
+  .get(getPrescriptionById);
 
 router.route('/lab-reports')
   .get(getLabReports);

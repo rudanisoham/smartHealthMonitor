@@ -9,7 +9,8 @@ import {
   CreditCard,
   Settings,
   LogOut,
-  Hospital
+  Hospital,
+  Hotel
 } from 'lucide-react';
 
 const ReceptionSidebar = ({ isCollapsed }) => {
@@ -20,7 +21,7 @@ const ReceptionSidebar = ({ isCollapsed }) => {
     { name: 'Patient Entry', path: '/reception/patient-entry', icon: <UserPlus size={18} /> },
     { name: 'Patients', path: '/reception/patients', icon: <Users size={18} /> },
     { name: 'Appointments', path: '/reception/appointments', icon: <Calendar size={18} /> },
-    { name: 'Bed Management', path: '/reception/beds', icon: <Bed size={18} /> },
+    { name: 'Bed Management', path: '/reception/beds', icon: <Hotel size={18} /> },
     { name: 'Billing', path: '/reception/billing', icon: <CreditCard size={18} /> },
     { name: 'Settings', path: '/reception/settings', icon: <Settings size={18} /> },
   ];

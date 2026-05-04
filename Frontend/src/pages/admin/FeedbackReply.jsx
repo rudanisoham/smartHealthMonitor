@@ -1,23 +1,53 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { ChevronLeft, Send, Mail, CheckCircle, Clock } from 'lucide-react';
+import { ChevronLeft, Send, Mail, CheckCircle, Clock, Loader } from 'lucide-react';
 import AdminLayout from '../../components/AdminLayout';
+import { getAdminFeedbackById, replyAdminFeedback } from '../../utils/api';
 
 const FeedbackReply = () => {
   const { id } = useParams();
   const navigate = useNavigate();
+  const [message, setMessage] = useState(null);
+  const [reply, setReply] = useState('');
+  const [loading, setLoading] = useState(true);
+  const [submitting, setSubmitting] = useState(false);
 
-  const message = {
-    id: id || 1,
-    fullName: "Soham Rudani",
-    email: "rudanisoham1@gmail.com",
-    subject: "Appointment Query",
-    message: "I would like to know if Dr. John is available this Saturday for a follow-up consultation. I've been experiencing mild symptoms again.",
-    createdAt: "2026-04-01 10:45",
-    status: id === "2" ? "REPLIED" : "PENDING",
-    adminReply: id === "2" ? "Yes, Dr. John is available from 10 AM to 2 PM this Saturday. Please book via the portal." : null,
-    repliedAt: id === "2" ? "2026-04-01 14:30" : null
+  useEffect(() => {
+    const fetchMessage = async () => {
+      try {
+        const res = await getAdminFeedbackById(id);
+        setMessage(res.data.data);
+        if (res.data.data.reply) {
+          setReply(res.data.data.reply);
+        }
+      } catch (err) {
+        console.error("Failed to fetch feedback message", err);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchMessage();
+  }, [id]);
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setSubmitting(true);
+    try {
+      await replyAdminFeedback(id, { reply });
+      alert("Reply sent successfully!");
+      navigate('/admin/feedback');
+    } catch (err) {
+      alert("Failed to send reply");
+    } finally {
+      setSubmitting(false);
+    }
   };
+
+  if (loading) return (
+    <AdminLayout>
+      <div style={{padding: '5rem', textAlign: 'center'}}><Loader className="animate-spin" size={32} /></div>
+    </AdminLayout>
+  );
 
   return (
     <AdminLayout>
@@ -47,7 +77,7 @@ const FeedbackReply = () => {
               </div>
             </div>
             <div className="muted" style={{ fontSize: '0.85rem', display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
-              <Clock size={14} /> Submitted on {message.createdAt}
+              <Clock size={14} /> Submitted on {new Date(message.createdAt).toLocaleString()}
             </div>
           </div>
         </div>
@@ -56,13 +86,21 @@ const FeedbackReply = () => {
           {message.status === 'PENDING' ? (
             <>
               <h3 className="section-title mb-4">Compose Reply</h3>
-              <form className="mt-4">
+              <form className="mt-4" onSubmit={handleSubmit}>
                 <div className="form-group mb-4">
                   <label className="form-label">Response Text</label>
-                  <textarea className="form-control" rows="10" placeholder="Type your response here..." required></textarea>
+                  <textarea 
+                    className="form-control" 
+                    rows="10" 
+                    placeholder="Type your response here..." 
+                    value={reply}
+                    onChange={(e) => setReply(e.target.value)}
+                    required
+                  ></textarea>
                 </div>
-                <button type="submit" className="btn btn-primary w-full" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem' }}>
-                  <Send size={18} /> Send Response Email
+                <button type="submit" disabled={submitting} className="btn btn-primary w-full" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem' }}>
+                  {submitting ? <Loader className="animate-spin" size={18} /> : <Send size={18} />}
+                  Send Response Email
                 </button>
               </form>
             </>
@@ -73,11 +111,11 @@ const FeedbackReply = () => {
                 <div className="form-group mb-4">
                   <label className="form-label">Sent Response</label>
                   <div style={{ background: 'rgba(16, 185, 129, 0.05)', padding: '1.5rem', borderRadius: '12px', borderLeft: '4px solid var(--success)', lineHeight: 1.6 }}>
-                    {message.adminReply}
+                    {message.reply}
                   </div>
                 </div>
                 <div className="chip-success" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', width: 'fit-content' }}>
-                  <CheckCircle size={16} /> Replied on {message.repliedAt}
+                  <CheckCircle size={16} /> Replied on {new Date(message.repliedAt).toLocaleString()}
                 </div>
               </div>
             </>

@@ -1,7 +1,34 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import AdminLayout from '../../components/AdminLayout';
+import { getAdminAnalytics } from '../../utils/api';
+import { Loader, Download, TrendingUp, AlertTriangle } from 'lucide-react';
 
 export default function Analytics() {
+  const [data, setData] = useState(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const res = await getAdminAnalytics();
+        setData(res.data.data);
+      } catch (err) {
+        console.error("Failed to fetch analytics", err);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchData();
+  }, []);
+
+  if (loading) return (
+    <AdminLayout title="Reports & Analytics" subtitle="Export data and view system telemetry">
+      <div style={{padding: '5rem', textAlign: 'center'}}><Loader className="animate-spin" size={32} /></div>
+    </AdminLayout>
+  );
+
+  const { stats, admissionsByMonth } = data;
+
   return (
     <AdminLayout title="Reports & Analytics" subtitle="Export data and view system telemetry">
       
@@ -35,65 +62,52 @@ export default function Analytics() {
       </div>
 
       <div className="grid grid-2">
-        {/* Left Column: Data Exports */}
+        {/* Left Column: Data Stats */}
         <div className="card">
           <div className="card-header">
-             <div className="card-title">Data Exports Generated</div>
+             <div className="card-title">System Metrics</div>
           </div>
           <div style={{display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem'}}>
             <div>
-              <div className="card-value">1,204</div>
-              <div className="muted mt-1">Total exports this month</div>
+              <div className="card-value">{stats.totalPatients}</div>
+              <div className="muted mt-1">Total Registered Patients</div>
             </div>
             <div className="header-avatar" style={{width: '48px', height: '48px', background: 'var(--primary-light)', color: 'var(--primary)'}}>
-              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" x2="12" y1="15" y2="3"/></svg>
+              <TrendingUp size={24} />
             </div>
           </div>
           <div style={{display: 'flex', justifyContent: 'space-between', alignItems: 'center'}}>
             <div>
-              <div className="card-value" style={{color: 'var(--warning)', fontSize: '1.8rem'}}>14</div>
-              <div className="muted mt-1">Failed Exports</div>
+              <div className="card-value" style={{color: 'var(--primary)', fontSize: '1.8rem'}}>₹{stats.totalRevenue.toLocaleString()}</div>
+              <div className="muted mt-1">Total Revenue Collected</div>
             </div>
-             <div className="header-avatar" style={{width: '48px', height: '48px', background: 'var(--warning-light)', color: 'var(--warning)'}}>
-              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/><path d="M12 9v4"/><path d="M12 17h.01"/></svg>
+             <div className="header-avatar" style={{width: '48px', height: '48px', background: 'var(--success-light)', color: 'var(--success)'}}>
+              <CheckCircle size={24} />
             </div>
           </div>
         </div>
 
-        {/* Right Column: System Reports */}
+        {/* Right Column: Monthly Admissions */}
         <div className="card">
           <div className="card-header">
-             <div className="card-title">Scheduled System Reports</div>
+             <div className="card-title">Recent Admissions Trend</div>
           </div>
           <div style={{display: 'flex', flexDirection: 'column', gap: '1.25rem'}}>
-            
-            <div style={{display: 'flex', alignItems: 'center', gap: '1rem'}}>
-              <div style={{width: '8px', height: '8px', borderRadius: '50%', background: 'var(--primary)'}}></div>
-              <div>
-                <div style={{fontWeight: '600', color: 'var(--text-main)'}}>Daily Admission Summary</div>
-                <div className="muted" style={{fontSize: '0.75rem'}}>Last run - Today at 07:45 - CSV</div>
+            {admissionsByMonth.length === 0 ? (
+              <div className="muted text-center py-4">No recent admissions data found.</div>
+            ) : admissionsByMonth.map((item, idx) => (
+              <div key={idx} style={{display: 'flex', alignItems: 'center', gap: '1rem'}}>
+                <div style={{width: '8px', height: '8px', borderRadius: '50%', background: 'var(--primary)'}}></div>
+                <div style={{flex: 1, display: 'flex', justifyContent: 'space-between'}}>
+                  <div style={{fontWeight: '600', color: 'var(--text-main)'}}>Month {item._id}</div>
+                  <div style={{fontWeight: '700'}}>{item.count} Admissions</div>
+                </div>
               </div>
-            </div>
-
-            <div style={{display: 'flex', alignItems: 'center', gap: '1rem'}}>
-              <div style={{width: '8px', height: '8px', borderRadius: '50%', background: 'var(--primary)'}}></div>
-              <div>
-                <div style={{fontWeight: '600', color: 'var(--text-main)'}}>Weekly Department Capacity</div>
-                <div className="muted" style={{fontSize: '0.75rem'}}>Last run - Sunday at 23:59 - PDF</div>
-              </div>
-            </div>
-
-            <div style={{display: 'flex', alignItems: 'center', gap: '1rem'}}>
-              <div style={{width: '8px', height: '8px', borderRadius: '50%', background: 'var(--primary)'}}></div>
-              <div>
-                <div style={{fontWeight: '600', color: 'var(--text-main)'}}>Monthly Financial Audit</div>
-                <div className="muted" style={{fontSize: '0.75rem'}}>Last run - 1st of Month - XLSX</div>
-              </div>
-            </div>
-            
+            ))}
           </div>
         </div>
       </div>
     </AdminLayout>
   );
 }
+import { CheckCircle } from 'lucide-react';

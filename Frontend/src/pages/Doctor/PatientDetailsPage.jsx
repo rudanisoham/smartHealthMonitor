@@ -1,13 +1,16 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { ChevronLeft, Heart, Stethoscope, Droplets, Thermometer } from 'lucide-react';
-import { getPatientDetails } from '../../utils/api';
+import { getPatientDetails, getLabTests, createReport } from '../../utils/api';
 
 const PatientDetailsPage = () => {
   const { id } = useParams();
   const [loading, setLoading] = useState(true);
   const [data, setData] = useState(null);
   const [error, setError] = useState(null);
+  const [labTests, setLabTests] = useState([]);
+  const [showLabModal, setShowLabModal] = useState(false);
+  const [selectedTestId, setSelectedTestId] = useState('');
 
   useEffect(() => {
     const fetchData = async () => {
@@ -21,8 +24,36 @@ const PatientDetailsPage = () => {
         setLoading(false);
       }
     };
+    const fetchTests = async () => {
+      try {
+        const res = await getLabTests();
+        setLabTests(res.data.data.tests);
+      } catch (err) {
+        console.error("Failed to load lab tests", err);
+      }
+    };
     fetchData();
+    fetchTests();
   }, [id]);
+
+  const handleRequestLabTest = async () => {
+    if (!selectedTestId) return alert('Please select a test');
+    const test = labTests.find(t => t._id === selectedTestId);
+    
+    try {
+      await createReport({
+        patientId: patient._id,
+        title: test.name,
+        reportType: test.category || 'OTHER',
+        status: 'PENDING'
+      });
+      alert('Lab request created successfully!');
+      window.location.reload();
+    } catch (err) {
+      console.error(err);
+      alert('Error creating lab request');
+    }
+  };
 
   if (loading) return <div style={{ padding: '2rem', textAlign: 'center' }}>Loading details...</div>;
   if (error || !data) return <div style={{ padding: '2rem', textAlign: 'center', color: 'red' }}>{error || 'Not found'}</div>;
@@ -175,9 +206,16 @@ const PatientDetailsPage = () => {
       <div className="card mt-4" style={{borderTop: '3px solid var(--primary)'}}>
          <div className="card-header" style={{margin: 0}}>
             <div>
-               <div className="section-title" style={{fontSize: '1.2rem'}}>Patient Uploaded Reports</div>
-               <div className="section-subtitle">Documentation provided by the patient for review</div>
+               <div className="section-title" style={{fontSize: '1.2rem'}}>Lab Reports</div>
+               <div className="section-subtitle">Requested and uploaded reports for this patient</div>
             </div>
+            <button 
+              className="btn btn-primary btn-sm" 
+              style={{fontWeight: 600}}
+              onClick={() => setShowLabModal(true)}
+            >
+              Request Lab Test
+            </button>
          </div>
          
          <div className="table-container mt-4" style={{border: 'none', background: 'transparent'}}>
@@ -186,21 +224,27 @@ const PatientDetailsPage = () => {
                   <tr>
                      <th style={{background: 'transparent', padding: '1rem 0.5rem'}}>SUBMISSION DATE</th>
                      <th style={{background: 'transparent', padding: '1rem 0.5rem'}}>REPORT TITLE</th>
+                     <th style={{background: 'transparent', padding: '1rem 0.5rem'}}>STATUS</th>
                      <th style={{background: 'transparent', padding: '1rem 0.5rem'}}>DESCRIPTION</th>
                      <th style={{background: 'transparent', padding: '1rem 0.5rem', textAlign: 'center'}}>ACTIONS</th>
                   </tr>
                </thead>
                <tbody>
                   {labReports.length === 0 ? (
-                    <tr><td colSpan="4" style={{textAlign: 'center', padding: '2rem'}}>No reports found.</td></tr>
+                    <tr><td colSpan="5" style={{textAlign: 'center', padding: '2rem'}}>No reports found.</td></tr>
                   ) : (
                     labReports.map(r => (
                       <tr key={r._id}>
                         <td style={{padding: '1rem 0.5rem', fontWeight: 600}}>{new Date(r.createdAt).toLocaleDateString()}</td>
                         <td style={{padding: '1rem 0.5rem', fontWeight: 600}}>{r.title}</td>
-                        <td style={{padding: '1rem 0.5rem', color: 'var(--text-muted)'}}>{r.description || '—'}</td>
+                        <td style={{padding: '1rem 0.5rem'}}><span className={`chip ${r.status === 'PENDING' ? 'chip-warning' : 'chip-success'}`}>{r.status}</span></td>
+                        <td style={{padding: '1rem 0.5rem', color: 'var(--text-muted)'}}>{r.description || r.results || '—'}</td>
                         <td style={{padding: '1rem 0.5rem', textAlign: 'center'}}>
-                          <Link to={`/doctor/reports/${r._id}`} className="btn btn-outline btn-sm" style={{padding: '0.4rem 1rem'}}>Review Findings</Link>
+                          {r.status === 'PENDING' ? (
+                            <span className="muted">Waiting for Lab</span>
+                          ) : (
+                            <Link to={`/doctor/reports/${r._id}`} className="btn btn-outline btn-sm" style={{padding: '0.4rem 1rem'}}>Review Findings</Link>
+                          )}
                         </td>
                       </tr>
                     ))
@@ -210,6 +254,34 @@ const PatientDetailsPage = () => {
          </div>
       </div>
 
+      {/* Lab Request Modal */}
+      {showLabModal && (
+        <div className="modal-overlay" style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(0,0,0,0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000 }}>
+          <div className="modal-content" style={{ background: 'white', padding: '2rem', borderRadius: '12px', width: '400px' }}>
+            <h3 style={{ marginBottom: '1.5rem', fontSize: '1.25rem' }}>Request Lab Test</h3>
+            <div className="form-group mb-4">
+              <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: 600 }}>Select Test from Catalog</label>
+              <select 
+                className="form-select" 
+                value={selectedTestId} 
+                onChange={(e) => setSelectedTestId(e.target.value)}
+                style={{ width: '100%', padding: '0.75rem', border: '1px solid #e2e8f0', borderRadius: '8px' }}
+              >
+                <option value="">-- Select a test --</option>
+                {labTests.map(test => (
+                  <option key={test._id} value={test._id}>
+                    {test.name} (${test.price}) - {test.category}
+                  </option>
+                ))}
+              </select>
+            </div>
+            <div className="flex gap-3 justify-end mt-6">
+              <button className="btn btn-outline" onClick={() => setShowLabModal(false)}>Cancel</button>
+              <button className="btn btn-primary" onClick={handleRequestLabTest}>Submit Request</button>
+            </div>
+          </div>
+        </div>
+      )}
     </>
   );
 };

@@ -1,40 +1,37 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate, useParams, Link } from 'react-router-dom';
-import { ChevronLeft, Edit3, MapPin, Phone, Users, Shield, User } from 'lucide-react';
+import { ChevronLeft, Edit3, MapPin, Phone, Users, Shield, User, Loader } from 'lucide-react';
 import AdminLayout from '../../components/AdminLayout';
+import { getAdminDepartmentById } from '../../utils/api';
 
 const ViewDepartment = () => {
   const navigate = useNavigate();
   const { id } = useParams();
+  const [data, setData] = useState(null);
+  const [loading, setLoading] = useState(true);
 
-  const department = {
-    id: id || 1,
-    name: "Cardiology Unit",
-    head: "Dr. John Smith",
-    location: "Block A, 3rd Floor",
-    phone: "+1 234 567 891",
-    capacity: 25,
-    occupancy: 18,
-    availableBeds: 7,
-    occupiedBeds: 18,
-    description: "Specialized unit for heart and cardiovascular health management."
-  };
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const res = await getAdminDepartmentById(id);
+        setData(res.data.data);
+      } catch (err) {
+        console.error("Failed to fetch department", err);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchData();
+  }, [id]);
 
-  const doctors = [
-    { id: 1, name: "Dr. John Smith", specialty: "Cardiologist", status: "Active" },
-    { id: 2, name: "Dr. Alice Baker", specialty: "Cardiac Surgeon", status: "Active" },
-    { id: 3, name: "Dr. Mike Wilson", specialty: "Pediatric Cardiologist", status: "Active" },
-  ];
+  if (loading) return (
+    <AdminLayout>
+      <div style={{padding: '5rem', textAlign: 'center'}}><Loader className="animate-spin" size={32} /></div>
+    </AdminLayout>
+  );
 
-  const beds = [
-    { id: 1, number: "C-101", type: "Normal", status: "Occupied", patient: "Soham Rudani" },
-    { id: 2, number: "C-102", type: "ICU", status: "Occupied", patient: "Neha Sharma" },
-    { id: 3, number: "C-103", type: "Normal", status: "Available", patient: null },
-    { id: 4, number: "C-104", type: "Normal", status: "Available", patient: null },
-    { id: 5, number: "C-105", type: "ICU", status: "Maintenance", patient: null },
-  ];
-
-  const occupancyRate = (department.occupancy * 100) / department.capacity;
+  const { department, doctors, beds } = data;
+  const occupancyRate = department.capacity > 0 ? (department.currentOccupancy * 100) / department.capacity : 0;
 
   return (
     <AdminLayout>
@@ -42,7 +39,7 @@ const ViewDepartment = () => {
         <button onClick={() => navigate(-1)} className="btn btn-outline btn-sm" style={{ display: 'inline-flex', alignItems: 'center', gap: '0.5rem' }}>
           <ChevronLeft size={16} /> Back to List
         </button>
-        <Link to={`/admin/departments/configure?id=${department.id}`} className="btn btn-primary btn-sm" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+        <Link to={`/admin/departments/configure?id=${department._id}`} className="btn btn-primary btn-sm" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
           <Edit3 size={16} /> Edit Department
         </Link>
       </div>
@@ -51,7 +48,7 @@ const ViewDepartment = () => {
         <div className="card col-span-2">
           <div className="card-header border-bottom pb-4 mb-4">
             <h2 style={{ margin: 0, fontSize: '1.5rem', fontWeight: 800 }}>{department.name}</h2>
-            <p className="muted" style={{ marginTop: '0.25rem' }}>{department.description}</p>
+            <p className="muted" style={{ marginTop: '0.25rem' }}>{department.description || 'No description available.'}</p>
           </div>
           
           <div className="grid grid-2 mt-4" style={{ gap: '1.5rem' }}>
@@ -59,26 +56,26 @@ const ViewDepartment = () => {
               <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', color: 'var(--primary)', fontWeight: 700, fontSize: '0.75rem', textTransform: 'uppercase', marginBottom: '0.75rem' }}>
                 <Shield size={14} /> Department Head
               </div>
-              <div style={{ fontSize: '1.1rem', fontWeight: 700 }}>{department.head}</div>
+              <div style={{ fontSize: '1.1rem', fontWeight: 700 }}>{department.head || 'Dr. Not Assigned'}</div>
             </div>
             <div style={{ padding: '1rem', background: '#f8fafc', borderRadius: '12px' }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', color: 'var(--primary)', fontWeight: 700, fontSize: '0.75rem', textTransform: 'uppercase', marginBottom: '0.75rem' }}>
                 <MapPin size={14} /> Physical Location
               </div>
-              <div style={{ fontSize: '1.1rem', fontWeight: 700 }}>{department.location}</div>
+              <div style={{ fontSize: '1.1rem', fontWeight: 700 }}>{department.location || 'Main Block'}</div>
             </div>
             <div style={{ padding: '1rem', background: '#f8fafc', borderRadius: '12px' }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', color: 'var(--primary)', fontWeight: 700, fontSize: '0.75rem', textTransform: 'uppercase', marginBottom: '0.75rem' }}>
                 <Phone size={14} /> Emergency Contact
               </div>
-              <div style={{ fontSize: '1.1rem', fontWeight: 700 }}>{department.phone}</div>
+              <div style={{ fontSize: '1.1rem', fontWeight: 700 }}>{department.phone || 'N/A'}</div>
             </div>
             <div style={{ padding: '1rem', background: '#f8fafc', borderRadius: '12px' }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', color: 'var(--primary)', fontWeight: 700, fontSize: '0.75rem', textTransform: 'uppercase', marginBottom: '0.75rem' }}>
                 <Users size={14} /> Capacity Status
               </div>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end' }}>
-                <div style={{ fontSize: '1.1rem', fontWeight: 700 }}>{department.occupancy} / {department.capacity}</div>
+                <div style={{ fontSize: '1.1rem', fontWeight: 700 }}>{department.currentOccupancy} / {department.capacity}</div>
                 <div className="muted" style={{ fontSize: '0.85rem' }}>{Math.round(occupancyRate)}% Occupied</div>
               </div>
               <div style={{ width: '100%', height: '6px', background: 'var(--border)', borderRadius: '10px', marginTop: '0.75rem', overflow: 'hidden' }}>
@@ -91,14 +88,16 @@ const ViewDepartment = () => {
         <div className="card">
           <h3 className="section-title mb-4">Assigned Doctors</h3>
           <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-            {doctors.map(doc => (
-              <div key={doc.id} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', paddingBottom: '1rem', borderBottom: '1px solid var(--border)' }}>
+            {doctors.length === 0 ? (
+              <div className="muted text-sm py-4">No doctors assigned to this department.</div>
+            ) : doctors.map(doc => (
+              <div key={doc._id} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', paddingBottom: '1rem', borderBottom: '1px solid var(--border)' }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
                   <div style={{ width: '36px', height: '36px', borderRadius: '50%', background: 'var(--primary-light)', color: 'var(--primary)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 800, fontSize: '0.85rem' }}>
-                    {doc.name.split(' ')[1].charAt(0)}
+                    {doc.user?.fullName?.charAt(0) || 'D'}
                   </div>
                   <div>
-                    <div style={{ fontWeight: 700, fontSize: '0.9rem' }}>{doc.name}</div>
+                    <div style={{ fontWeight: 700, fontSize: '0.9rem' }}>{doc.user?.fullName}</div>
                     <div className="muted" style={{ fontSize: '0.75rem' }}>{doc.specialty}</div>
                   </div>
                 </div>
@@ -115,10 +114,6 @@ const ViewDepartment = () => {
             <h3 className="section-title">Bed Inventory</h3>
             <p className="muted" style={{ fontSize: '0.85rem' }}>All beds currently configured in this department</p>
           </div>
-          <div style={{ display: 'flex', gap: '0.75rem' }}>
-            <span className="chip-success">{department.availableBeds} Available</span>
-            <span className="chip-danger">{department.occupiedBeds} Occupied</span>
-          </div>
         </div>
         
         <div className="table-container">
@@ -132,25 +127,25 @@ const ViewDepartment = () => {
               </tr>
             </thead>
             <tbody>
-              {beds.map(bed => (
-                <tr key={bed.id}>
-                  <td><strong style={{ fontSize: '1rem' }}>{bed.number}</strong></td>
+              {beds.length === 0 ? (
+                <tr><td colSpan="4" className="text-center py-4">No beds registered in this department.</td></tr>
+              ) : beds.map(bed => (
+                <tr key={bed._id}>
+                  <td><strong style={{ fontSize: '1rem' }}>{bed.bedNumber}</strong></td>
                   <td>
                     <span className={bed.type === 'ICU' ? 'chip-danger' : 'chip-neutral'} style={{ fontSize: '0.7rem' }}>{bed.type}</span>
                   </td>
                   <td>
-                    {bed.status === 'Occupied' ? (
+                    {bed.isOccupied ? (
                       <span className="chip-danger" style={{ fontSize: '0.7rem' }}>Occupied</span>
-                    ) : bed.status === 'Available' ? (
-                      <span className="chip-success" style={{ fontSize: '0.7rem' }}>Available</span>
                     ) : (
-                      <span className="chip-warning" style={{ fontSize: '0.7rem' }}>Maintenance</span>
+                      <span className="chip-success" style={{ fontSize: '0.7rem' }}>Available</span>
                     )}
                   </td>
                   <td>
                     {bed.patient ? (
                       <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                        <User size={14} className="muted" /> {bed.patient}
+                        <User size={14} className="muted" /> {bed.patient.user?.fullName}
                       </div>
                     ) : (
                       <span className="muted">—</span>

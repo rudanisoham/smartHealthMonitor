@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { getAppointments } from '../../utils/api';
+import { getMyPrescriptions } from '../../utils/api';
 import { Loader } from 'lucide-react';
 
 const Prescriptions = () => {
@@ -14,18 +14,16 @@ const Prescriptions = () => {
     const fetchPrescriptions = async () => {
         try {
             setLoading(true);
-            // Prescriptions are derived from completed appointments
-            const res = await getAppointments();
+            const res = await getMyPrescriptions();
             if (res.data.success) {
-                const completedAppts = res.data.data.filter(a => a.status === 'COMPLETED');
-                const rxList = completedAppts.map(appt => ({
-                    id: appt._id,
-                    date: appt.scheduledAt ? new Date(appt.scheduledAt).toLocaleDateString() : new Date(appt.createdAt).toLocaleDateString(),
-                    diagnosis: appt.notes || 'General Consultation',
-                    doctor: appt.doctor?.user?.fullName || 'Assigned Doctor',
-                    specialty: appt.doctor?.specialty || '',
-                    medicines: 'As prescribed by doctor',
-                    validUntil: null
+                const rxList = res.data.data.map(p => ({
+                    id: p._id,
+                    date: p.createdAt ? new Date(p.createdAt).toLocaleDateString() : 'N/A',
+                    diagnosis: p.diagnosis || 'General Consultation',
+                    doctor: p.doctor?.user?.fullName || 'Assigned Doctor',
+                    specialty: p.doctor?.specialty || '',
+                    medicines: p.medicinesText || 'View details',
+                    validUntil: p.validUntil ? new Date(p.validUntil).toLocaleDateString() : null
                 }));
                 setPrescriptions(rxList);
             }

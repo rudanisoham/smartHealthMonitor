@@ -32,6 +32,7 @@ const Reports = () => {
             case 'NORMAL': return { bg: '#d1fae5', color: '#059669' };
             case 'ABNORMAL': return { bg: '#fee2e2', color: '#dc2626' };
             case 'REVIEWED': return { bg: '#e0e7ff', color: '#4338ca' };
+            case 'COMPLETED': return { bg: '#dcfce7', color: '#166534' };
             case 'PENDING':
             default: return { bg: '#fef3c7', color: '#d97706' };
         }

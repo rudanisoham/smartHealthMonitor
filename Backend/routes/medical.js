@@ -13,4 +13,7 @@ router.route('/inventory').get(getInventory).post(addMedicine);
 router.route('/inventory/:id').delete(deleteMedicine);
 router.route('/prescriptions').get(getPrescriptions);
 
+const { fulfillPrescription } = require('../controllers/medical');
+router.route('/prescriptions/:id/fulfill').put(fulfillPrescription);
+
 module.exports = router;

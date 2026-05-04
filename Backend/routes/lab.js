@@ -1,5 +1,5 @@
 const express = require('express');
-const { getDashboard, getTests, getHistory } = require('../controllers/lab');
+const { getDashboard, getTests, createTest, getHistory } = require('../controllers/lab');
 
 const router = express.Router();
 
@@ -12,7 +12,7 @@ router.use(protect);
 router.use(authorize('ADMIN', 'DOCTOR', 'LAB_STAFF'));
 
 router.route('/dashboard').get(getDashboard);
-router.route('/tests').get(getTests);
+router.route('/tests').get(getTests).post(createTest);
 router.route('/history').get(getHistory);
 
 module.exports = router;

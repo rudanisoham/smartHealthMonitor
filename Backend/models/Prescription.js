@@ -4,8 +4,9 @@ const PrescriptionItemSchema = new mongoose.Schema({
   medicine: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'Medicine',
-    required: true
+    required: false // Make it optional for custom medicines
   },
+  name: String, // Store name directly
   dosage: String,
   frequency: String,
   duration: String,

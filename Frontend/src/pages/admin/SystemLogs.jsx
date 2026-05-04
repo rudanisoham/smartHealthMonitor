@@ -1,24 +1,37 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import AdminLayout from '../../components/AdminLayout';
-
-const mockLogs = [
-  { action: "INFO", desc: "User logged in: admin@health.com", user: "System Admin", time: "2026-04-01 22:27:57" },
-  { action: "INFO", desc: "User logged in: neha@gmail.com", user: "neha", time: "2026-04-01 22:24:03" },
-  { action: "INFO", desc: "User logged out: admin@health.com", user: "System Admin", time: "2026-04-01 22:21:28" },
-  { action: "INFO", desc: "User logged in: admin@health.com", user: "System Admin", time: "2026-04-01 22:21:18" },
-  { action: "INFO", desc: "User logged out: admin@health.com", user: "System Admin", time: "2026-04-01 22:18:01" },
-  { action: "INFO", desc: "User logged in: admin@health.com", user: "System Admin", time: "2026-04-01 22:15:40" },
-  { action: "WARN", desc: "Failed login attempt: doctor@health.com", user: "Unknown", time: "2026-04-01 21:05:12" },
-  { action: "ERROR", desc: "Database connection timeout", user: "System", time: "2026-04-01 19:42:01" }
-];
+import { getAdminLogs } from '../../utils/api';
+import { Loader, Search } from 'lucide-react';
 
 export default function SystemLogs() {
+  const [logs, setLogs] = useState([]);
   const [search, setSearch] = useState('');
+  const [loading, setLoading] = useState(true);
 
-  const filteredLogs = mockLogs.filter(log => 
-    log.desc.toLowerCase().includes(search.toLowerCase()) ||
-    log.user.toLowerCase().includes(search.toLowerCase()) ||
-    log.action.toLowerCase().includes(search.toLowerCase())
+  useEffect(() => {
+    const fetchLogs = async () => {
+      try {
+        const res = await getAdminLogs();
+        setLogs(res.data.data);
+      } catch (err) {
+        console.error("Failed to fetch logs", err);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchLogs();
+  }, []);
+
+  const filteredLogs = logs.filter(log => 
+    log.details?.toLowerCase().includes(search.toLowerCase()) ||
+    log.user?.toLowerCase().includes(search.toLowerCase()) ||
+    log.action?.toLowerCase().includes(search.toLowerCase())
+  );
+
+  if (loading) return (
+    <AdminLayout title="System Logs" subtitle="Security audit trails and tracking">
+      <div style={{padding: '5rem', textAlign: 'center'}}><Loader className="animate-spin" size={32} /></div>
+    </AdminLayout>
   );
 
   return (
@@ -33,9 +46,7 @@ export default function SystemLogs() {
             <div style={{fontSize: '0.85rem', color: '#64748B', marginTop: '0.2rem', fontWeight: '500'}}>Real-time system events</div>
           </div>
           <div style={{position: 'relative', width: '300px'}}>
-             <svg style={{position: 'absolute', left: '1rem', top: '50%', transform: 'translateY(-50%)', width: '16px', height: '16px', color: '#94A3B8'}} fill="none" viewBox="0 0 24 24" stroke="currentColor">
-               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-             </svg>
+             <Search style={{position: 'absolute', left: '1rem', top: '50%', transform: 'translateY(-50%)', width: '16px', height: '16px', color: '#94A3B8'}} />
              <input 
                 type="text" 
                 placeholder="Search logs..." 
@@ -58,19 +69,19 @@ export default function SystemLogs() {
             <tbody>
               {filteredLogs.map((log, index) => {
                 let dotColor = '#3B82F6';
-                if (log.action === 'WARN') dotColor = '#F59E0B';
-                if (log.action === 'ERROR') dotColor = '#EF4444';
+                if (log.role === 'ADMIN') dotColor = '#F59E0B';
+                if (log.role === 'SYSTEM') dotColor = '#EF4444';
                 return (
-                  <tr key={index} style={{background: '#FFFFFF', transition: 'background 0.2s'}} onMouseOver={(e) => e.currentTarget.style.background = '#F8FAFC'} onMouseOut={(e) => e.currentTarget.style.background = '#FFFFFF'}>
+                  <tr key={log._id} style={{background: '#FFFFFF', transition: 'background 0.2s'}} onMouseOver={(e) => e.currentTarget.style.background = '#F8FAFC'} onMouseOut={(e) => e.currentTarget.style.background = '#FFFFFF'}>
                     <td style={{padding: '1.5rem 2.5rem', borderBottom: index === filteredLogs.length - 1 ? 'none' : '1px solid #F1F5F9'}}>
                       <div style={{display: 'flex', alignItems: 'center', gap: '0.5rem'}}>
                         <div style={{width: '6px', height: '6px', borderRadius: '50%', background: dotColor}}></div>
                         <span style={{fontSize: '0.75rem', fontWeight: '700', color: '#334155'}}>{log.action}</span>
                       </div>
                     </td>
-                    <td style={{padding: '1.5rem 1.5rem', fontSize: '0.85rem', color: '#0F172A', fontWeight: '500', borderBottom: index === filteredLogs.length - 1 ? 'none' : '1px solid #F1F5F9'}}>{log.desc}</td>
-                    <td style={{padding: '1.5rem 1.5rem', fontSize: '0.85rem', color: '#64748B', fontWeight: '500', borderBottom: index === filteredLogs.length - 1 ? 'none' : '1px solid #F1F5F9'}}>{log.user}</td>
-                    <td style={{padding: '1.5rem 2.5rem', fontSize: '0.85rem', color: '#64748B', fontWeight: '500', borderBottom: index === filteredLogs.length - 1 ? 'none' : '1px solid #F1F5F9'}}>{log.time}</td>
+                    <td style={{padding: '1.5rem 1.5rem', fontSize: '0.85rem', color: '#0F172A', fontWeight: '500', borderBottom: index === filteredLogs.length - 1 ? 'none' : '1px solid #F1F5F9'}}>{log.details}</td>
+                    <td style={{padding: '1.5rem 1.5rem', fontSize: '0.85rem', color: '#64748B', fontWeight: '500', borderBottom: index === filteredLogs.length - 1 ? 'none' : '1px solid #F1F5F9'}}>{log.user} ({log.role})</td>
+                    <td style={{padding: '1.5rem 2.5rem', fontSize: '0.85rem', color: '#64748B', fontWeight: '500', borderBottom: index === filteredLogs.length - 1 ? 'none' : '1px solid #F1F5F9'}}>{new Date(log.createdAt).toLocaleString()}</td>
                   </tr>
                 )
               })}

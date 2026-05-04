@@ -238,17 +238,19 @@ exports.createPrescription = async (req, res, next) => {
       return res.status(404).json({ success: false, error: 'Doctor profile not found' });
     }
 
-    const { patientId, diagnosis, medicines, instructions, validUntil, appointmentId } = req.body;
+    const { patientId, diagnosis, medicines, items, instructions, notes, validUntil, appointmentId } = req.body;
 
     const Prescription = require('../models/Prescription');
     const prescription = await Prescription.create({
       patient: patientId,
       doctor: doctor._id,
       appointment: appointmentId,
-      medicinesText: medicines,
-      notes: instructions,
+      diagnosis,
+      items: items || [], // Structured items from the new UI
+      medicinesText: medicines, // Simple text fallback
+      notes: notes || instructions,
+      validUntil,
       createdAt: Date.now()
-      // Optional: expiry, etc.
     });
 
     res.status(201).json({ success: true, data: prescription });
@@ -272,11 +274,39 @@ exports.getDoctorPrescriptions = async (req, res, next) => {
     const prescriptions = await Prescription.find({ doctor: doctor._id })
       .populate({
         path: 'patient',
-        populate: { path: 'user', select: 'fullName' }
+        populate: { path: 'user', select: 'fullName email' }
       })
+      .populate('items.medicine', 'name category unit')
       .sort({ createdAt: -1 });
 
     res.status(200).json({ success: true, data: prescriptions });
+  } catch (err) {
+    res.status(500).json({ success: false, error: 'Server Error' });
+  }
+};
+
+// @desc    Get single prescription by ID
+// @route   GET /api/doctors/prescriptions/:id
+// @access  Private
+exports.getPrescriptionById = async (req, res, next) => {
+  try {
+    const Prescription = require('../models/Prescription');
+    const prescription = await Prescription.findById(req.params.id)
+      .populate({
+        path: 'patient',
+        populate: { path: 'user', select: 'fullName email' }
+      })
+      .populate({
+        path: 'doctor',
+        populate: { path: 'user', select: 'fullName email' }
+      })
+      .populate('items.medicine', 'name category unit');
+
+    if (!prescription) {
+      return res.status(404).json({ success: false, error: 'Prescription not found' });
+    }
+
+    res.status(200).json({ success: true, data: prescription });
   } catch (err) {
     res.status(500).json({ success: false, error: 'Server Error' });
   }

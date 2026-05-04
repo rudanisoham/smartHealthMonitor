@@ -5,6 +5,12 @@ const Doctor = require('../models/Doctor');
 const Appointment = require('../models/Appointment');
 const Department = require('../models/Department');
 const SystemLog = require('../models/SystemLog');
+const Feedback = require('../models/Feedback');
+const Review = require('../models/Review');
+const SystemSetting = require('../models/SystemSetting');
+const Message = require('../models/Message');
+const Admission = require('../models/Admission');
+const Payment = require('../models/Payment');
 
 // @desc    Get admin dashboard stats
 // @route   GET /api/admin/dashboard
@@ -97,6 +103,28 @@ exports.getReports = async (req, res, next) => {
     res.status(200).json({ success: true, data: formatted });
   } catch (err) {
     console.error(err);
+    res.status(500).json({ success: false, error: 'Server Error' });
+  }
+};
+
+// @desc    Get specific report by ID
+// @route   GET /api/admin/reports/:id
+// @access  Private/Admin
+exports.getReportById = async (req, res, next) => {
+  try {
+    const LabReport = require('../models/LabReport');
+    const report = await LabReport.findById(req.params.id)
+      .populate({
+        path: 'patient',
+        populate: { path: 'user', select: 'fullName' }
+      })
+      .populate('doctor', 'fullName');
+      
+    if (!report) {
+      return res.status(404).json({ success: false, error: 'Report not found' });
+    }
+    res.status(200).json({ success: true, data: report });
+  } catch (err) {
     res.status(500).json({ success: false, error: 'Server Error' });
   }
 };
@@ -211,19 +239,40 @@ exports.approveDoctor = async (req, res, next) => {
 // @access  Private/Admin
 exports.getPatients = async (req, res, next) => {
   try {
-    const patients = await Patient.find().populate('user', 'fullName email phone');
+    const patients = await Patient.find().populate('user', 'fullName email phone role');
     
-    const formattedPatients = patients.map(p => ({
-      _id: p._id,
-      name: p.user?.fullName || 'Unknown',
-      email: p.user?.email || 'N/A',
-      phone: p.user?.phone || p.phone || 'N/A',
-      bloodGroup: p.bloodGroup || '—',
-      gender: p.gender || '—',
-      createdAt: p.user?.createdAt || p._id.getTimestamp()
-    }));
+    // Only show users with PATIENT role
+    const formattedPatients = patients
+      .filter(p => p.user && p.user.role === 'PATIENT')
+      .map(p => ({
+        _id: p._id,
+        name: p.user?.fullName || 'Unknown',
+        email: p.user?.email || 'N/A',
+        phone: p.user?.phone || p.phone || 'N/A',
+        bloodGroup: p.bloodGroup || '—',
+        gender: p.gender || '—',
+        createdAt: p.user?.createdAt || p._id.getTimestamp()
+      }));
 
     res.status(200).json({ success: true, data: formattedPatients });
+  } catch (err) {
+    res.status(500).json({ success: false, error: 'Server Error' });
+  }
+};
+
+// @desc    Get patient by ID
+// @route   GET /api/admin/patients/:id
+// @access  Private/Admin
+exports.getPatientById = async (req, res, next) => {
+  try {
+    const patient = await Patient.findById(req.params.id)
+      .populate('user', 'fullName email phone role createdAt');
+
+    if (!patient) {
+      return res.status(404).json({ success: false, error: 'Patient not found' });
+    }
+
+    res.status(200).json({ success: true, data: patient });
   } catch (err) {
     res.status(500).json({ success: false, error: 'Server Error' });
   }
@@ -396,6 +445,66 @@ exports.getDepartments = async (req, res, next) => {
   }
 };
 
+// @desc    Get department by ID
+// @route   GET /api/admin/departments/:id
+// @access  Private/Admin
+exports.getDepartmentById = async (req, res, next) => {
+  try {
+    const department = await Department.findById(req.params.id);
+    if (!department) {
+      return res.status(404).json({ success: false, error: 'Department not found' });
+    }
+
+    // Find doctors in this department
+    const doctors = await Doctor.find({ department: department._id }).populate('user', 'fullName');
+    
+    // Find beds in this department
+    const Bed = require('../models/Bed');
+    const beds = await Bed.find({ department: department._id }).populate({
+      path: 'patient',
+      populate: { path: 'user', select: 'fullName' }
+    });
+
+    res.status(200).json({ 
+      success: true, 
+      data: {
+        department,
+        doctors,
+        beds
+      } 
+    });
+  } catch (err) {
+    res.status(500).json({ success: false, error: 'Server Error' });
+  }
+};
+
+// @desc    Update department
+// @route   PUT /api/admin/departments/:id
+// @access  Private/Admin
+exports.updateDepartment = async (req, res, next) => {
+  try {
+    const dept = await Department.findByIdAndUpdate(req.params.id, req.body, {
+      new: true,
+      runValidators: true
+    });
+    
+    if (!dept) {
+      return res.status(404).json({ success: false, error: 'Department not found' });
+    }
+
+    // Log update
+    await SystemLog.create({
+      action: `Department Updated: ${dept.name}`,
+      user: req.user.fullName,
+      role: 'ADMIN'
+    });
+
+    res.status(200).json({ success: true, data: dept });
+  } catch (err) {
+    res.status(500).json({ success: false, error: 'Server Error' });
+  }
+};
+
 // @desc    Add department
 // @route   POST /api/admin/departments
 // @access  Private/Admin
@@ -485,6 +594,230 @@ exports.deleteStaff = async (req, res, next) => {
 
     await user.deleteOne();
     res.status(200).json({ success: true, data: {} });
+  } catch (err) {
+    res.status(500).json({ success: false, error: 'Server Error' });
+  }
+};
+
+// @desc    Get analytics data
+// @route   GET /api/admin/analytics
+// @access  Private/Admin
+exports.getAnalytics = async (req, res, next) => {
+  try {
+    const totalPatients = await Patient.countDocuments();
+    const totalDoctors = await Doctor.countDocuments({ isApproved: true });
+    const totalAdmissions = await Admission.countDocuments();
+    const totalRevenueRes = await Payment.aggregate([
+      { $match: { status: 'PAID' } },
+      { $group: { _id: null, total: { $sum: '$amount' } } }
+    ]);
+    const totalRevenue = totalRevenueRes.length > 0 ? totalRevenueRes[0].total : 0;
+
+    // Monthly admissions (last 6 months)
+    const sixMonthsAgo = new Date();
+    sixMonthsAgo.setMonth(sixMonthsAgo.getMonth() - 6);
+    
+    const admissionsByMonth = await Admission.aggregate([
+      { $match: { admittedAt: { $gte: sixMonthsAgo } } },
+      {
+        $group: {
+          _id: { $month: "$admittedAt" },
+          count: { $sum: 1 }
+        }
+      },
+      { $sort: { "_id": 1 } }
+    ]);
+
+    res.status(200).json({
+      success: true,
+      data: {
+        stats: {
+          totalPatients,
+          totalDoctors,
+          totalAdmissions,
+          totalRevenue
+        },
+        admissionsByMonth
+      }
+    });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ success: false, error: 'Server Error' });
+  }
+};
+
+// @desc    Get all feedback
+// @route   GET /api/admin/feedback
+// @access  Private/Admin
+exports.getFeedback = async (req, res, next) => {
+  try {
+    const feedback = await Feedback.find().sort({ createdAt: -1 });
+    res.status(200).json({ success: true, data: feedback });
+  } catch (err) {
+    res.status(500).json({ success: false, error: 'Server Error' });
+  }
+};
+
+// @desc    Reply to feedback
+// @route   PUT /api/admin/feedback/:id/reply
+// @access  Private/Admin
+exports.replyFeedback = async (req, res, next) => {
+  try {
+    const feedback = await Feedback.findById(req.params.id);
+    if (!feedback) {
+      return res.status(404).json({ success: false, error: 'Feedback not found' });
+    }
+
+    feedback.reply = req.body.reply;
+    feedback.status = 'REPLIED';
+    feedback.repliedAt = Date.now();
+    await feedback.save();
+
+    // Log the reply
+    await SystemLog.create({
+      action: `Feedback Replied: ${feedback.subject}`,
+      user: req.user.fullName,
+      role: 'ADMIN'
+    });
+
+    res.status(200).json({ success: true, data: feedback });
+  } catch (err) {
+    res.status(500).json({ success: false, error: 'Server Error' });
+  }
+};
+
+// @desc    Get feedback by ID
+// @route   GET /api/admin/feedback/:id
+// @access  Private/Admin
+exports.getFeedbackById = async (req, res, next) => {
+  try {
+    const feedback = await Feedback.findById(req.params.id);
+    if (!feedback) {
+      return res.status(404).json({ success: false, error: 'Feedback not found' });
+    }
+    res.status(200).json({ success: true, data: feedback });
+  } catch (err) {
+    res.status(500).json({ success: false, error: 'Server Error' });
+  }
+};
+
+// @desc    Get system settings
+// @route   GET /api/admin/settings
+// @access  Private/Admin
+exports.getSettings = async (req, res, next) => {
+  try {
+    let settings = await SystemSetting.findOne();
+    if (!settings) {
+      settings = await SystemSetting.create({});
+    }
+    res.status(200).json({ success: true, data: settings });
+  } catch (err) {
+    res.status(500).json({ success: false, error: 'Server Error' });
+  }
+};
+
+// @desc    Update system settings
+// @route   PUT /api/admin/settings
+// @access  Private/Admin
+exports.updateSettings = async (req, res, next) => {
+  try {
+    let settings = await SystemSetting.findOne();
+    if (!settings) {
+      settings = await SystemSetting.create(req.body);
+    } else {
+      settings = await SystemSetting.findOneAndUpdate({}, req.body, {
+        new: true,
+        runValidators: true
+      });
+    }
+
+    // Log setting update
+    await SystemLog.create({
+      action: `System Settings Updated`,
+      user: req.user.fullName,
+      role: 'ADMIN'
+    });
+
+    res.status(200).json({ success: true, data: settings });
+  } catch (err) {
+    res.status(500).json({ success: false, error: 'Server Error' });
+  }
+};
+
+// @desc    Send broadcast message
+// @route   POST /api/admin/broadcast
+// @access  Private/Admin
+exports.sendBroadcast = async (req, res, next) => {
+  try {
+    const { target, subject, body, method } = req.body;
+    
+    // In a real app, this would trigger email/push notifications
+    const message = await Message.create({
+      sender: req.user.id,
+      receiver: null, // null means broadcast or system
+      subject,
+      body,
+      targetGroup: target,
+      deliveryMethod: method,
+      isBroadcast: true
+    });
+
+    // Log broadcast
+    await SystemLog.create({
+      action: `Broadcast Sent: ${subject}`,
+      details: `Target: ${target}`,
+      user: req.user.fullName,
+      role: 'ADMIN'
+    });
+
+    res.status(200).json({ success: true, data: message });
+  } catch (err) {
+    res.status(500).json({ success: false, error: 'Server Error' });
+  }
+};
+
+// @desc    Get broadcast history
+// @route   GET /api/admin/broadcasts
+// @access  Private/Admin
+exports.getBroadcasts = async (req, res, next) => {
+  try {
+    const broadcasts = await Message.find({ isBroadcast: true }).sort({ createdAt: -1 });
+    res.status(200).json({ success: true, data: broadcasts });
+  } catch (err) {
+    res.status(500).json({ success: false, error: 'Server Error' });
+  }
+};
+
+// @desc    Get all reviews
+// @route   GET /api/admin/reviews
+// @access  Private/Admin
+exports.getReviews = async (req, res, next) => {
+  try {
+    const reviews = await Review.find()
+      .populate({
+        path: 'patient',
+        populate: { path: 'user', select: 'fullName' }
+      })
+      .populate('doctor', 'fullName')
+      .sort({ createdAt: -1 });
+    res.status(200).json({ success: true, data: reviews });
+  } catch (err) {
+    res.status(500).json({ success: false, error: 'Server Error' });
+  }
+};
+
+// @desc    Get messages
+// @route   GET /api/admin/messages
+// @access  Private/Admin
+exports.getMessages = async (req, res, next) => {
+  try {
+    const messages = await Message.find({
+      $or: [{ sender: req.user.id }, { receiver: req.user.id }]
+    })
+      .populate('sender', 'fullName role')
+      .populate('receiver', 'fullName role')
+      .sort({ createdAt: -1 });
+    res.status(200).json({ success: true, data: messages });
   } catch (err) {
     res.status(500).json({ success: false, error: 'Server Error' });
   }

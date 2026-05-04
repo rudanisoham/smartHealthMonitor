@@ -23,7 +23,7 @@ const Login = () => {
         localStorage.setItem('token', res.data.token);
         localStorage.setItem('user', JSON.stringify(res.data.user));
         
-        if (['PHARMACIST', 'ADMIN', 'DOCTOR', 'RECEPTIONIST'].includes(res.data.user.role)) {
+        if (['MEDICAL_STAFF', 'ADMIN', 'DOCTOR', 'RECEPTIONIST'].includes(res.data.user.role)) {
           navigate('/medical/dashboard');
         } else {
           setError('Unauthorized: This portal is for Medical staff only.');

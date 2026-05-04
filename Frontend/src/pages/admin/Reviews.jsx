@@ -1,13 +1,25 @@
-import React from 'react';
-import { Star, MessageCircle } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { Star, MessageCircle, Loader } from 'lucide-react';
 import AdminLayout from '../../components/AdminLayout';
+import { getAdminReviews } from '../../utils/api';
 
 const Reviews = () => {
-  const mockReviews = [
-    { id: 1, patient: "Soham Rudani", doctor: "Dr. John Smith", rating: 5, comment: "Excellent doctor, very attentive and explained everything clearly.", date: "2026-04-01" },
-    { id: 2, patient: "Neha Sharma", doctor: "Dr. Sarah Wilson", rating: 4, comment: "Great experience, wait time was a bit long though.", date: "2026-03-29" },
-    { id: 3, patient: "Rohan Varma", doctor: "Dr. Mike Ross", rating: 2, comment: "Doctor was rushed and didn't answer my questions properly.", date: "2026-03-25" },
-  ];
+  const [reviews, setReviews] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchReviews = async () => {
+      try {
+        const res = await getAdminReviews();
+        setReviews(res.data.data);
+      } catch (err) {
+        console.error("Failed to fetch reviews", err);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchReviews();
+  }, []);
 
   const renderStars = (rating) => {
     return (
@@ -19,6 +31,12 @@ const Reviews = () => {
       </div>
     );
   };
+
+  if (loading) return (
+    <AdminLayout>
+      <div style={{padding: '5rem', textAlign: 'center'}}><Loader className="animate-spin" size={32} /></div>
+    </AdminLayout>
+  );
 
   return (
     <AdminLayout>
@@ -41,17 +59,19 @@ const Reviews = () => {
               </tr>
             </thead>
             <tbody>
-              {mockReviews.map((rev) => (
-                <tr key={rev.id}>
-                  <td style={{ fontWeight: 600 }}>{rev.patient}</td>
-                  <td>{rev.doctor}</td>
+              {reviews.length === 0 ? (
+                <tr><td colSpan="5" className="text-center py-4">No reviews found.</td></tr>
+              ) : reviews.map((rev) => (
+                <tr key={rev._id}>
+                  <td style={{ fontWeight: 600 }}>{rev.patient?.user?.fullName || 'Anonymous'}</td>
+                  <td>{rev.doctor?.fullName || 'Dr. Not Found'}</td>
                   <td>{renderStars(rev.rating)}</td>
                   <td>
                     <div style={{ maxWidth: '350px', whiteSpace: 'normal', lineHeight: 1.5, color: 'var(--text-main)', fontSize: '0.9rem' }}>
                       {rev.comment}
                     </div>
                   </td>
-                  <td className="muted" style={{ fontSize: '0.85rem' }}>{rev.date}</td>
+                  <td className="muted" style={{ fontSize: '0.85rem' }}>{new Date(rev.createdAt).toLocaleDateString()}</td>
                 </tr>
               ))}
             </tbody>

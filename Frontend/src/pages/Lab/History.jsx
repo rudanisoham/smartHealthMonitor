@@ -113,7 +113,7 @@ const LabHistory = () => {
                     {item.date}
                   </div>
                 </td>
-                <td>System Admin</td>
+                <td>{item.technician}</td>
                 <td>
                   <span className={item.status === 'REVIEWED' ? 'chip' : (item.status === 'NORMAL' ? 'chip-success' : (item.status === 'ABNORMAL' ? 'chip-danger' : 'chip-warning'))}>
                     {item.status}
@@ -121,12 +121,20 @@ const LabHistory = () => {
                 </td>
                 <td>
                   <div className="flex justify-end gap-2">
-                    <button className="btn-icon" title="View Results">
-                      <Eye size={14} />
-                    </button>
-                    <button className="btn-icon" title="Download PDF">
-                      <Download size={14} />
-                    </button>
+                    {item.filePath ? (
+                      <>
+                        <a href={item.filePath} target="_blank" rel="noopener noreferrer" className="btn-icon" title="View PDF">
+                          <Eye size={14} />
+                        </a>
+                        <a href={item.filePath} download className="btn-icon" title="Download PDF">
+                          <Download size={14} />
+                        </a>
+                      </>
+                    ) : (
+                      <button className="btn-icon" disabled title="No File Uploaded">
+                        <AlertTriangle size={14} style={{ color: '#cbd5e1' }} />
+                      </button>
+                    )}
                     <button className="btn-icon">
                       <MoreVertical size={14} />
                     </button>

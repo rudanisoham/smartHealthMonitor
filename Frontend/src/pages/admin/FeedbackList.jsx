@@ -1,14 +1,32 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { Mail, Trash2, Reply, Eye, Clock, CheckCircle } from 'lucide-react';
+import { Mail, Trash2, Reply, Eye, Clock, CheckCircle, Loader } from 'lucide-react';
 import AdminLayout from '../../components/AdminLayout';
+import { getAdminFeedback } from '../../utils/api';
 
 const FeedbackList = () => {
-  const mockFeedback = [
-    { id: 1, fullName: "Soham Rudani", email: "rudanisoham1@gmail.com", subject: "Appointment Query", status: "PENDING", date: "2026-04-01 10:45" },
-    { id: 2, fullName: "Neha Sharma", email: "neha@gmail.com", subject: "Lab Report Issue", status: "REPLIED", date: "2026-03-30 15:20" },
-    { id: 3, fullName: "Rohan Varma", email: "rohan@yahoo.com", subject: "New Department Request", status: "PENDING", date: "2026-03-28 09:15" },
-  ];
+  const [feedback, setFeedback] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchFeedback = async () => {
+      try {
+        const res = await getAdminFeedback();
+        setFeedback(res.data.data);
+      } catch (err) {
+        console.error("Failed to fetch feedback", err);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchFeedback();
+  }, []);
+
+  if (loading) return (
+    <AdminLayout>
+      <div style={{padding: '5rem', textAlign: 'center'}}><Loader className="animate-spin" size={32} /></div>
+    </AdminLayout>
+  );
 
   return (
     <AdminLayout>
@@ -37,8 +55,10 @@ const FeedbackList = () => {
               </tr>
             </thead>
             <tbody>
-              {mockFeedback.map((msg) => (
-                <tr key={msg.id}>
+              {feedback.length === 0 ? (
+                <tr><td colSpan="5" className="text-center py-4">No feedback messages found.</td></tr>
+              ) : feedback.map((msg) => (
+                <tr key={msg._id}>
                   <td>
                     {msg.status === 'PENDING' ? (
                       <span className="chip-warning" style={{ display: 'flex', alignItems: 'center', gap: '0.35rem', width: 'fit-content' }}>
@@ -55,16 +75,13 @@ const FeedbackList = () => {
                     <div className="muted" style={{ fontSize: '0.8rem' }}>{msg.email}</div>
                   </td>
                   <td>{msg.subject}</td>
-                  <td className="muted">{msg.date}</td>
+                  <td className="muted">{new Date(msg.createdAt).toLocaleDateString()}</td>
                   <td className="text-right">
                     <div style={{ display: 'flex', gap: '0.5rem', justifyContent: 'flex-end' }}>
-                      <Link to={`/admin/feedback/${msg.id}`} className="btn btn-outline btn-sm" style={{ display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
+                      <Link to={`/admin/feedback/${msg._id}/reply`} className="btn btn-outline btn-sm" style={{ display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
                         {msg.status === 'PENDING' ? <Reply size={14} /> : <Eye size={14} />}
                         {msg.status === 'PENDING' ? 'Reply' : 'View'}
                       </Link>
-                      <button className="btn-icon" style={{ color: '#ef4444' }}>
-                        <Trash2 size={16} />
-                      </button>
                     </div>
                   </td>
                 </tr>

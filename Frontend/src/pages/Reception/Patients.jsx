@@ -1,209 +1,255 @@
 import React, { useState, useEffect } from 'react';
-import { Search, Filter, MoreVertical, Eye, Edit, UserX, Loader, Trash2, X, Save } from 'lucide-react';
+import { Search, RefreshCw, Edit, Trash2, X, Save, Loader, BedDouble, User } from 'lucide-react';
 import { getReceptionPatients, updateReceptionPatient, deleteReceptionPatient } from '../../utils/api';
 
 const Patients = () => {
-  const [searchTerm, setSearchTerm] = useState('');
   const [patients, setPatients] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  
-  // Edit Modal State
-  const [editingPatient, setEditingPatient] = useState(null);
-  const [editFormData, setEditFormData] = useState({ fullName: '', phone: '', email: '' });
-  const [submitting, setSubmitting] = useState(false);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [showAssignedOnly, setShowAssignedOnly] = useState(false);
 
-  useEffect(() => {
-    fetchPatients();
-  }, []);
+  // Edit modal
+  const [editingPatient, setEditingPatient] = useState(null);
+  const [editForm, setEditForm] = useState({ fullName: '', email: '', phone: '' });
+  const [submitting, setSubmitting] = useState(false);
+  const [toast, setToast] = useState(null);
+
+  const showToast = (msg, type = 'success') => {
+    setToast({ msg, type });
+    setTimeout(() => setToast(null), 4000);
+  };
 
   const fetchPatients = async () => {
+    setLoading(true);
+    setError(null);
     try {
-      setLoading(true);
       const res = await getReceptionPatients();
-      if (res.data.success) {
-        setPatients(res.data.data);
-      }
-      setLoading(false);
+      if (res.data.success) setPatients(res.data.data);
     } catch (err) {
-      console.error('Error fetching patients:', err);
-      setError('Failed to load patients. Please check if backend is running.');
+      console.error('getPatients error:', err);
+      setError('Failed to load patients. Make sure the backend is running.');
+    } finally {
       setLoading(false);
     }
   };
 
-  const handleDelete = async (id) => {
-    if (window.confirm('Are you sure you want to delete this patient and their associated user account? This action is IRREVERSIBLE.')) {
-      try {
-        await deleteReceptionPatient(id);
-        setPatients(patients.filter(p => p._id !== id));
-        alert('Patient deleted successfully');
-      } catch (err) {
-        alert('Failed to delete patient');
-      }
-    }
-  };
+  useEffect(() => { fetchPatients(); }, []);
 
-  const openEditModal = (patient) => {
-    setEditingPatient(patient);
-    setEditFormData({
-      fullName: patient.name,
-      phone: patient.phone,
-      email: patient.email
-    });
+  const filtered = patients.filter(p => {
+    const matchSearch =
+      (p.name || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
+      (p.email || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
+      (p.id || '').toLowerCase().includes(searchTerm.toLowerCase());
+    const matchFilter = showAssignedOnly ? !!p.department : true;
+    return matchSearch && matchFilter;
+  });
+
+  const openEdit = (p) => {
+    setEditingPatient(p);
+    setEditForm({ fullName: p.name, email: p.email, phone: p.phone });
   };
 
   const handleEditSubmit = async (e) => {
     e.preventDefault();
     setSubmitting(true);
     try {
-      // In our backend, we update the user fields through the patient update endpoint
       await updateReceptionPatient(editingPatient._id, {
-        // We'll need to handle the user nested updates in the controller if needed, 
-        // for now let's assume we pass what the controller expects
-        user: { fullName: editFormData.fullName, phone: editFormData.phone, email: editFormData.email }
+        fullName: editForm.fullName,
+        email: editForm.email,
+        phone: editForm.phone
       });
       await fetchPatients();
       setEditingPatient(null);
-      alert('Patient updated successfully');
+      showToast('Patient updated successfully');
     } catch (err) {
-      alert('Failed to update patient');
+      showToast('Failed to update patient', 'error');
     } finally {
       setSubmitting(false);
     }
   };
 
-  const filteredPatients = patients.filter(patient => 
-    (patient.name || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
-    (patient.id || '').toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  const handleDelete = async (p) => {
+    if (!window.confirm(`Delete patient "${p.name}"? This will also remove their login account. This cannot be undone.`)) return;
+    try {
+      await deleteReceptionPatient(p._id);
+      setPatients(prev => prev.filter(x => x._id !== p._id));
+      showToast('Patient record deleted');
+    } catch (err) {
+      showToast('Failed to delete patient', 'error');
+    }
+  };
 
-  if (loading) {
-    return (
-      <div className="admin-content flex justify-center items-center py-20">
-        <Loader className="animate-spin text-primary" size={48} />
+  if (loading) return (
+    <div className="admin-content" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: '400px' }}>
+      <div style={{ textAlign: 'center' }}>
+        <Loader className="animate-spin text-primary" size={40} style={{ margin: '0 auto 1rem' }} />
+        <p className="muted">Loading patient directory…</p>
       </div>
-    );
-  }
+    </div>
+  );
 
   return (
     <div className="admin-content">
+      {/* Toast */}
+      {toast && (
+        <div style={{
+          position: 'fixed', top: '1.5rem', right: '1.5rem', zIndex: 9999,
+          padding: '1rem 1.5rem', borderRadius: '12px', fontWeight: 600,
+          background: toast.type === 'error' ? '#fee2e2' : '#dcfce7',
+          color: toast.type === 'error' ? '#b91c1c' : '#166534',
+          boxShadow: '0 10px 25px rgba(0,0,0,0.15)'
+        }}>
+          {toast.msg}
+        </div>
+      )}
+
       <div className="flex justify-between items-center mb-6">
         <div>
           <h2 className="section-title">Patient Directory</h2>
-          <p className="section-subtitle">Manage and view all registered patient records</p>
+          <p className="section-subtitle">
+            View and manage all registered patients · {filtered.length} record{filtered.length !== 1 ? 's' : ''}
+          </p>
         </div>
-        <div className="flex gap-3">
+        <div className="flex gap-3 items-center">
           <div className="search-bar">
             <Search className="search-icon" size={18} />
-            <input 
-              type="text" 
-              placeholder="Search patients..." 
+            <input
+              type="text"
+              placeholder="Search name, email or ID…"
               value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
+              onChange={e => setSearchTerm(e.target.value)}
             />
           </div>
+          <button
+            className={`btn ${showAssignedOnly ? 'btn-primary' : 'btn-outline'}`}
+            onClick={() => setShowAssignedOnly(v => !v)}
+            title="Show only patients with department assignment"
+          >
+            <BedDouble size={16} /> Assigned Only
+          </button>
           <button className="btn btn-outline" onClick={fetchPatients}>
-            <Filter size={18} /> Refresh
+            <RefreshCw size={16} /> Refresh
           </button>
         </div>
       </div>
 
-      {error && <div className="alert alert-danger mb-6">{error}</div>}
+      {error && (
+        <div style={{ background: '#fee2e2', border: '1px solid #fca5a5', color: '#b91c1c', padding: '1rem', borderRadius: '10px', marginBottom: '1.5rem' }}>
+          {error}
+        </div>
+      )}
 
-      <div className="table-container">
-        <table className="premium-table">
-          <thead>
-            <tr>
-              <th>Patient ID</th>
-              <th>Full Name</th>
-              <th>Email</th>
-              <th>Phone</th>
-              <th className="text-right">Action</th>
-            </tr>
-          </thead>
-          <tbody>
-            {filteredPatients.length > 0 ? filteredPatients.map((patient) => (
-              <tr key={patient._id}>
-                <td><span className="badge-soft">{patient.id}</span></td>
-                <td>
-                  <div className="flex-author">
-                    <div className="header-avatar" style={{ width: '32px', height: '32px', fontSize: '0.85rem' }}>
-                      {patient.name?.charAt(0) || 'P'}
-                    </div>
-                    <span className="author-name">{patient.name || 'N/A'}</span>
-                  </div>
-                </td>
-                <td><span className="muted">{patient.email || 'N/A'}</span></td>
-                <td><span className="muted">{patient.phone || 'N/A'}</span></td>
-                <td className="text-right">
-                  <div className="flex gap-2 justify-end">
-                    <button className="btn-icon" title="Edit Record" onClick={() => openEditModal(patient)}>
-                      <Edit size={16} />
-                    </button>
-                    <button className="btn-icon text-danger" title="Delete Record" onClick={() => handleDelete(patient._id)}>
-                      <Trash2 size={16} />
-                    </button>
-                  </div>
-                </td>
-              </tr>
-            )) : (
+      <div className="card" style={{ padding: 0, overflow: 'hidden' }}>
+        <div className="table-container" style={{ margin: 0 }}>
+          <table className="premium-table">
+            <thead>
               <tr>
-                <td colSpan="5" className="text-center py-8 muted">No patients found.</td>
+                <th>Patient ID</th>
+                <th>Name</th>
+                <th>Contact</th>
+                <th>Department / Bed</th>
+                <th>Blood Group</th>
+                <th style={{ textAlign: 'right' }}>Actions</th>
               </tr>
-            )}
-          </tbody>
-        </table>
+            </thead>
+            <tbody>
+              {filtered.length > 0 ? filtered.map(p => (
+                <tr key={p._id}>
+                  <td><span className="badge-soft">{p.id}</span></td>
+                  <td>
+                    <div className="flex-author">
+                      <div className="header-avatar" style={{ width: '34px', height: '34px', fontSize: '0.9rem', flexShrink: 0 }}>
+                        {(p.name || 'P').charAt(0).toUpperCase()}
+                      </div>
+                      <div>
+                        <div className="author-name">{p.name || 'N/A'}</div>
+                        {p.gender && <div className="muted" style={{ fontSize: '0.75rem' }}>{p.gender}</div>}
+                      </div>
+                    </div>
+                  </td>
+                  <td>
+                    <div style={{ fontSize: '0.875rem' }}>{p.email || '—'}</div>
+                    <div className="muted" style={{ fontSize: '0.8rem' }}>{p.phone || '—'}</div>
+                  </td>
+                  <td>
+                    {p.department
+                      ? <span className="chip">{p.department}</span>
+                      : <span className="muted">Not Assigned</span>}
+                  </td>
+                  <td>
+                    {p.bloodGroup
+                      ? <span className="chip-neutral">{p.bloodGroup}</span>
+                      : <span className="muted">—</span>}
+                  </td>
+                  <td style={{ textAlign: 'right' }}>
+                    <div className="flex gap-2" style={{ justifyContent: 'flex-end' }}>
+                      <button
+                        className="btn-icon"
+                        title="Edit Patient"
+                        onClick={() => openEdit(p)}
+                      >
+                        <Edit size={16} />
+                      </button>
+                      <button
+                        className="btn-icon"
+                        title="Delete Patient"
+                        style={{ color: '#ef4444' }}
+                        onClick={() => handleDelete(p)}
+                      >
+                        <Trash2 size={16} />
+                      </button>
+                    </div>
+                  </td>
+                </tr>
+              )) : (
+                <tr>
+                  <td colSpan="6" style={{ textAlign: 'center', padding: '3rem', color: 'var(--text-muted)' }}>
+                    <User size={32} style={{ margin: '0 auto 0.75rem', opacity: 0.4 }} />
+                    <div>No patients found{searchTerm ? ` matching "${searchTerm}"` : ''}.</div>
+                  </td>
+                </tr>
+              )}
+            </tbody>
+          </table>
+        </div>
       </div>
 
       {/* Edit Modal */}
       {editingPatient && (
-        <div className="modal-overlay" style={{
-          position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)', zIndex: 1000,
-          display: 'flex', alignItems: 'center', justifyContent: 'center'
+        <div style={{
+          position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.6)', zIndex: 1000,
+          display: 'flex', alignItems: 'center', justifyContent: 'center', backdropFilter: 'blur(4px)'
         }}>
-          <div className="card" style={{ width: '450px', padding: '2rem' }}>
+          <div className="card" style={{ width: '460px', padding: '2rem', position: 'relative' }}>
             <div className="flex justify-between items-center mb-6">
-              <h3 className="section-title" style={{ margin: 0 }}>Edit Patient Profile</h3>
-              <button onClick={() => setEditingPatient(null)} className="btn-icon"><X size={20} /></button>
+              <div>
+                <h3 className="section-title" style={{ margin: 0 }}>Edit Patient</h3>
+                <p className="muted" style={{ margin: 0, fontSize: '0.85rem' }}>ID: {editingPatient.id}</p>
+              </div>
+              <button className="btn-icon" onClick={() => setEditingPatient(null)}><X size={20} /></button>
             </div>
-            
             <form onSubmit={handleEditSubmit}>
-              <div className="form-group mb-4">
-                <label>Full Name</label>
-                <input 
-                  type="text" 
-                  className="form-control" 
-                  value={editFormData.fullName}
-                  onChange={(e) => setEditFormData({...editFormData, fullName: e.target.value})}
-                  required
-                />
+              <div className="form-group" style={{ marginBottom: '1rem' }}>
+                <label className="form-label">Full Name</label>
+                <input type="text" className="form-control" value={editForm.fullName}
+                  onChange={e => setEditForm(f => ({ ...f, fullName: e.target.value }))} required />
               </div>
-              <div className="form-group mb-4">
-                <label>Email Address</label>
-                <input 
-                  type="email" 
-                  className="form-control" 
-                  value={editFormData.email}
-                  onChange={(e) => setEditFormData({...editFormData, email: e.target.value})}
-                  required
-                />
+              <div className="form-group" style={{ marginBottom: '1rem' }}>
+                <label className="form-label">Email Address</label>
+                <input type="email" className="form-control" value={editForm.email}
+                  onChange={e => setEditForm(f => ({ ...f, email: e.target.value }))} required />
               </div>
-              <div className="form-group mb-6">
-                <label>Phone Number</label>
-                <input 
-                  type="text" 
-                  className="form-control" 
-                  value={editFormData.phone}
-                  onChange={(e) => setEditFormData({...editFormData, phone: e.target.value})}
-                  required
-                />
+              <div className="form-group" style={{ marginBottom: '1.5rem' }}>
+                <label className="form-label">Phone Number</label>
+                <input type="text" className="form-control" value={editForm.phone}
+                  onChange={e => setEditForm(f => ({ ...f, phone: e.target.value }))} />
               </div>
-              
               <div className="flex gap-3">
-                <button type="button" onClick={() => setEditingPatient(null)} className="btn btn-outline flex-1">Cancel</button>
-                <button type="submit" className="btn btn-primary flex-1" disabled={submitting}>
-                  {submitting ? <Loader className="animate-spin inline mr-2" size={16} /> : <><Save size={16} className="inline mr-2" /> Save Changes</>}
+                <button type="button" className="btn btn-outline" style={{ flex: 1 }}
+                  onClick={() => setEditingPatient(null)}>Cancel</button>
+                <button type="submit" className="btn btn-primary" style={{ flex: 1 }} disabled={submitting}>
+                  {submitting ? <Loader className="animate-spin" size={16} /> : <><Save size={16} /> Save Changes</>}
                 </button>
               </div>
             </form>

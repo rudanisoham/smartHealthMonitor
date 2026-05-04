@@ -31,7 +31,7 @@ const LabLogin = () => {
         localStorage.setItem('token', res.data.token);
         localStorage.setItem('user', JSON.stringify(res.data.user));
         
-        if (res.data.user.role === 'LAB_TECHNICIAN' || res.data.user.role === 'ADMIN' || res.data.user.role === 'DOCTOR') {
+        if (res.data.user.role === 'LAB_STAFF' || res.data.user.role === 'ADMIN' || res.data.user.role === 'DOCTOR') {
           navigate('/lab/dashboard');
         } else {
           setError('Unauthorized: This portal is for Lab staff only.');

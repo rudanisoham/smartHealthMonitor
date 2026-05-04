@@ -16,41 +16,31 @@ const PrescriptionDetail = () => {
     const fetchPrescription = async () => {
         try {
             setLoading(true);
-            // Fetch appointment details which serve as the prescription source
-            const res = await API.get(`/appointments/${id}`);
+            const { getMyPrescriptions } = await import('../../utils/api');
+            const res = await getMyPrescriptions();
             if (res.data.success) {
-                const appt = res.data.data;
-                setPrescription({
-                    id: appt._id?.slice(-8).toUpperCase() || id,
-                    createdAt: appt.scheduledAt ? new Date(appt.scheduledAt).toLocaleString() : new Date(appt.createdAt).toLocaleString(),
-                    validUntil: null,
-                    doctor: {
-                        fullName: appt.doctor?.user?.fullName || 'Assigned Doctor',
-                        specialty: appt.doctor?.specialty || 'General Medicine',
-                        department: appt.doctor?.specialty || 'Outpatient',
-                        licenseNumber: appt.doctor?.licenseNumber || 'N/A',
-                    },
-                    diagnosis: appt.notes || 'General Consultation',
-                    medicines: [
-                        { name: 'As prescribed by doctor', dosage: 'Per visit', timing: '1-0-1', duration: 'As needed' }
-                    ],
-                    instructions: 'Follow the doctor\'s instructions. Take medicines after meals as directed.',
-                    notes: appt.notes || 'Follow up as scheduled.'
-                });
+                const rx = res.data.data.find(p => p._id === id);
+                if (rx) {
+                    setPrescription({
+                        id: rx._id.slice(-8).toUpperCase(),
+                        createdAt: new Date(rx.createdAt).toLocaleString(),
+                        validUntil: rx.validUntil ? new Date(rx.validUntil).toLocaleDateString() : null,
+                        doctor: {
+                            fullName: rx.doctor?.user?.fullName || 'Assigned Doctor',
+                            specialty: rx.doctor?.specialty || 'General Medicine',
+                            department: rx.doctor?.department || 'Outpatient',
+                            licenseNumber: rx.doctor?.licenseNumber || 'N/A',
+                        },
+                        diagnosis: rx.diagnosis || 'General Consultation',
+                        medicinesText: rx.medicinesText, // Will map to UI or show as text
+                        medicines: [], // For legacy UI mapping if needed
+                        instructions: rx.notes || 'Follow the doctor\'s instructions.',
+                        notes: rx.notes || ''
+                    });
+                }
             }
         } catch (err) {
             console.error('Error fetching prescription:', err);
-            // Fallback: show generic info
-            setPrescription({
-                id: id?.slice(-8).toUpperCase() || 'N/A',
-                createdAt: 'N/A',
-                validUntil: null,
-                doctor: { fullName: 'Doctor', specialty: 'General', department: 'Outpatient', licenseNumber: 'N/A' },
-                diagnosis: 'Consultation',
-                medicines: [],
-                instructions: 'Contact reception for prescription details.',
-                notes: ''
-            });
         } finally {
             setLoading(false);
         }
@@ -149,27 +139,15 @@ const PrescriptionDetail = () => {
                     <table style={{ width: '100%', borderCollapse: 'collapse' }}>
                         <thead>
                             <tr style={{ background: '#f8fafc', borderBottom: '2px solid #e2e8f0' }}>
-                                <th style={{ padding: '0.75rem 1rem', textAlign: 'left', fontSize: '0.78rem', fontWeight: 700, textTransform: 'uppercase', color: '#64748b' }}>#</th>
-                                <th style={{ padding: '0.75rem 1rem', textAlign: 'left', fontSize: '0.78rem', fontWeight: 700, textTransform: 'uppercase', color: '#64748b' }}>Medicine Name</th>
-                                <th style={{ padding: '0.75rem 1rem', textAlign: 'left', fontSize: '0.78rem', fontWeight: 700, textTransform: 'uppercase', color: '#64748b' }}>Dosage</th>
-                                <th style={{ padding: '0.75rem 1rem', textAlign: 'left', fontSize: '0.78rem', fontWeight: 700, textTransform: 'uppercase', color: '#64748b' }}>Timing</th>
-                                <th style={{ padding: '0.75rem 1rem', textAlign: 'left', fontSize: '0.78rem', fontWeight: 700, textTransform: 'uppercase', color: '#64748b' }}>Duration</th>
+                                <th style={{ padding: '0.75rem 1rem', textAlign: 'left', fontSize: '0.78rem', fontWeight: 700, textTransform: 'uppercase', color: '#64748b' }}>Medicines and Dosages</th>
                             </tr>
                         </thead>
                         <tbody>
-                            {prescription.medicines.length > 0 ? prescription.medicines.map((med, index) => (
-                                <tr key={index} style={{ borderBottom: '1px solid #f1f5f9' }}>
-                                    <td style={{ padding: '0.875rem 1rem', color: '#94a3b8', fontWeight: 700 }}>{index + 1}</td>
-                                    <td style={{ padding: '0.875rem 1rem' }}><strong>{med.name}</strong></td>
-                                    <td style={{ padding: '0.875rem 1rem' }}>
-                                        <span style={{ background: '#eff6ff', color: '#1d4ed8', padding: '0.2rem 0.6rem', borderRadius: '4px', fontSize: '0.82rem', fontWeight: 700 }}>{med.dosage}</span>
-                                    </td>
-                                    <td style={{ padding: '0.875rem 1rem' }}>{renderTiming(med.timing)}</td>
-                                    <td style={{ padding: '0.875rem 1rem' }}>{med.duration}</td>
-                                </tr>
-                            )) : (
-                                <tr><td colSpan="5" className="muted" style={{ padding: '2rem', textAlign: 'center' }}>No medicines listed.</td></tr>
-                            )}
+                            <tr>
+                                <td style={{ padding: '1rem', whiteSpace: 'pre-wrap', color: '#0f172a', fontWeight: 500, lineHeight: 1.5 }}>
+                                    {prescription.medicinesText || 'No specific medicines listed.'}
+                                </td>
+                            </tr>
                         </tbody>
                     </table>
                 </div>
